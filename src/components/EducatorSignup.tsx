@@ -389,4 +389,4 @@ export default function EducatorSignup({ onSignupComplete, onBackToLogin }: Educ
       </div>
     </div>
   );
-}</parameter>
+}
