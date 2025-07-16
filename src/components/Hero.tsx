@@ -4,11 +4,16 @@ import Pricing from './Pricing';
 
 interface HeroProps {
   onLogin: (role: 'educator') => void;
+  onShowEducatorSignup?: () => void;
 }
 
-export default function Hero({ onLogin }: HeroProps) {
+export default function Hero({ onLogin, onShowEducatorSignup }: HeroProps) {
   const handleGetStarted = () => {
-    onLogin('educator');
+    if (onShowEducatorSignup) {
+      onShowEducatorSignup();
+    } else {
+      onLogin('educator');
+    }
   };
 
   const replacedTools = [

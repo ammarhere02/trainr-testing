@@ -3,6 +3,9 @@ import { Users, BookOpen, Video, User, Mail } from 'lucide-react';
 import Header from './components/Header';
 import SideMenu from './components/SideMenu';
 import Hero from './components/Hero';
+import EducatorSignup from './components/EducatorSignup';
+import EducatorWelcome from './components/EducatorWelcome';
+import StudentSignup from './components/StudentSignup';
 import Community from './components/Community';
 import Courses from './components/Courses';
 import Events from './components/Events';
@@ -26,17 +29,51 @@ function App() {
   const [userRole, setUserRole] = useState<'educator' | 'student' | null>(null);
   const [currentCourseId, setCurrentCourseId] = useState<number | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showEducatorSignup, setShowEducatorSignup] = useState(false);
+  const [showEducatorWelcome, setShowEducatorWelcome] = useState(false);
+  const [showStudentSignup, setShowStudentSignup] = useState(false);
+  const [educatorData, setEducatorData] = useState<any>(null);
+  const [studentEducatorId, setStudentEducatorId] = useState<string | null>(null);
 
+  // Check for educator parameter in URL
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const educatorId = urlParams.get('educator');
+    
+    if (educatorId && !isLoggedIn) {
+      setStudentEducatorId(educatorId);
+      setShowStudentSignup(true);
+    }
+  }, [isLoggedIn]);
   const handleLogin = (role: 'educator') => {
     setIsLoggedIn(true);
     setUserRole('educator');
     setCurrentView('dashboard');
   };
 
+  const handleEducatorSignupComplete = (data: any) => {
+    setEducatorData(data);
+    setShowEducatorSignup(false);
+    setShowEducatorWelcome(true);
+  };
+
+  const handleEducatorWelcomeContinue = () => {
+    setShowEducatorWelcome(false);
+    handleLogin('educator');
+  };
+
+  const handleStudentSignupComplete = (data: any) => {
+    setShowStudentSignup(false);
+    setIsLoggedIn(true);
+    setUserRole('student');
+    setCurrentView('member-community');
+  };
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUserRole(null);
     setCurrentView('home');
+    setEducatorData(null);
+    setStudentEducatorId(null);
   };
 
   const handleStartLearning = (courseId: number) => {
@@ -44,9 +81,38 @@ function App() {
     setCurrentView('course-learning');
   };
 
+  // Show educator signup
+  if (showEducatorSignup) {
+    return (
+      <EducatorSignup 
+        onSignupComplete={handleEducatorSignupComplete}
+        onBackToLogin={() => setShowEducatorSignup(false)}
+      />
+    );
+  }
+
+  // Show educator welcome
+  if (showEducatorWelcome && educatorData) {
+    return (
+      <EducatorWelcome 
+        educatorData={educatorData}
+        onContinue={handleEducatorWelcomeContinue}
+      />
+    );
+  }
+
+  // Show student signup
+  if (showStudentSignup && studentEducatorId) {
+    return (
+      <StudentSignup 
+        educatorId={studentEducatorId}
+        onSignupComplete={handleStudentSignupComplete}
+      />
+    );
+  }
   const renderCurrentView = () => {
     if (!isLoggedIn) {
-      return <Hero onLogin={handleLogin} />;
+      return <Hero onLogin={handleLogin} onShowEducatorSignup={() => setShowEducatorSignup(true)} />;
     }
 
     // Handle side menu views for educators
