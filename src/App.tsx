@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Users, BookOpen, Video, User, Mail } from 'lucide-react';
 import Header from './components/Header';
+import Login from './components/Login';
 import SideMenu from './components/SideMenu';
 import Hero from './components/Hero';
 import EducatorSignup from './components/EducatorSignup';
@@ -32,6 +33,7 @@ function App() {
   const [showEducatorSignup, setShowEducatorSignup] = useState(false);
   const [showEducatorWelcome, setShowEducatorWelcome] = useState(false);
   const [showStudentSignup, setShowStudentSignup] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
   const [educatorData, setEducatorData] = useState<any>(null);
   const [studentEducatorId, setStudentEducatorId] = useState<string | null>(null);
 
@@ -45,10 +47,11 @@ function App() {
       setShowStudentSignup(true);
     }
   }, [isLoggedIn]);
-  const handleLogin = (role: 'educator') => {
+  const handleLogin = (role: 'educator' | 'student') => {
     setIsLoggedIn(true);
-    setUserRole('educator');
-    setCurrentView('dashboard');
+    setUserRole(role);
+    setCurrentView(role === 'educator' ? 'dashboard' : 'member-community');
+    setShowLogin(false);
   };
 
   const handleEducatorSignupComplete = (data: any) => {
@@ -73,6 +76,7 @@ function App() {
     setUserRole(null);
     setCurrentView('home');
     setEducatorData(null);
+    setShowLogin(false);
     setStudentEducatorId(null);
   };
 
@@ -80,6 +84,23 @@ function App() {
     setCurrentCourseId(courseId);
     setCurrentView('course-learning');
   };
+
+  // Show login page
+  if (showLogin) {
+    return (
+      <Login 
+        onLogin={handleLogin}
+        onShowEducatorSignup={() => {
+          setShowLogin(false);
+          setShowEducatorSignup(true);
+        }}
+        onShowStudentSignup={() => {
+          setShowLogin(false);
+          setShowStudentSignup(true);
+        }}
+      />
+    );
+  }
 
   // Show educator signup
   if (showEducatorSignup) {
@@ -219,6 +240,7 @@ function App() {
         currentView={currentView} 
         onViewChange={setCurrentView} 
         isLoggedIn={isLoggedIn}
+        onShowLogin={() => setShowLogin(true)}
         userRole={userRole}
         onLogin={handleLogin}
         onLogout={handleLogout}

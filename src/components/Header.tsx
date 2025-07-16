@@ -4,13 +4,14 @@ import { Search, Bell, User, Menu, LogOut, Video, FileText, UserPlus, ArrowRight
 interface HeaderProps {
   currentView: string;
   onViewChange: (view: string) => void;
+  onShowLogin: () => void;
   isLoggedIn: boolean;
   userRole: 'educator' | 'student' | null;
   onLogout: () => void;
   onLogin?: (role: 'educator' | 'student', educatorId?: string) => void;
 }
 
-export default function Header({ currentView, onViewChange, isLoggedIn, userRole, onLogout, onLogin }: HeaderProps) {
+export default function Header({ currentView, onViewChange, onShowLogin, isLoggedIn, userRole, onLogout, onLogin }: HeaderProps) {
   const [showProductsDropdown, setShowProductsDropdown] = useState(false);
 
   const handleJoinClick = () => {
@@ -82,6 +83,13 @@ export default function Header({ currentView, onViewChange, isLoggedIn, userRole
                     className="text-gray-300 hover:text-white font-medium transition-colors"
                   >
                     Pricing
+                  </button>
+                  
+                  <button
+                    onClick={onShowLogin}
+                    className="text-gray-300 hover:text-white font-medium transition-colors"
+                  >
+                    Login
                   </button>
                   
                   <button
