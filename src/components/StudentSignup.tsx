@@ -321,4 +321,4 @@ export default function StudentSignup({ educatorId, onSignupComplete }: StudentS
       </div>
     </div>
   );
-}</parameter>
+}

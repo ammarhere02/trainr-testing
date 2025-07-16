@@ -207,4 +207,4 @@ export default function EducatorWelcome({ educatorData, onContinue }: EducatorWe
       </div>
     </div>
   );
-}</parameter>
+}
