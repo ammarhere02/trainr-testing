@@ -7,7 +7,7 @@ interface HeaderProps {
   isLoggedIn: boolean;
   userRole: 'educator' | 'student' | null;
   onLogout: () => void;
-  onLogin?: (role: 'educator') => void;
+  onLogin?: (role: 'educator' | 'student', educatorId?: string) => void;
 }
 
 export default function Header({ currentView, onViewChange, isLoggedIn, userRole, onLogout, onLogin }: HeaderProps) {
