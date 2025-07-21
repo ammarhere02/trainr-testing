@@ -10,13 +10,13 @@ export default function EducatorWelcome({ educatorData, onContinue }: EducatorWe
   const [copied, setCopied] = useState(false);
 
   const copySubdomain = () => {
-    navigator.clipboard.writeText(`https://${educatorData.fullSubdomain}`);
+    navigator.clipboard.writeText(`${window.location.protocol}//${educatorData.fullSubdomain}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const shareSubdomain = (platform: string) => {
-    const url = `https://${educatorData.fullSubdomain}`;
+    const url = window.location.protocol + '//' + educatorData.fullSubdomain;
     const text = `Join my online learning community at ${educatorData.businessName}!`;
     
     const shareUrls = {
@@ -76,7 +76,7 @@ export default function EducatorWelcome({ educatorData, onContinue }: EducatorWe
                     {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   </button>
                   <a
-                    href={`https://${educatorData.fullSubdomain}`}
+                    href={`${window.location.protocol}//${educatorData.fullSubdomain}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-2 bg-white text-gray-600 hover:text-purple-600 rounded-lg transition-colors"

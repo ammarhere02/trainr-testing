@@ -7,6 +7,7 @@ import Hero from './components/Hero';
 import EducatorSignup from './components/EducatorSignup';
 import EducatorWelcome from './components/EducatorWelcome';
 import StudentSignup from './components/StudentSignup';
+import EducatorPortal from './components/EducatorPortal';
 import Community from './components/Community';
 import Courses from './components/Courses';
 import Events from './components/Events';
@@ -23,6 +24,7 @@ import Meet from './components/Meet';
 import Contacts from './components/Contacts';
 import Dashboard from './components/Dashboard';
 import Products from './components/Products';
+import { getSubdomain, isSubdomain, getEducatorBySubdomain } from './utils/subdomain';
 
 function App() {
   const [currentView, setCurrentView] = useState('home');
@@ -36,17 +38,40 @@ function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [educatorData, setEducatorData] = useState<any>(null);
   const [studentEducatorId, setStudentEducatorId] = useState<string | null>(null);
+  const [subdomainEducator, setSubdomainEducator] = useState<any>(null);
+  const [isLoadingSubdomain, setIsLoadingSubdomain] = useState(false);
 
-  // Check for educator parameter in URL
+  // Check for educator parameter in URL or subdomain
   React.useEffect(() => {
+    const checkSubdomain = async () => {
+      const subdomain = getSubdomain();
+      if (subdomain && !isLoggedIn) {
+        setIsLoadingSubdomain(true);
+        try {
+          const educator = await getEducatorBySubdomain(subdomain);
+          if (educator) {
+            setSubdomainEducator(educator);
+            setStudentEducatorId(educator.id);
+          }
+        } catch (error) {
+          console.error('Error fetching educator:', error);
+        } finally {
+          setIsLoadingSubdomain(false);
+        }
+      }
+    };
+    
     const urlParams = new URLSearchParams(window.location.search);
     const educatorId = urlParams.get('educator');
     
     if (educatorId && !isLoggedIn) {
       setStudentEducatorId(educatorId);
       setShowStudentSignup(true);
+    } else {
+      checkSubdomain();
     }
   }, [isLoggedIn]);
+  
   const handleLogin = (role: 'educator' | 'student') => {
     setIsLoggedIn(true);
     setUserRole(role);
@@ -70,7 +95,9 @@ function App() {
     setIsLoggedIn(true);
     setUserRole('student');
     setCurrentView('member-community');
+    setSubdomainEducator(null);
   };
+  
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUserRole(null);
@@ -78,12 +105,37 @@ function App() {
     setEducatorData(null);
     setShowLogin(false);
     setStudentEducatorId(null);
+    setSubdomainEducator(null);
   };
 
   const handleStartLearning = (courseId: number) => {
     setCurrentCourseId(courseId);
     setCurrentView('course-learning');
   };
+
+  // Show loading screen while checking subdomain
+  if (isLoadingSubdomain) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <span className="text-white font-bold text-2xl">T</span>
+          </div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show educator portal if we're on a subdomain
+  if (subdomainEducator && !isLoggedIn) {
+    return (
+      <EducatorPortal 
+        educator={subdomainEducator}
+        onStudentSignup={() => setShowStudentSignup(true)}
+      />
+    );
+  }
 
   // Show login page
   if (showLogin) {
@@ -123,14 +175,15 @@ function App() {
   }
 
   // Show student signup
-  if (showStudentSignup && studentEducatorId) {
+  if (showStudentSignup && (studentEducatorId || subdomainEducator)) {
     return (
       <StudentSignup 
-        educatorId={studentEducatorId}
+        educatorId={studentEducatorId || subdomainEducator?.id}
         onSignupComplete={handleStudentSignupComplete}
       />
     );
   }
+  
   const renderCurrentView = () => {
     if (!isLoggedIn) {
       return <Hero onLogin={handleLogin} onShowEducatorSignup={() => setShowEducatorSignup(true)} />;
