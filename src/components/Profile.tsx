@@ -204,6 +204,7 @@ export default function Profile({ onBack }: ProfileProps) {
                       className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
                     />
                     <label className="absolute bottom-2 right-2 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors cursor-pointer">
+                      <>
                       {isUploadingPhoto ? (
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       ) : (
@@ -216,6 +217,7 @@ export default function Profile({ onBack }: ProfileProps) {
                         className="hidden"
                         disabled={isUploadingPhoto}
                       />
+                      </>
                     </label>
                   </div>
                   <h2 className="text-xl font-bold text-gray-900">{profileData.firstName} {profileData.lastName}</h2>
