@@ -234,14 +234,6 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
                         </>
                       )}
                     </div>
-                    
-                    <button 
-                      onClick={onLogout}
-                      className="p-2 text-gray-300 hover:text-red-400 transition-colors"
-                      title="Logout"
-                    >
-                      <LogOut className="w-5 h-5" />
-                    </button>
                   </>
                 )}
                 <button className="md:hidden p-2 text-gray-300 hover:text-white transition-colors">
