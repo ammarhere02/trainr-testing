@@ -193,7 +193,6 @@ export default function Profile({ onBack }: ProfileProps) {
         {/* Profile Tab Content */}
         {activeTab === 'profile' && (
           <>
-          <>
             {/* Profile Info */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
