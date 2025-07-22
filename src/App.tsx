@@ -316,7 +316,7 @@ function App() {
         {/* Sub-menu for member area - positioned below header, above content */}
         {isLoggedIn && currentView.startsWith('member-') && currentView !== 'member-record' && currentView !== 'course-learning' && currentView !== 'member-profile' && (
           <div className={`transition-all duration-300 ${
-            userRole === 'educator' && !currentView.startsWith('member-') && currentView !== 'course-learning' && currentView !== 'member-record'
+            userRole === 'educator' && !currentView.startsWith('member-')
               ? (sidebarCollapsed ? 'ml-16' : 'ml-64') 
               : ''
           }`}>
