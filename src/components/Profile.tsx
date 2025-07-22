@@ -38,8 +38,6 @@ export default function Profile({ onBack }: ProfileProps) {
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [isEditingPassword, setIsEditingPassword] = useState(false);
   const [showSocialLinks, setShowSocialLinks] = useState(true);
-  const [profilePhoto, setProfilePhoto] = useState('https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=200');
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   
   const [profileData, setProfileData] = useState({
     firstName: 'R',
@@ -61,45 +59,6 @@ export default function Profile({ onBack }: ProfileProps) {
   const [tempProfileData, setTempProfileData] = useState(profileData);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-
-  // Handle profile photo upload
-  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image size must be less than 5MB');
-      return;
-    }
-
-    setIsUploadingPhoto(true);
-
-    try {
-      // Create a preview URL
-      const previewUrl = URL.createObjectURL(file);
-      
-      // Simulate upload process
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // In real app, this would upload to your server/cloud storage
-      // For now, we'll just use the preview URL
-      setProfilePhoto(previewUrl);
-      
-      console.log('Photo uploaded:', file.name);
-    } catch (error) {
-      console.error('Upload failed:', error);
-      alert('Failed to upload photo. Please try again.');
-    } finally {
-      setIsUploadingPhoto(false);
-    }
-  };
 
   const stats = [
     { label: 'Current Level', value: '12', icon: Trophy, color: 'text-yellow-600' },
@@ -199,24 +158,13 @@ export default function Profile({ onBack }: ProfileProps) {
                 <div className="text-center">
                   <div className="relative inline-block">
                     <img
-                      src={profilePhoto}
+                      src="https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=200"
                       alt="Profile"
                       className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
                     />
-                    <label className="absolute bottom-2 right-2 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors cursor-pointer">
-                      {isUploadingPhoto ? (
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      ) : (
-                        <Camera className="w-4 h-4" />
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoUpload}
-                        className="hidden"
-                        disabled={isUploadingPhoto}
-                      />
-                    </label>
+                    <button className="absolute bottom-2 right-2 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors">
+                      <Camera className="w-4 h-4" />
+                    </button>
                   </div>
                   <h2 className="text-xl font-bold text-gray-900">{profileData.firstName} {profileData.lastName}</h2>
                   <p className="text-gray-600 mb-4">{profileData.bio}</p>
@@ -227,7 +175,7 @@ export default function Profile({ onBack }: ProfileProps) {
                       <span className="text-sm font-medium text-gray-700">Level 12</span>
                       <span className="text-sm text-gray-600">2,847 / 3,000 XP</span>
                     </div>
-                    src={profilePhoto}
+                    <div className="w-full bg-gray-200 rounded-full h-3">
                       <div
                         className="bg-gradient-to-r from-purple-600 to-blue-600 h-3 rounded-full transition-all duration-300"
                         style={{ width: '85%' }}
@@ -275,20 +223,13 @@ export default function Profile({ onBack }: ProfileProps) {
                     {/* Profile Photo */}
                     <div className="flex items-center space-x-4">
                       <img
-                        src={profilePhoto}
+                        src="https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=80"
                         alt="Profile"
                         className="w-16 h-16 rounded-full object-cover"
                       />
-                      <label className="text-blue-600 hover:text-blue-700 font-medium cursor-pointer">
-                        {isUploadingPhoto ? 'Uploading...' : 'Change profile photo'}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handlePhotoUpload}
-                          className="hidden"
-                          disabled={isUploadingPhoto}
-                        />
-                      </label>
+                      <button className="text-blue-600 hover:text-blue-700 font-medium">
+                        Change profile photo
+                      </button>
                     </div>
 
                     {/* Name Fields */}
