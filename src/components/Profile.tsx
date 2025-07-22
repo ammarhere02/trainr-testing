@@ -22,10 +22,15 @@ import {
   ChevronDown,
   ChevronUp,
   LogOut,
-  Clock
+  Clock,
+  ArrowLeft
 } from 'lucide-react';
 
-export default function Profile() {
+interface ProfileProps {
+  onBack?: () => void;
+}
+
+export default function Profile({ onBack }: ProfileProps) {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [isEditingPassword, setIsEditingPassword] = useState(false);
@@ -95,7 +100,21 @@ export default function Profile() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header with Back Button */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center">
+          <button
+            onClick={onBack}
+            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Back
+          </button>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Profile Info */}
         <div className="lg:col-span-1">
@@ -578,6 +597,7 @@ export default function Profile() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

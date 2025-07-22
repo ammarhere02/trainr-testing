@@ -273,7 +273,7 @@ function App() {
         case 'events':
           return <Events />;
         case 'profile':
-          return <Profile />;
+          return <Profile onBack={() => setCurrentView('member-community')} />;
         default:
           return <Community />;
       }
