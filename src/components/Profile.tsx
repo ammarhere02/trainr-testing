@@ -430,6 +430,21 @@ export default function Profile({ onBack }: ProfileProps) {
                       </button>
                     </div>
 
+                    {/* Timezone Display */}
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-2">Timezone</h4>
+                      <select 
+                        value={profileData.timezone}
+                        onChange={(e) => setProfileData(prev => ({ ...prev, timezone: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      >
+                        <option value="(GMT +01:00) Europe/London">(GMT +01:00) Europe/London</option>
+                        <option value="(GMT +00:00) UTC">(GMT +00:00) UTC</option>
+                        <option value="(GMT -05:00) Eastern Time">(GMT -05:00) Eastern Time</option>
+                        <option value="(GMT -08:00) Pacific Time">(GMT -08:00) Pacific Time</option>
+                      </select>
+                    </div>
+
                     {/* Social Links Display */}
                     {(profileData.socialLinks.instagram || 
                       profileData.socialLinks.youtube || profileData.socialLinks.linkedin) && (
@@ -500,21 +515,6 @@ export default function Profile({ onBack }: ProfileProps) {
                   >
                     CHANGE PASSWORD
                   </button>
-                </div>
-
-                {/* Timezone */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Timezone</h3>
-                  <select 
-                    value={profileData.timezone}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, timezone: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  >
-                    <option value="(GMT +01:00) Europe/London">(GMT +01:00) Europe/London</option>
-                    <option value="(GMT +00:00) UTC">(GMT +00:00) UTC</option>
-                    <option value="(GMT -05:00) Eastern Time">(GMT -05:00) Eastern Time</option>
-                    <option value="(GMT -08:00) Pacific Time">(GMT -08:00) Pacific Time</option>
-                  </select>
                 </div>
 
                 {/* Log out of all devices */}
