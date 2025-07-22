@@ -124,9 +124,16 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
                     <div className="relative">
                       <button 
                         onClick={() => setShowAccountDropdown(!showAccountDropdown)}
-                        className="p-2 text-gray-300 hover:text-white transition-colors"
+                        className="flex items-center space-x-2 p-1 text-gray-300 hover:text-white transition-colors rounded-full hover:bg-slate-700"
                       >
-                        <User className="w-5 h-5" />
+                        <img
+                          src={userRole === 'educator' 
+                            ? 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=60'
+                            : 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=60'
+                          }
+                          alt="Profile"
+                          className="w-8 h-8 rounded-full object-cover border-2 border-slate-600"
+                        />
                       </button>
                       
                       {showAccountDropdown && (
@@ -142,9 +149,14 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
                             {/* User Info */}
                             <div className="px-4 py-3 border-b border-gray-100">
                               <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                                  <User className="w-5 h-5 text-purple-600" />
-                                </div>
+                                <img
+                                  src={userRole === 'educator' 
+                                    ? 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=80'
+                                    : 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=80'
+                                  }
+                                  alt="Profile"
+                                  className="w-10 h-10 rounded-full object-cover"
+                                />
                                 <div>
                                   <p className="font-medium text-gray-900">
                                     {userRole === 'educator' ? 'Sarah Johnson' : 'John Doe'}
