@@ -310,19 +310,6 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
                     <p className="text-sm text-gray-600">Manage the general settings associated with this account</p>
                   </div>
 
-                  {/* Sign In & Security */}
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
-                    <div className="flex items-center mb-4">
-                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                        <Lock className="w-6 h-6 text-purple-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">Sign In & security</h3>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600">Manage password and multi-factor authentication</p>
-                  </div>
-
                   {/* Manage Users */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
                     <div className="flex items-center mb-4">
