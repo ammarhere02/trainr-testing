@@ -53,7 +53,7 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
   const tabs = [
     { id: 'payment', label: 'Payment settings', icon: CreditCard },
     { id: 'site', label: 'Site settings', icon: Globe },
-    { id: 'account', label: 'Subscription', icon: User }
+    { id: 'account', label: 'Account settings', icon: User }
   ];
 
   const [users, setUsers] = useState([
@@ -280,7 +280,7 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
           {activeTab === 'account' && (
             <div className="space-y-8">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-8">Subscription</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-8">Account settings</h2>
                 
                 {/* Account Settings Grid */}
                 <div className="grid md:grid-cols-3 gap-6 mb-12">
