@@ -181,30 +181,6 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
                                 View Profile
                               </button>
                               
-                              {userRole === 'educator' && (
-                                <button
-                                  onClick={() => {
-                                    onViewChange('settings');
-                                    setShowAccountDropdown(false);
-                                  }}
-                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
-                                >
-                                  <Settings className="w-4 h-4 mr-3" />
-                                  Account Settings
-                                </button>
-                              )}
-                              
-                              <button
-                                onClick={() => {
-                                  // Navigate to billing/subscription page
-                                  setShowAccountDropdown(false);
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
-                              >
-                                <CreditCard className="w-4 h-4 mr-3" />
-                                Billing & Subscription
-                              </button>
-                              
                               <button
                                 onClick={() => {
                                   // Navigate to help/support page
