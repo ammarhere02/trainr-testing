@@ -324,8 +324,7 @@ function App() {
                   {userRole === 'student' && [
                     { key: 'member-community', label: 'Community', icon: Users },
                     { key: 'member-courses', label: 'My Courses', icon: BookOpen },
-                    { key: 'member-events', label: 'Live Calls', icon: Video },
-                    { key: 'member-profile', label: 'Profile', icon: User }
+                    { key: 'member-events', label: 'Live Calls', icon: Video }
                   ].map((item) => (
                     <button
                       key={item.key}
@@ -345,8 +344,7 @@ function App() {
                   {userRole === 'educator' && currentView.startsWith('member-') && [
                     { key: 'member-community', label: 'Community', icon: Users },
                     { key: 'member-courses', label: 'Courses', icon: BookOpen },
-                    { key: 'member-events', label: 'Live Calls', icon: Video },
-                    { key: 'member-profile', label: 'Profile', icon: User }
+                    { key: 'member-events', label: 'Live Calls', icon: Video }
                   ].map((item) => (
                     <button
                       key={item.key}
