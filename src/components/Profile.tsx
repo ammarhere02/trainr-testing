@@ -473,8 +473,6 @@ export default function Profile() {
               </div>
             </div>
           </div>
-
-                    <p className="text-sm text-gray-900">
         </div>
       </div>
 
