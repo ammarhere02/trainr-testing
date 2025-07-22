@@ -308,7 +308,7 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                       <span className="font-medium text-gray-900">Paid</span>
                     </div>
                     <p className="text-sm text-gray-600 ml-7">
-                      Members pay to unlock.
+                      Paid members only.
                     </p>
                   </button>
                 </div>
