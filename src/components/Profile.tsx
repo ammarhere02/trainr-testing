@@ -192,7 +192,7 @@ export default function Profile({ onBack }: ProfileProps) {
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Profile Tab Content */}
         {activeTab === 'profile' && (
-          <>
+          <React.Fragment>
             {/* Profile Info */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
@@ -537,7 +537,7 @@ export default function Profile({ onBack }: ProfileProps) {
                 )}
               </div>
             </div>
-          </>
+          </React.Fragment>
         )}
 
         {/* Login & Security Tab Content */}
