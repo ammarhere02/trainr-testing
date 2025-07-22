@@ -218,6 +218,7 @@ export default function Profile({ onBack }: ProfileProps) {
                         className="hidden"
                         disabled={isUploadingPhoto}
                       />
+                    </>
                     </label>
                   </div>
                   <h2 className="text-xl font-bold text-gray-900">{profileData.firstName} {profileData.lastName}</h2>
