@@ -289,18 +289,21 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header 
-        currentView={currentView} 
-        onViewChange={setCurrentView} 
-        isLoggedIn={isLoggedIn}
-        onShowLogin={() => setShowLogin(true)}
-        userRole={userRole}
-        onLogin={handleLogin}
-        onLogout={handleLogout}
-      />
+      {/* Hide header when viewing profile */}
+      {currentView !== 'member-profile' && (
+        <Header 
+          currentView={currentView} 
+          onViewChange={setCurrentView} 
+          isLoggedIn={isLoggedIn}
+          onShowLogin={() => setShowLogin(true)}
+          userRole={userRole}
+          onLogin={handleLogin}
+          onLogout={handleLogout}
+        />
+      )}
       
-      {/* Side Menu for Educators */}
-      {isLoggedIn && userRole === 'educator' && currentView !== 'course-learning' && (
+      {/* Side Menu for Educators - Hide when viewing profile */}
+      {isLoggedIn && userRole === 'educator' && currentView !== 'course-learning' && currentView !== 'member-profile' && (
         <SideMenu 
           currentView={currentView}
           onViewChange={setCurrentView}
@@ -311,7 +314,7 @@ function App() {
       
       <main className="flex-1">
         {/* Sub-menu for member area - positioned below header, above content */}
-        {isLoggedIn && currentView.startsWith('member-') && currentView !== 'member-record' && currentView !== 'course-learning' && (
+        {isLoggedIn && currentView.startsWith('member-') && currentView !== 'member-record' && currentView !== 'course-learning' && currentView !== 'member-profile' && (
           <div className={`transition-all duration-300 ${
             userRole === 'educator' && !currentView.startsWith('member-') && currentView !== 'course-learning' && currentView !== 'member-record'
               ? (sidebarCollapsed ? 'ml-16' : 'ml-64') 
@@ -366,7 +369,7 @@ function App() {
         )}
 
         <div className={`transition-all duration-300 ${
-          isLoggedIn && userRole === 'educator' && !currentView.startsWith('member-') && currentView !== 'course-learning' && currentView !== 'member-record'
+          isLoggedIn && userRole === 'educator' && !currentView.startsWith('member-') && currentView !== 'course-learning' && currentView !== 'member-record' && currentView !== 'member-profile'
             ? (sidebarCollapsed ? 'ml-16' : 'ml-64') 
             : ''
         }`}>
