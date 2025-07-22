@@ -227,7 +227,6 @@ export default function Profile({ onBack }: ProfileProps) {
                       <span className="text-sm font-medium text-gray-700">Level 12</span>
                       <span className="text-sm text-gray-600">2,847 / 3,000 XP</span>
                     </div>
-                    src={profilePhoto}
                       <div
                         className="bg-gradient-to-r from-purple-600 to-blue-600 h-3 rounded-full transition-all duration-300"
                         style={{ width: '85%' }}
