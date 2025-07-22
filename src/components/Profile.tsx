@@ -264,7 +264,7 @@ export default function Profile({ onBack }: ProfileProps) {
               </div>
             </div>
 
-            {/* Profile Content */}
+          {/* Profile Content */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Profile Information</h2>
