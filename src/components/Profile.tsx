@@ -52,27 +52,11 @@ export default function Profile() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const achievements = [
-    { name: 'Course Completer', description: 'Finished 5 courses', icon: BookOpen, earned: true },
-    { name: 'Community Helper', description: 'Helped 50+ members', icon: Users, earned: true },
-    { name: 'Discussion Starter', description: 'Started 10 discussions', icon: TrendingUp, earned: true },
-    { name: 'Call Attendee', description: 'Attended 25 live calls', icon: Calendar, earned: false },
-    { name: 'Master Learner', description: 'Earned 1000+ XP', icon: Award, earned: false },
-    { name: 'Top Contributor', description: 'Monthly top contributor', icon: Star, earned: false }
-  ];
-
   const stats = [
     { label: 'Current Level', value: '12', icon: Trophy, color: 'text-yellow-600' },
     { label: 'Total XP', value: '2,847', icon: Star, color: 'text-purple-600' },
     { label: 'Courses Completed', value: '8', icon: BookOpen, color: 'text-blue-600' },
     { label: 'Community Points', value: '1,234', icon: Users, color: 'text-green-600' }
-  ];
-
-  const recentActivity = [
-    { type: 'course', action: 'Completed lesson', title: 'React Hooks Deep Dive', time: '2 hours ago' },
-    { type: 'discussion', action: 'Replied to', title: 'Best practices for state management', time: '4 hours ago' },
-    { type: 'achievement', action: 'Earned badge', title: 'Discussion Starter', time: '1 day ago' },
-    { type: 'call', action: 'Attended', title: 'JavaScript Q&A Session', time: '2 days ago' }
   ];
 
   const handleSaveProfile = () => {
@@ -490,62 +474,7 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Achievements */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-6">Achievements</h3>
-            <div className="grid md:grid-cols-2 gap-4">
-              {achievements.map((achievement, index) => (
-                <div
-                  key={index}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    achievement.earned
-                      ? 'border-purple-200 bg-purple-50'
-                      : 'border-gray-200 bg-gray-50 opacity-60'
-                  }`}
-                >
-                  <div className="flex items-center mb-3">
-                    <div className={`p-2 rounded-lg ${
-                      achievement.earned ? 'bg-purple-600' : 'bg-gray-400'
-                    }`}>
-                      <achievement.icon className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="ml-3">
-                      <h4 className={`font-medium ${
-                        achievement.earned ? 'text-gray-900' : 'text-gray-500'
-                      }`}>
-                        {achievement.name}
-                      </h4>
-                    </div>
-                  </div>
-                  <p className={`text-sm ${
-                    achievement.earned ? 'text-gray-600' : 'text-gray-400'
-                  }`}>
-                    {achievement.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Recent Activity */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-6">Recent Activity</h3>
-            <div className="space-y-4">
-              {recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Clock className="w-4 h-4 text-purple-600" />
-                  </div>
-                  <div className="flex-1">
                     <p className="text-sm text-gray-900">
-                      <span className="font-medium">{activity.action}</span> {activity.title}
-                    </p>
-                    <p className="text-xs text-gray-500">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
 
