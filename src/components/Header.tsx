@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Bell, User, Menu, LogOut, Video, FileText, UserPlus, ArrowRight, ChevronDown } from 'lucide-react';
+import { Search, Bell, User, Menu, LogOut, Video, FileText, UserPlus, ArrowRight, ChevronDown, Settings, CreditCard, HelpCircle } from 'lucide-react';
 
 interface HeaderProps {
   currentView: string;
@@ -13,6 +13,7 @@ interface HeaderProps {
 
 export default function Header({ currentView, onViewChange, onShowLogin, isLoggedIn, userRole, onLogout, onLogin }: HeaderProps) {
   const [showProductsDropdown, setShowProductsDropdown] = useState(false);
+  const [showAccountDropdown, setShowAccountDropdown] = useState(false);
 
   const handleJoinClick = () => {
     if (onLogin) {
@@ -118,9 +119,110 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
                       <Bell className="w-5 h-5" />
                       <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full"></span>
                     </button>
-                    <button className="p-2 text-gray-300 hover:text-white transition-colors">
-                      <User className="w-5 h-5" />
-                    </button>
+                    
+                    {/* Account Dropdown */}
+                    <div className="relative">
+                      <button 
+                        onClick={() => setShowAccountDropdown(!showAccountDropdown)}
+                        className="p-2 text-gray-300 hover:text-white transition-colors"
+                      >
+                        <User className="w-5 h-5" />
+                      </button>
+                      
+                      {showAccountDropdown && (
+                        <>
+                          {/* Backdrop */}
+                          <div 
+                            className="fixed inset-0 z-40"
+                            onClick={() => setShowAccountDropdown(false)}
+                          />
+                          
+                          {/* Dropdown Menu */}
+                          <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                            {/* User Info */}
+                            <div className="px-4 py-3 border-b border-gray-100">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                  <User className="w-5 h-5 text-purple-600" />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-900">
+                                    {userRole === 'educator' ? 'Sarah Johnson' : 'John Doe'}
+                                  </p>
+                                  <p className="text-sm text-gray-500">
+                                    {userRole === 'educator' ? 'Educator' : 'Student'}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Menu Items */}
+                            <div className="py-1">
+                              <button
+                                onClick={() => {
+                                  onViewChange('member-profile');
+                                  setShowAccountDropdown(false);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                              >
+                                <User className="w-4 h-4 mr-3" />
+                                View Profile
+                              </button>
+                              
+                              {userRole === 'educator' && (
+                                <button
+                                  onClick={() => {
+                                    onViewChange('settings');
+                                    setShowAccountDropdown(false);
+                                  }}
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                                >
+                                  <Settings className="w-4 h-4 mr-3" />
+                                  Account Settings
+                                </button>
+                              )}
+                              
+                              <button
+                                onClick={() => {
+                                  // Navigate to billing/subscription page
+                                  setShowAccountDropdown(false);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                              >
+                                <CreditCard className="w-4 h-4 mr-3" />
+                                Billing & Subscription
+                              </button>
+                              
+                              <button
+                                onClick={() => {
+                                  // Navigate to help/support page
+                                  setShowAccountDropdown(false);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                              >
+                                <HelpCircle className="w-4 h-4 mr-3" />
+                                Help & Support
+                              </button>
+                            </div>
+                            
+                            {/* Logout */}
+                            <div className="border-t border-gray-100 pt-1">
+                              <button
+                                onClick={() => {
+                                  onLogout();
+                                  setShowAccountDropdown(false);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center"
+                              >
+                                <LogOut className="w-4 h-4 mr-3" />
+                                Sign Out
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    
                     <button 
                       onClick={onLogout}
                       className="p-2 text-gray-300 hover:text-red-400 transition-colors"
