@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Clock, Users, Star, BookOpen, CheckCircle, Video, Plus, Upload, X } from 'lucide-react';
+import { Play, Clock, Users, Star, BookOpen, CheckCircle, Video, Plus, Upload, X, Trash2, AlertTriangle } from 'lucide-react';
 
 interface CoursesProps {
   onStartLearning: (courseId: number) => void;
@@ -7,6 +7,8 @@ interface CoursesProps {
 
 export default function Courses({ onStartLearning }: CoursesProps) {
   const [showAddCourseModal, setShowAddCourseModal] = React.useState(false);
+  const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+  const [courseToDelete, setCourseToDelete] = React.useState<any>(null);
   const [courses, setCourses] = React.useState([
     {
       id: 1,
@@ -48,6 +50,24 @@ export default function Courses({ onStartLearning }: CoursesProps) {
     thumbnailPreview: '',
     published: true
   });
+
+  const handleDeleteCourse = (course: any) => {
+    setCourseToDelete(course);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteCourse = () => {
+    if (courseToDelete) {
+      setCourses(prev => prev.filter(course => course.id !== courseToDelete.id));
+      setShowDeleteModal(false);
+      setCourseToDelete(null);
+    }
+  };
+
+  const cancelDeleteCourse = () => {
+    setShowDeleteModal(false);
+    setCourseToDelete(null);
+  };
 
   const handleAddCourse = () => {
     // Create new course object
@@ -355,8 +375,8 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <Upload className="w-8 h-8 mb-4 text-blue-500" />
                           <p className="text-blue-500 font-medium">Upload</p>
-                        </div>
-                        <input
+                  {/* Progress Bar and Actions */}
+                  <div className="mt-auto space-y-3">
                           type="file"
                           className="hidden"
                           accept="image/*"
@@ -364,6 +384,23 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                         />
                       </label>
                     )}
+                    
+                    {/* Course Actions */}
+                    <div className="flex items-center justify-between pt-2">
+                      <button
+                        onClick={() => onStartLearning(course.id)}
+                        className="text-purple-600 hover:text-purple-700 font-medium text-sm transition-colors"
+                      >
+                        Continue Learning
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCourse(course)}
+                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                        title="Delete course"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -408,6 +445,51 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                   }`}
                 >
                   ADD
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && courseToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              {/* Warning Icon */}
+              <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mx-auto mb-4">
+                <AlertTriangle className="w-8 h-8 text-red-600" />
+              </div>
+              
+              {/* Title and Message */}
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Course</h3>
+                <p className="text-gray-600 mb-4">
+                  Are you sure you want to delete <strong>"{courseToDelete.title}"</strong>?
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-left">
+                  <p className="text-red-800 text-sm font-medium mb-2">⚠️ This action cannot be undone</p>
+                  <ul className="text-red-700 text-sm space-y-1">
+                    <li>• All course content will be permanently deleted</li>
+                    <li>• Student progress will be lost</li>
+                    <li>• Course analytics will be removed</li>
+                  </ul>
+                </div>
+              </div>
+              {/* Action Buttons */}
+              <div className="flex space-x-3">
+                <button
+                  onClick={cancelDeleteCourse}
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteCourse}
+                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+                >
+                  Delete Course
                 </button>
               </div>
             </div>
