@@ -87,9 +87,6 @@ export default function Record(props: RecordProps) {
     }
   };
 
-    microphone: 'unknown'
-  });
-
   // Refs for media streams and recording
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
