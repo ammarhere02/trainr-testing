@@ -61,9 +61,7 @@ export default function Record(props: RecordProps) {
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-
-    microphone: 'unknown'
-  });
+  const [isLoading, setIsLoading] = useState(false);
 
   // Process and download video function
   const processAndDownloadVideo = (chunks: Blob[]) => {
