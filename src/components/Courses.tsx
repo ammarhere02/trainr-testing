@@ -215,6 +215,25 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${course.progress}%` }}></div>
                 </div>
+                {/* Progress Bar and Actions */}
+                <div className="mt-auto space-y-3">
+                  {/* Course Actions */}
+                  <div className="flex items-center justify-between pt-2">
+                    <button
+                      onClick={() => onStartLearning(course.id)}
+                      className="text-purple-600 hover:text-purple-700 font-medium text-sm transition-colors"
+                    >
+                      Continue Learning
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCourse(course)}
+                      className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                      title="Delete course"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -375,8 +394,8 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <Upload className="w-8 h-8 mb-4 text-blue-500" />
                           <p className="text-blue-500 font-medium">Upload</p>
-                  {/* Progress Bar and Actions */}
-                  <div className="mt-auto space-y-3">
+                        </div>
+                        <input
                           type="file"
                           className="hidden"
                           accept="image/*"
@@ -384,23 +403,6 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                         />
                       </label>
                     )}
-                    
-                    {/* Course Actions */}
-                    <div className="flex items-center justify-between pt-2">
-                      <button
-                        onClick={() => onStartLearning(course.id)}
-                        className="text-purple-600 hover:text-purple-700 font-medium text-sm transition-colors"
-                      >
-                        Continue Learning
-                      </button>
-                      <button
-                        onClick={() => handleDeleteCourse(course)}
-                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                        title="Delete course"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
                   </div>
                 </div>
               </div>
