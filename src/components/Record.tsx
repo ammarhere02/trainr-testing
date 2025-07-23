@@ -147,7 +147,8 @@ export default function Record(props: RecordProps) {
         video: cameraEnabled ? {
           width: { ideal: 1280 },
           height: { ideal: 720 },
-          frameRate: { ideal: 30 }
+          frameRate: { ideal: 30 },
+          facingMode: 'user'
         } : false,
         audio: micEnabled
       });
@@ -221,6 +222,22 @@ export default function Record(props: RecordProps) {
         const screenStream = await getScreenStream();
         screenStreamRef.current = screenStream;
         finalStream = screenStream;
+        
+        // If camera is enabled in screen mode, get camera stream for overlay
+        if (cameraEnabled) {
+          const cameraStream = await getCameraStream();
+          cameraStreamRef.current = cameraStream;
+          
+          // Show camera preview in circle
+          if (cameraPreviewRef.current) {
+            cameraPreviewRef.current.srcObject = cameraStream;
+            try {
+              await cameraPreviewRef.current.play();
+            } catch (playError) {
+              console.warn('Camera preview autoplay failed:', playError);
+            }
+          }
+        }
       } else if (recordingMode === 'camera') {
         const cameraStream = await getCameraStream();
         cameraStreamRef.current = cameraStream;
@@ -233,6 +250,16 @@ export default function Record(props: RecordProps) {
         cameraStreamRef.current = cameraStream;
         finalStream = combineStreams(screenStream, cameraStream);
         combinedStreamRef.current = finalStream;
+        
+        // Show camera preview in circle for both mode
+        if (cameraPreviewRef.current) {
+          cameraPreviewRef.current.srcObject = cameraStream;
+          try {
+            await cameraPreviewRef.current.play();
+          } catch (playError) {
+            console.warn('Camera preview autoplay failed:', playError);
+          }
+        }
       }
 
       // Show preview
@@ -245,37 +272,18 @@ export default function Record(props: RecordProps) {
         }
       }
 
-      // Show camera preview in circle if camera is enabled
-      if (cameraEnabled && (recordingMode === 'screen' || recordingMode === 'both')) {
-        let cameraStream: MediaStream;
-        if (recordingMode === 'screen') {
-          cameraStream = await getCameraStream();
-          cameraStreamRef.current = cameraStream;
-        } else {
-          cameraStream = cameraStreamRef.current!;
-        }
-        
-        if (cameraPreviewRef.current) {
-          cameraPreviewRef.current.srcObject = cameraStream;
-          try {
-            await cameraPreviewRef.current.play();
-          } catch (playError) {
-            console.warn('Camera preview autoplay failed:', playError);
-          }
-        }
-      }
-
       // Set up MediaRecorder with best available format
       let mediaRecorder: MediaRecorder;
       
-      // Try to use MP4 format if supported, otherwise fall back to WebM
+      // Try to use the best available format for MP4 output
       const supportedMimeTypes = [
-        'video/mp4;codecs=h264,aac',
-        'video/mp4;codecs=h264',
-        'video/mp4',
+        'video/webm;codecs=h264,opus',
+        'video/webm;codecs=vp9,opus',
         'video/webm;codecs=vp9,opus',
         'video/webm;codecs=vp8,opus',
-        'video/webm'
+        'video/webm',
+        'video/mp4;codecs=h264,aac',
+        'video/mp4'
       ];
       
       let selectedMimeType = '';
@@ -292,8 +300,8 @@ export default function Record(props: RecordProps) {
       
       mediaRecorder = new MediaRecorder(finalStream, {
         mimeType: selectedMimeType,
-        videoBitsPerSecond: recordingMode === 'camera' ? 1500000 : 2500000, // Lower bitrate for camera-only
-        audioBitsPerSecond: 128000   // 128 kbps for audio
+        videoBitsPerSecond: recordingMode === 'camera' ? 2000000 : 4000000, // Higher quality
+        audioBitsPerSecond: 128000
       });
 
       mediaRecorder.ondataavailable = (event) => {
@@ -307,7 +315,7 @@ export default function Record(props: RecordProps) {
       };
 
       mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start(1000); // Collect data every second
+      mediaRecorder.start(100); // Collect data more frequently for better quality
 
       setIsRecording(true);
       setIsPaused(false);
@@ -361,20 +369,22 @@ export default function Record(props: RecordProps) {
 
   // Handle recording completion
   const handleRecordingComplete = () => {
-    const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+    // Create blob with WebM type first
+    const webmBlob = new Blob(recordedChunksRef.current, { 
+      type: recordedChunksRef.current[0]?.type || 'video/webm' 
+    });
     const duration = formatTime(recordingTime);
-    const size = `${(blob.size / (1024 * 1024)).toFixed(1)} MB`;
+    const size = `${(webmBlob.size / (1024 * 1024)).toFixed(1)} MB`;
     
-    // Create MP4 blob for download (changes MIME type for better compatibility)
-    const mp4Blob = new Blob(recordedChunksRef.current, { type: 'video/mp4' });
-    const url = URL.createObjectURL(mp4Blob);
+    // Create URL for the recorded video
+    const url = URL.createObjectURL(webmBlob);
     
     // Create new recording entry
     const newRecording = {
       id: Date.now(),
       title: `Screen Recording ${new Date().toLocaleDateString()}`,
       duration,
-      size: `${(mp4Blob.size / (1024 * 1024)).toFixed(1)} MB`,
+      size,
       date: new Date().toISOString().split('T')[0],
       thumbnail: 'https://images.pexels.com/photos/3861958/pexels-photo-3861958.jpeg?auto=compress&cs=tinysrgb&w=300',
       views: 0,
@@ -384,9 +394,9 @@ export default function Record(props: RecordProps) {
       comments: 0,
       likes: 0,
       description: 'New screen recording',
-      blob: mp4Blob,
+      blob: webmBlob,
       url: url,
-      format: 'mp4'
+      format: 'webm'
     };
 
     setCompletedRecording(newRecording);
@@ -435,8 +445,9 @@ export default function Record(props: RecordProps) {
     if (recording.url) {
       const a = document.createElement('a');
       a.href = recording.url;
-      // Always download as MP4 for better compatibility
-      a.download = `${recording.title}.mp4`;
+      // Download with appropriate extension
+      const extension = recording.format === 'webm' ? 'webm' : 'mp4';
+      a.download = `${recording.title}.${extension}`;
       a.click();
     }
   };
@@ -462,7 +473,8 @@ export default function Record(props: RecordProps) {
       // Download the file
       const a = document.createElement('a');
       a.href = completedRecording.url;
-      a.download = `${completedRecording.title}.mp4`;
+      const extension = completedRecording.format === 'webm' ? 'webm' : 'mp4';
+      a.download = `${completedRecording.title}.${extension}`;
       a.click();
       
       // Also save to recordings list
@@ -484,7 +496,8 @@ export default function Record(props: RecordProps) {
     if (completedRecording) {
       const a = document.createElement('a');
       a.href = completedRecording.url;
-      a.download = `${completedRecording.title}.mp4`;
+      const extension = completedRecording.format === 'webm' ? 'webm' : 'mp4';
+      a.download = `${completedRecording.title}.${extension}`;
       a.click();
       
       // Clean up the blob URL after download
