@@ -57,6 +57,14 @@ export default function Record(props: RecordProps) {
     microphone: 'unknown'
   });
 
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+    microphone: 'unknown'
+  });
+
   // Process and download video function
   const processAndDownloadVideo = (chunks: Blob[]) => {
     setIsProcessing(true);
@@ -93,6 +101,112 @@ export default function Record(props: RecordProps) {
       setIsProcessing(false);
     }
   };
+
+  // Start recording function
+  const startRecording = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Request camera and microphone permissions
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true
+      });
+      
+      setStream(mediaStream);
+      
+      // Set video preview
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+      
+      // Create MediaRecorder
+      const recorder = new MediaRecorder(mediaStream, {
+        mimeType: 'video/webm;codecs=vp9'
+      });
+      
+      const chunks: Blob[] = [];
+      
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
+      
+      recorder.onstop = () => {
+        processAndDownloadVideo(chunks);
+      };
+      
+      setMediaRecorder(recorder);
+      setRecordedChunks([]);
+      
+      // Start recording
+      recorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+      
+      // Start timer
+      const timer = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      
+      // Store timer reference for cleanup
+      (recorder as any).timer = timer;
+      
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      setShowPermissionModal(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Stop recording function
+  const stopRecording = () => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+      
+      // Clear timer
+      if ((mediaRecorder as any).timer) {
+        clearInterval((mediaRecorder as any).timer);
+      }
+      
+      // Stop all tracks
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      
+      setIsRecording(false);
+      setStream(null);
+      setMediaRecorder(null);
+      
+      // Clear video preview
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+    }
+  };
+
+  // Handle record button click
+  const handleRecordClick = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      if (mediaRecorder && (mediaRecorder as any).timer) {
+        clearInterval((mediaRecorder as any).timer);
+      }
+    };
+  }, [stream, mediaRecorder]);
 
   // Refs for media streams and recording
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
