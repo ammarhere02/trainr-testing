@@ -50,13 +50,10 @@ export default function Record(props: RecordProps) {
   const [completedRecording, setCompletedRecording] = useState<any>(null);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<{
-    camera: 'unknown' | 'granted' | 'denied',
-    microphone: 'unknown' | 'granted' | 'denied'
+    camera: 'unknown' | 'granted' | 'denied';
+    microphone: 'unknown' | 'granted' | 'denied';
   }>({
     camera: 'unknown',
-    microphone: 'unknown'
-  });
-
   const processAndDownloadVideo = async (recordedChunks: Blob[]) => {
     try {
       setIsProcessing(true);
@@ -86,6 +83,9 @@ export default function Record(props: RecordProps) {
       setIsProcessing(false);
     }
   };
+
+    microphone: 'unknown'
+  });
 
   // Refs for media streams and recording
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
