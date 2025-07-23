@@ -48,6 +48,14 @@ export default function Record(props: RecordProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [completedRecording, setCompletedRecording] = useState<any>(null);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [permissionStatus, setPermissionStatus] = useState<{
+    camera: 'unknown' | 'granted' | 'denied';
+    microphone: 'unknown' | 'granted' | 'denied';
+  }>({
+    camera: 'unknown',
+    microphone: 'unknown'
+  });
 
   // Refs for media streams and recording
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -209,8 +217,87 @@ export default function Record(props: RecordProps) {
     return stream;
   };
 
+  // Check current permissions
+  const checkPermissions = async () => {
+    try {
+      const cameraPermission = await navigator.permissions.query({ name: 'camera' as PermissionName });
+      const microphonePermission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+      
+      setPermissionStatus({
+        camera: cameraPermission.state === 'granted' ? 'granted' : 
+                cameraPermission.state === 'denied' ? 'denied' : 'unknown',
+        microphone: microphonePermission.state === 'granted' ? 'granted' : 
+                   microphonePermission.state === 'denied' ? 'denied' : 'unknown'
+      });
+    } catch (error) {
+      console.log('Permission API not supported, will request during recording');
+    }
+  };
+
+  // Request permissions explicitly
+  const requestPermissions = async () => {
+    try {
+      setError('');
+      
+      // Request microphone permission
+      if (micEnabled) {
+        try {
+          const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          micStream.getTracks().forEach(track => track.stop()); // Stop immediately, just testing permission
+          setPermissionStatus(prev => ({ ...prev, microphone: 'granted' }));
+        } catch (err) {
+          setPermissionStatus(prev => ({ ...prev, microphone: 'denied' }));
+          throw new Error('Microphone permission denied. Please allow microphone access in your browser settings.');
+        }
+      }
+      
+      // Request camera permission
+      if (cameraEnabled && (recordingMode === 'camera' || recordingMode === 'both' || recordingMode === 'screen')) {
+        try {
+          const camStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              frameRate: { ideal: 30 },
+              facingMode: 'user'
+            } 
+          });
+          camStream.getTracks().forEach(track => track.stop()); // Stop immediately, just testing permission
+          setPermissionStatus(prev => ({ ...prev, camera: 'granted' }));
+        } catch (err) {
+          setPermissionStatus(prev => ({ ...prev, camera: 'denied' }));
+          throw new Error('Camera permission denied. Please allow camera access in your browser settings.');
+        }
+      }
+      
+      setShowPermissionModal(false);
+      // Now start recording with permissions granted
+      handleStartRecording();
+      
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to get permissions');
+    }
+  };
+
+  // Check permissions on component mount
+  React.useEffect(() => {
+    checkPermissions();
+  }, []);
+
   // Start recording
-  const handleStartRecording = async () => {
+  const handleStartRecording = async (skipPermissionCheck = false) => {
+    // Check if we need to request permissions first
+    if (!skipPermissionCheck) {
+      const needsCamera = cameraEnabled && (recordingMode === 'camera' || recordingMode === 'both' || recordingMode === 'screen');
+      const needsMic = micEnabled;
+      
+      if ((needsCamera && permissionStatus.camera !== 'granted') || 
+          (needsMic && permissionStatus.microphone !== 'granted')) {
+        setShowPermissionModal(true);
+        return;
+      }
+    }
+    
     try {
       setError('');
       setIsProcessing(true);
