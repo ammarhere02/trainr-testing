@@ -239,7 +239,7 @@ function App() {
         case 'member-area':
           return <Community />;
         case 'member-record':
-          return <Record />;
+          return <Record onBack={() => setCurrentView('dashboard')} />;
         case 'library':
           return <div className="p-8"><h1 className="text-3xl font-bold text-gray-900">Video Library</h1><p className="text-gray-600 mt-2">All your recorded videos are stored here</p></div>;
         case 'meet':
