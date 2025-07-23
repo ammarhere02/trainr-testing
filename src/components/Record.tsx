@@ -286,6 +286,42 @@ export default function Record(props: RecordProps) {
     checkPermissions();
   }, []);
 
+  // Process and convert video to MP4-compatible format
+  const processAndDownloadVideo = async (chunks: Blob[]) => {
+    try {
+      console.log('Processing video chunks:', chunks.length);
+      
+      // Create blob from chunks
+      const videoBlob = new Blob(chunks, { 
+        type: 'video/webm;codecs=vp9,opus' 
+      });
+      
+      console.log('Video blob created:', videoBlob.size, 'bytes');
+      
+      // For now, download as WebM (most browsers support this)
+      // In a real app, you'd convert to MP4 server-side or use FFmpeg.js
+      const url = URL.createObjectURL(videoBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `trainr-recording-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.webm`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      console.log('Video downloaded successfully');
+      
+      // Clear recorded chunks
+      setRecordedChunks([]);
+      
+    } catch (error) {
+      console.error('Error processing video:', error);
+      alert('Error processing video. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   // Start recording
   const handleStartRecording = async () => {
     try {
@@ -740,6 +776,12 @@ export default function Record(props: RecordProps) {
     if (confirm('Are you sure you want to delete this recording?')) {
       setRecordings(prev => prev.filter(r => r.id !== recordingId));
     }
+  };
+
+  // Download recorded video
+  const downloadVideo = () => {
+    // This function is now handled automatically after recording stops
+    console.log('Download triggered manually');
   };
 
   // Handle completion modal actions
