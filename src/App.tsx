@@ -312,6 +312,16 @@ function App() {
         />
       )}
       
+      {/* Side Menu for Educators - Hide when viewing profile or recording */}
+      {isLoggedIn && userRole === 'educator' && currentView !== 'course-learning' && currentView !== 'member-profile' && currentView !== 'member-record' && (
+        <SideMenu 
+          currentView={currentView}
+          onViewChange={setCurrentView}
+          userRole={userRole}
+          onCollapseChange={setSidebarCollapsed}
+        />
+      )}
+      
       <main className="flex-1">
         {/* Sub-menu for member area - positioned below header, above content */}
         {isLoggedIn && currentView.startsWith('member-') && currentView !== 'member-record' && currentView !== 'course-learning' && currentView !== 'member-profile' && (
