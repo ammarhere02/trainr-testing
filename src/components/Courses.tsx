@@ -21,6 +21,7 @@ export default function Courses({ onStartLearning }: CoursesProps) {
       progress: 65,
       level: 'Beginner',
       type: 'free',
+      price: 0,
       published: true
     },
     {
@@ -31,6 +32,7 @@ export default function Courses({ onStartLearning }: CoursesProps) {
       progress: 30,
       level: 'Advanced',
       type: 'paid',
+      price: 199,
       published: true
     },
     {
@@ -41,6 +43,7 @@ export default function Courses({ onStartLearning }: CoursesProps) {
       progress: 0,
       level: 'Intermediate',
       type: 'free',
+      price: 0,
       published: true
     }
   ]);
@@ -48,15 +51,21 @@ export default function Courses({ onStartLearning }: CoursesProps) {
   const [newCourse, setNewCourse] = React.useState({
     name: '',
     description: '',
-    type: 'free', // 'free' or 'paid'
+    type: 'free',
+    price: '',
     thumbnail: null as File | null,
     thumbnailPreview: '',
     published: true
   });
 
   const [editCourse, setEditCourse] = React.useState({
-    title: '',
-    description: ''
+    name: '',
+    description: '',
+    type: 'free',
+    price: '',
+    thumbnail: null as File | null,
+    thumbnailPreview: '',
+    published: true
   });
 
   const handleDeleteCourse = (course: any) => {
@@ -68,8 +77,13 @@ export default function Courses({ onStartLearning }: CoursesProps) {
   const handleEditCourse = (course: any) => {
     setCourseToEdit(course);
     setEditCourse({
-      title: course.title,
-      description: course.description
+      name: course.title,
+      description: course.description,
+      type: course.type,
+      price: course.price.toString(),
+      thumbnail: null,
+      thumbnailPreview: course.image,
+      published: course.published
     });
     setShowEditModal(true);
     setShowCourseMenu(null);
@@ -79,19 +93,43 @@ export default function Courses({ onStartLearning }: CoursesProps) {
     if (courseToEdit) {
       setCourses(prev => prev.map(course => 
         course.id === courseToEdit.id 
-          ? { ...course, title: editCourse.title, description: editCourse.description }
+          ? { 
+              ...course, 
+              title: editCourse.name,
+              description: editCourse.description,
+              type: editCourse.type,
+              price: editCourse.price ? parseFloat(editCourse.price) : 0,
+              image: editCourse.thumbnailPreview || course.image,
+              published: editCourse.published
+            }
           : course
       ));
       setShowEditModal(false);
       setCourseToEdit(null);
-      setEditCourse({ title: '', description: '' });
+      setEditCourse({
+        name: '',
+        description: '',
+        type: 'free',
+        price: '',
+        thumbnail: null,
+        thumbnailPreview: '',
+        published: true
+      });
     }
   };
 
   const cancelEditCourse = () => {
     setShowEditModal(false);
     setCourseToEdit(null);
-    setEditCourse({ title: '', description: '' });
+    setEditCourse({
+      name: '',
+      description: '',
+      type: 'free',
+      price: '',
+      thumbnail: null,
+      thumbnailPreview: '',
+      published: true
+    });
   };
 
   const confirmDeleteCourse = () => {
@@ -117,6 +155,7 @@ export default function Courses({ onStartLearning }: CoursesProps) {
       progress: 0, // New courses start with 0% progress
       level: 'Beginner', // Default level for new courses
       type: newCourse.type,
+      price: newCourse.type === 'paid' ? parseFloat(newCourse.price) || 0 : 0,
       published: newCourse.published
     };
 
@@ -134,6 +173,7 @@ export default function Courses({ onStartLearning }: CoursesProps) {
       name: '',
       description: '',
       type: 'free',
+      price: '',
       thumbnail: null,
       thumbnailPreview: '',
       published: true
@@ -171,6 +211,7 @@ export default function Courses({ onStartLearning }: CoursesProps) {
       name: '',
       description: '',
       type: 'free',
+      price: '',
       thumbnail: null,
       thumbnailPreview: '',
       published: true
@@ -240,7 +281,7 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                     ? 'bg-green-100 text-green-700' 
                     : 'bg-blue-100 text-blue-700'
                 }`}>
-                  {course.type === 'free' ? '🆓 Free' : '💰 Paid'}
+                  {course.type === 'free' ? '🆓 Free' : `💰 $${course.price}`}
                 </span>
               </div>
 
@@ -263,10 +304,10 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                     >
                       Continue Learning
                     </button>
-                    <div className="relative">
+                    <div className="relative group">
                       <button
                         onClick={() => setShowCourseMenu(showCourseMenu === course.id ? null : course.id)}
-                        className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                        className="p-2 text-gray-400 hover:text-gray-600 transition-colors opacity-0 group-hover:opacity-100"
                         title="Course options"
                       >
                         <MoreHorizontal className="w-4 h-4" />
@@ -281,22 +322,20 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                           />
                           
                           {/* Dropdown Menu */}
-                          <div className="absolute right-0 bottom-full mb-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
+                          <div className="absolute right-0 bottom-full mb-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
                             <button
                               onClick={() => handleEditCourse(course)}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                             >
-                              <Edit3 className="w-4 h-4 mr-3" />
-                              Edit course details
+                              Edit course
                             </button>
                             
                             <hr className="my-1 border-gray-200" />
                             
                             <button
                               onClick={() => handleDeleteCourse(course)}
-                              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center"
+                              className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                             >
-                              <Trash2 className="w-4 h-4 mr-3" />
                               Delete course
                             </button>
                           </div>
@@ -424,6 +463,24 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                 </div>
               </div>
 
+              {/* Price Field - Only show if paid */}
+              {newCourse.type === 'paid' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Price ($)
+                  </label>
+                  <input
+                    type="number"
+                    value={newCourse.price}
+                    onChange={(e) => setNewCourse(prev => ({ ...prev, price: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="199"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+              )}
+
               {/* Thumbnail Upload */}
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -528,11 +585,11 @@ export default function Courses({ onStartLearning }: CoursesProps) {
       {/* Edit Course Modal */}
       {showEditModal && courseToEdit && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-gray-900">Edit Course</h3>
+                <h2 className="text-2xl font-bold text-gray-900">Edit course</h2>
                 <button
                   onClick={cancelEditCourse}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -542,55 +599,225 @@ export default function Courses({ onStartLearning }: CoursesProps) {
               </div>
               
               <div className="space-y-6">
-                {/* Course Title */}
+                {/* Course Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Course Title
-                  </label>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Course name
+                    </label>
+                    <span className="text-sm text-gray-500">
+                      {editCourse.name.length} / 50
+                    </span>
+                  </div>
                   <input
                     type="text"
-                    value={editCourse.title}
-                    onChange={(e) => setEditCourse(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Enter course title"
+                    value={editCourse.name}
+                    onChange={(e) => setEditCourse(prev => ({ ...prev, name: e.target.value.slice(0, 50) }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter course name"
                   />
                 </div>
 
                 {/* Course Description */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Course Description
-                  </label>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Course description
+                    </label>
+                    <span className="text-sm text-gray-500">
+                      {editCourse.description.length} / 500
+                    </span>
+                  </div>
                   <textarea
                     value={editCourse.description}
-                    onChange={(e) => setEditCourse(prev => ({ ...prev, description: e.target.value }))}
+                    onChange={(e) => setEditCourse(prev => ({ ...prev, description: e.target.value.slice(0, 500) }))}
                     rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                     placeholder="Enter course description"
                   />
+                </div>
+
+                {/* Course Type - Free or Paid */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-4">
+                    Course Access
+                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      onClick={() => setEditCourse(prev => ({ ...prev, type: 'free' }))}
+                      className={`p-4 border-2 rounded-lg text-left transition-all ${
+                        editCourse.type === 'free'
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center mb-2">
+                        <div className={`w-4 h-4 rounded-full border-2 mr-3 ${
+                          editCourse.type === 'free'
+                            ? 'border-blue-500 bg-blue-500'
+                            : 'border-gray-300'
+                        }`}>
+                          {editCourse.type === 'free' && (
+                            <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>
+                          )}
+                        </div>
+                        <span className="font-medium text-gray-900">Free</span>
+                      </div>
+                      <p className="text-sm text-gray-600 ml-7">
+                        All members can access.
+                      </p>
+                    </button>
+
+                    <button
+                      onClick={() => setEditCourse(prev => ({ ...prev, type: 'paid' }))}
+                      className={`p-4 border-2 rounded-lg text-left transition-all ${
+                        editCourse.type === 'paid'
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center mb-2">
+                        <div className={`w-4 h-4 rounded-full border-2 mr-3 ${
+                          editCourse.type === 'paid'
+                            ? 'border-blue-500 bg-blue-500'
+                            : 'border-gray-300'
+                        }`}>
+                          {editCourse.type === 'paid' && (
+                            <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>
+                          )}
+                        </div>
+                        <span className="font-medium text-gray-900">Paid</span>
+                      </div>
+                      <p className="text-sm text-gray-600 ml-7">
+                        Paid members only.
+                      </p>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Price Field - Only show if paid */}
+                {editCourse.type === 'paid' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Price ($)
+                    </label>
+                    <input
+                      type="number"
+                      value={editCourse.price}
+                      onChange={(e) => setEditCourse(prev => ({ ...prev, price: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="199"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                )}
+
+                {/* Thumbnail Upload */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Cover
+                      </label>
+                      <p className="text-sm text-gray-500">1460 x 752 px</p>
+                    </div>
+                    {editCourse.thumbnailPreview && (
+                      <button
+                        onClick={() => setEditCourse(prev => ({ ...prev, thumbnailPreview: '', thumbnail: null }))}
+                        className="text-gray-500 hover:text-gray-700 font-medium"
+                      >
+                        CHANGE
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="flex space-x-4">
+                    {/* Upload Area */}
+                    <div className="flex-1">
+                      {editCourse.thumbnailPreview ? (
+                        <div className="relative">
+                          <img
+                            src={editCourse.thumbnailPreview}
+                            alt="Course thumbnail"
+                            className="w-full h-48 object-cover rounded-lg"
+                          />
+                          <button
+                            onClick={() => setEditCourse(prev => ({ ...prev, thumbnailPreview: '', thumbnail: null }))}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <Upload className="w-8 h-8 mb-4 text-blue-500" />
+                            <p className="text-blue-500 font-medium">Upload</p>
+                          </div>
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setEditCourse(prev => ({
+                                  ...prev,
+                                  thumbnail: file,
+                                  thumbnailPreview: URL.createObjectURL(file)
+                                }));
+                              }
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end space-x-3 mt-8">
-                <button
-                  onClick={cancelEditCourse}
-                  className="px-6 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveEditCourse}
-                  disabled={!editCourse.title.trim() || !editCourse.description.trim()}
-                  className={`px-6 py-2 rounded-lg font-medium transition-colors flex items-center ${
-                    editCourse.title.trim() && editCourse.description.trim()
-                      ? 'bg-purple-600 text-white hover:bg-purple-700'
-                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  }`}
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Changes
-                </button>
+              <div className="flex items-center justify-between mt-8">
+                {/* Published Toggle */}
+                <div className="flex items-center space-x-3">
+                  <span className={`font-medium ${editCourse.published ? 'text-green-600' : 'text-gray-600'}`}>
+                    Published
+                  </span>
+                  <button
+                    onClick={() => setEditCourse(prev => ({ ...prev, published: !prev.published }))}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      editCourse.published ? 'bg-green-600' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        editCourse.published ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={cancelEditCourse}
+                    className="px-6 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+                  >
+                    CANCEL
+                  </button>
+                  <button
+                    onClick={saveEditCourse}
+                    disabled={!editCourse.name.trim() || !editCourse.description.trim()}
+                    className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                      editCourse.name.trim() && editCourse.description.trim()
+                        ? 'bg-gray-800 text-white hover:bg-gray-900'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    UPDATE
+                  </button>
+                </div>
               </div>
             </div>
           </div>
