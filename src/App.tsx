@@ -312,7 +312,7 @@ function App() {
         />
       )}
       
-      {/* Side Menu for Educators - Hide when viewing profile or recording */}
+      {/* Side Menu for Educators - Hide when viewing profile, recording, or course learning */}
       {isLoggedIn && userRole === 'educator' && currentView !== 'course-learning' && currentView !== 'member-profile' && currentView !== 'member-record' && (
         <SideMenu 
           currentView={currentView}
@@ -379,7 +379,7 @@ function App() {
         )}
 
         <div className={`transition-all duration-300 ${
-          isLoggedIn && userRole === 'educator' && !currentView.startsWith('member-') && currentView !== 'course-learning' && currentView !== 'member-record' && currentView !== 'member-profile'
+          isLoggedIn && userRole === 'educator' && !currentView.startsWith('member-') && currentView !== 'course-learning' && currentView !== 'member-profile'
             ? (sidebarCollapsed ? 'ml-16' : 'ml-64') 
             : ''
         }`}>
