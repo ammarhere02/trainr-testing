@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Clock, Users, Star, BookOpen, CheckCircle, Video, Plus, Upload, X, Trash2, AlertTriangle } from 'lucide-react';
+import { Play, Clock, Users, Star, BookOpen, CheckCircle, Video, Plus, Upload, X, Trash2, AlertTriangle, MoreHorizontal, Edit3, Save } from 'lucide-react';
 
 interface CoursesProps {
   onStartLearning: (courseId: number) => void;
@@ -8,7 +8,10 @@ interface CoursesProps {
 export default function Courses({ onStartLearning }: CoursesProps) {
   const [showAddCourseModal, setShowAddCourseModal] = React.useState(false);
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+  const [showEditModal, setShowEditModal] = React.useState(false);
+  const [showCourseMenu, setShowCourseMenu] = React.useState<number | null>(null);
   const [courseToDelete, setCourseToDelete] = React.useState<any>(null);
+  const [courseToEdit, setCourseToEdit] = React.useState<any>(null);
   const [courses, setCourses] = React.useState([
     {
       id: 1,
@@ -51,9 +54,44 @@ export default function Courses({ onStartLearning }: CoursesProps) {
     published: true
   });
 
+  const [editCourse, setEditCourse] = React.useState({
+    title: '',
+    description: ''
+  });
+
   const handleDeleteCourse = (course: any) => {
     setCourseToDelete(course);
     setShowDeleteModal(true);
+    setShowCourseMenu(null);
+  };
+
+  const handleEditCourse = (course: any) => {
+    setCourseToEdit(course);
+    setEditCourse({
+      title: course.title,
+      description: course.description
+    });
+    setShowEditModal(true);
+    setShowCourseMenu(null);
+  };
+
+  const saveEditCourse = () => {
+    if (courseToEdit) {
+      setCourses(prev => prev.map(course => 
+        course.id === courseToEdit.id 
+          ? { ...course, title: editCourse.title, description: editCourse.description }
+          : course
+      ));
+      setShowEditModal(false);
+      setCourseToEdit(null);
+      setEditCourse({ title: '', description: '' });
+    }
+  };
+
+  const cancelEditCourse = () => {
+    setShowEditModal(false);
+    setCourseToEdit(null);
+    setEditCourse({ title: '', description: '' });
   };
 
   const confirmDeleteCourse = () => {
@@ -225,13 +263,46 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                     >
                       Continue Learning
                     </button>
-                    <button
-                      onClick={() => handleDeleteCourse(course)}
-                      className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                      title="Delete course"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="relative">
+                      <button
+                        onClick={() => setShowCourseMenu(showCourseMenu === course.id ? null : course.id)}
+                        className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                        title="Course options"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                      
+                      {showCourseMenu === course.id && (
+                        <>
+                          {/* Backdrop */}
+                          <div 
+                            className="fixed inset-0 z-10"
+                            onClick={() => setShowCourseMenu(null)}
+                          />
+                          
+                          {/* Dropdown Menu */}
+                          <div className="absolute right-0 bottom-full mb-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
+                            <button
+                              onClick={() => handleEditCourse(course)}
+                              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                            >
+                              <Edit3 className="w-4 h-4 mr-3" />
+                              Edit course details
+                            </button>
+                            
+                            <hr className="my-1 border-gray-200" />
+                            
+                            <button
+                              onClick={() => handleDeleteCourse(course)}
+                              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center"
+                            >
+                              <Trash2 className="w-4 h-4 mr-3" />
+                              Delete course
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -447,6 +518,78 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                   }`}
                 >
                   ADD
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Course Modal */}
+      {showEditModal && courseToEdit && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-gray-900">Edit Course</h3>
+                <button
+                  onClick={cancelEditCourse}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                {/* Course Title */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Course Title
+                  </label>
+                  <input
+                    type="text"
+                    value={editCourse.title}
+                    onChange={(e) => setEditCourse(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Enter course title"
+                  />
+                </div>
+
+                {/* Course Description */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Course Description
+                  </label>
+                  <textarea
+                    value={editCourse.description}
+                    onChange={(e) => setEditCourse(prev => ({ ...prev, description: e.target.value }))}
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    placeholder="Enter course description"
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 mt-8">
+                <button
+                  onClick={cancelEditCourse}
+                  className="px-6 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveEditCourse}
+                  disabled={!editCourse.title.trim() || !editCourse.description.trim()}
+                  className={`px-6 py-2 rounded-lg font-medium transition-colors flex items-center ${
+                    editCourse.title.trim() && editCourse.description.trim()
+                      ? 'bg-purple-600 text-white hover:bg-purple-700'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Changes
                 </button>
               </div>
             </div>
