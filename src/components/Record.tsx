@@ -26,10 +26,16 @@ import {
   Star,
   MessageCircle,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  ArrowLeft
 } from 'lucide-react';
 
-export default function Record() {
+interface RecordProps {
+  onBack?: () => void;
+}
+
+export default function Record(props: RecordProps) {
+  const { onBack = () => {} } = props;
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
