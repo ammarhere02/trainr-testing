@@ -615,13 +615,13 @@ export default function Record() {
                 <button
                   onClick={handleStartRecording}
                   disabled={isProcessing}
-                  className="bg-red-600 text-white p-4 rounded-full hover:bg-red-700 transition-colors shadow-lg disabled:opacity-50"
+                  className="bg-red-600 text-white p-6 rounded-full hover:bg-red-700 transition-colors shadow-lg disabled:opacity-50"
                   title="Start recording"
                 >
                   {isProcessing ? (
-                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   ) : (
-                    <div className="w-6 h-6 bg-white rounded-sm"></div>
+                    <div className="w-8 h-8 bg-white rounded-full"></div>
                   )}
                 </button>
               ) : (
