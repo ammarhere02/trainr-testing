@@ -54,6 +54,9 @@ export default function Record(props: RecordProps) {
     microphone: 'unknown' | 'granted' | 'denied'
   }>({
     camera: 'unknown',
+    microphone: 'unknown'
+  });
+
   // Process and download video function
   const processAndDownloadVideo = (chunks: Blob[]) => {
     setIsProcessing(true);
