@@ -1412,7 +1412,14 @@ export default function Record(props: RecordProps) {
                 >
                   Close
                 </button>
-                <button className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors">
+                <button 
+                  onClick={() => {
+                    // Handle sharing functionality
+                    console.log('Share button clicked');
+                    // Add actual share logic here
+                  }}
+                  className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                >
                   Update Settings
                 </button>
               </div>
