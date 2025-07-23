@@ -285,7 +285,179 @@ export default function Record(props: RecordProps) {
   }, []);
 
   // Start recording
-  const handleStartRecording = async (skipPermissionCheck = false) => {
+  const handleStartRecording = async () => {
+    try {
+      setError('');
+      setIsProcessing(true);
+      recordedChunksRef.current = [];
+
+      let finalStream: MediaStream;
+
+      if (recordingMode === 'screen') {
+        // Get screen stream
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            mediaSource: 'screen',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            frameRate: { ideal: 30 }
+          },
+          audio: micEnabled
+        });
+        screenStreamRef.current = screenStream;
+        finalStream = screenStream;
+        
+        // Show screen in main preview
+        if (previewVideoRef.current) {
+          previewVideoRef.current.srcObject = screenStream;
+          previewVideoRef.current.play().catch(console.warn);
+        }
+        
+        // If camera is enabled, get camera stream for overlay
+        if (cameraEnabled) {
+          console.log('Getting camera stream for overlay...');
+          const cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+              frameRate: { ideal: 30 },
+              facingMode: 'user'
+            },
+            audio: false // No audio from camera to avoid conflicts
+          });
+          cameraStreamRef.current = cameraStream;
+          
+          // Show camera in circle overlay
+          if (cameraPreviewRef.current) {
+            console.log('Setting camera preview...');
+            cameraPreviewRef.current.srcObject = cameraStream;
+            cameraPreviewRef.current.onloadedmetadata = () => {
+              console.log('Camera metadata loaded, playing...');
+              cameraPreviewRef.current!.play().catch(console.warn);
+            };
+          }
+        }
+      } else if (recordingMode === 'camera') {
+        // Camera only mode
+        const cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            frameRate: { ideal: 30 },
+            facingMode: 'user'
+          },
+          audio: micEnabled
+        });
+        cameraStreamRef.current = cameraStream;
+        finalStream = cameraStream;
+        
+        // Show camera in main preview
+        if (previewVideoRef.current) {
+          previewVideoRef.current.srcObject = cameraStream;
+          previewVideoRef.current.play().catch(console.warn);
+        }
+      } else {
+        // Both screen and camera
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            mediaSource: 'screen',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            frameRate: { ideal: 30 }
+          },
+          audio: micEnabled
+        });
+        
+        const cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+            frameRate: { ideal: 30 },
+            facingMode: 'user'
+          },
+          audio: false
+        });
+        
+        screenStreamRef.current = screenStream;
+        cameraStreamRef.current = cameraStream;
+        finalStream = screenStream; // Use screen as main stream
+        
+        // Show screen in main preview
+        if (previewVideoRef.current) {
+          previewVideoRef.current.srcObject = screenStream;
+          previewVideoRef.current.play().catch(console.warn);
+        }
+        
+        // Show camera in circle overlay
+        if (cameraPreviewRef.current) {
+          cameraPreviewRef.current.srcObject = cameraStream;
+          cameraPreviewRef.current.onloadedmetadata = () => {
+            cameraPreviewRef.current!.play().catch(console.warn);
+          };
+        }
+      }
+
+      // Set up MediaRecorder
+      const supportedMimeTypes = [
+        'video/webm;codecs=h264,opus',
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus',
+        'video/webm',
+        'video/mp4'
+      ];
+      
+      let selectedMimeType = '';
+      for (const mimeType of supportedMimeTypes) {
+        if (MediaRecorder.isTypeSupported(mimeType)) {
+          selectedMimeType = mimeType;
+          break;
+        }
+      }
+      
+      if (!selectedMimeType) {
+        throw new Error('No supported video format found');
+      }
+      
+      const mediaRecorder = new MediaRecorder(finalStream, {
+        mimeType: selectedMimeType,
+        videoBitsPerSecond: 4000000,
+        audioBitsPerSecond: 128000
+      });
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        handleRecordingComplete();
+      };
+
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start(100);
+
+      setIsRecording(true);
+      setIsPaused(false);
+      setRecordingTime(0);
+      setIsProcessing(false);
+
+      // Handle screen share stop
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getVideoTracks()[0].addEventListener('ended', () => {
+          handleStopRecording();
+        });
+      }
+
+    } catch (err) {
+      console.error('Recording error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to start recording');
+      setIsProcessing(false);
+    }
+  };
+
+  // Original complex function removed and replaced with simpler version above
+  const handleStartRecordingOld = async (skipPermissionCheck = false) => {
     // Check if we need to request permissions first
     if (!skipPermissionCheck) {
       const needsCamera = cameraEnabled && (recordingMode === 'camera' || recordingMode === 'both' || recordingMode === 'screen');
@@ -659,15 +831,15 @@ export default function Record(props: RecordProps) {
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Quick Record</h2>
             
             {/* Camera Circle Overlay - Show when recording with camera enabled */}
-            {isRecording && cameraEnabled && (recordingMode === 'screen' || recordingMode === 'both') && (
-              <div className="fixed bottom-6 right-6 w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-xl bg-black z-50">
+            {isRecording && cameraEnabled && recordingMode === 'screen' && (
+              <div className="fixed bottom-6 right-6 w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xl bg-black z-50">
                 <video
                   ref={cameraPreviewRef}
                   className="w-full h-full object-cover"
                   muted
                   playsInline
                   autoPlay
-                  style={{ transform: 'scaleX(-1)' }}
+                  style={{ transform: 'scaleX(-1)' }} // Mirror effect like selfie
                 />
                 {/* Recording indicator */}
                 <div className="absolute top-2 left-2 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
@@ -677,7 +849,6 @@ export default function Record(props: RecordProps) {
             {/* Screen Preview */}
             <div className="bg-gray-900 rounded-xl overflow-hidden mb-6">
               <div className="aspect-video relative">
-                <>
                 {isRecording ? (
                   <video
                     ref={previewVideoRef}
@@ -732,7 +903,6 @@ export default function Record(props: RecordProps) {
                      recordingMode === 'camera' ? 'Camera Only' : 'Screen + Camera'}
                   </span>
                 </div>
-                </>
               </div>
             </div>
 
@@ -798,7 +968,7 @@ export default function Record(props: RecordProps) {
                 <button
                   onClick={handleStartRecording}
                   disabled={isProcessing}
-                  className="bg-red-600 text-white p-6 rounded-full hover:bg-red-700 transition-colors shadow-lg disabled:opacity-50 relative group"
+                  className="bg-red-600 text-white p-6 rounded-full hover:bg-red-700 transition-colors shadow-lg disabled:opacity-50"
                   title="Start recording"
                 >
                   {isProcessing ? (
@@ -835,13 +1005,14 @@ export default function Record(props: RecordProps) {
             <div className="bg-blue-50 rounded-lg p-4">
               <h4 className="font-medium text-blue-900 mb-2">Quick Tips:</h4>
               <ul className="text-sm text-blue-800 space-y-1">
-                <li>• Your browser will ask for {recordingMode === 'camera' ? 'camera' : recordingMode === 'screen' ? 'screen sharing' : 'camera and screen sharing'} permission</li>
+                <li>• Click record and your browser will ask for permissions</li>
+                <li>• For screen recording: Grant screen sharing permission</li>
+                <li>• For camera overlay: Also grant camera permission</li>
                 <li>• Recordings are saved locally and can be downloaded</li>
-                {cameraEnabled && (recordingMode === 'screen' || recordingMode === 'both') && <li>• Your camera will appear in a circle overlay during recording</li>}
-                {recordingMode === 'both' && <li>• Use screen + camera for the most engaging content</li>}
+                {cameraEnabled && recordingMode === 'screen' && <li>• Your camera will appear in a circle overlay during recording</li>}
                 {recordingMode === 'screen' && <li>• Stop sharing your screen to automatically end recording</li>}
                 {recordingMode === 'camera' && <li>• Camera-only recordings are perfect for talking head videos</li>}
-                <li>• Make sure your camera and microphone permissions are enabled</li>
+                <li>• Check that no other apps are using your camera</li>
               </ul>
             </div>
           </div>
@@ -1079,6 +1250,96 @@ export default function Record(props: RecordProps) {
                   Update Settings
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Permission Request Modal */}
+      {showPermissionModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Camera className="w-8 h-8 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Permission Required</h3>
+                <p className="text-gray-600">
+                  Trainr needs access to your camera and microphone to record videos.
+                </p>
+              </div>
+
+              <div className="space-y-3 mb-6">
+                {micEnabled && (
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      permissionStatus.microphone === 'granted' ? 'bg-green-100' : 'bg-blue-100'
+                    }`}>
+                      <Mic className={`w-4 h-4 ${
+                        permissionStatus.microphone === 'granted' ? 'text-green-600' : 'text-blue-600'
+                      }`} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900">Microphone Access</h4>
+                      <p className="text-sm text-gray-600">Record audio with your video</p>
+                    </div>
+                    {permissionStatus.microphone === 'granted' && (
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    )}
+                  </div>
+                )}
+                
+                {cameraEnabled && (recordingMode === 'camera' || recordingMode === 'both' || recordingMode === 'screen') && (
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      permissionStatus.camera === 'granted' ? 'bg-green-100' : 'bg-blue-100'
+                    }`}>
+                      <Camera className={`w-4 h-4 ${
+                        permissionStatus.camera === 'granted' ? 'text-green-600' : 'text-blue-600'
+                      }`} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900">Camera Access</h4>
+                      <p className="text-sm text-gray-600">
+                        {recordingMode === 'camera' ? 'Record video from your camera' : 'Show yourself while recording'}
+                      </p>
+                    </div>
+                    {permissionStatus.camera === 'granted' && (
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h4 className="font-medium text-blue-900 mb-2">How to grant permissions:</h4>
+                <ol className="text-sm text-blue-800 space-y-1">
+                  <li>1. Click "Allow Permissions" below</li>
+                  <li>2. Your browser will show a permission popup</li>
+                  <li>3. Click "Allow" or "Yes" in the popup</li>
+                  <li>4. Recording will start automatically</li>
+                </ol>
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowPermissionModal(false)}
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={requestPermissions}
+                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Allow Permissions
+                </button>
+              </div>
+
+              <p className="text-xs text-gray-500 text-center mt-4">
+                Your privacy is important. Permissions are only used for recording and are not stored.
+              </p>
             </div>
           </div>
         </div>
