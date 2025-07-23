@@ -798,7 +798,7 @@ export default function Record(props: RecordProps) {
                 <button
                   onClick={handleStartRecording}
                   disabled={isProcessing}
-                  className="bg-red-600 text-white p-6 rounded-full hover:bg-red-700 transition-colors shadow-lg disabled:opacity-50"
+                  className="bg-red-600 text-white p-6 rounded-full hover:bg-red-700 transition-colors shadow-lg disabled:opacity-50 relative group"
                   title="Start recording"
                 >
                   {isProcessing ? (
