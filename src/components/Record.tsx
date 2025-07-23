@@ -286,42 +286,6 @@ export default function Record(props: RecordProps) {
     checkPermissions();
   }, []);
 
-  // Process and convert video to MP4-compatible format
-  const processAndDownloadVideo = async (chunks: Blob[]) => {
-    try {
-      console.log('Processing video chunks:', chunks.length);
-      
-      // Create blob from chunks
-      const videoBlob = new Blob(chunks, { 
-        type: 'video/webm;codecs=vp9,opus' 
-      });
-      
-      console.log('Video blob created:', videoBlob.size, 'bytes');
-      
-      // For now, download as WebM (most browsers support this)
-      // In a real app, you'd convert to MP4 server-side or use FFmpeg.js
-      const url = URL.createObjectURL(videoBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `trainr-recording-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.webm`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      console.log('Video downloaded successfully');
-      
-      // Clear recorded chunks
-      setRecordedChunks([]);
-      
-    } catch (error) {
-      console.error('Error processing video:', error);
-      alert('Error processing video. Please try again.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   // Start recording
   const handleStartRecording = async () => {
     try {
@@ -778,12 +742,6 @@ export default function Record(props: RecordProps) {
     }
   };
 
-  // Download recorded video
-  const downloadVideo = () => {
-    // This function is now handled automatically after recording stops
-    console.log('Download triggered manually');
-  };
-
   // Handle completion modal actions
   const handleSaveRecording = () => {
     if (completedRecording) {
@@ -1012,6 +970,16 @@ export default function Record(props: RecordProps) {
                 >
                   {cameraEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
                 </button>
+              )}
+              
+              {isProcessing && (
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center">
+                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-3"></div>
+                    <span className="text-blue-800 font-medium">Processing your video...</span>
+                  </div>
+                  <p className="text-blue-700 text-sm mt-1">Your recording will download automatically when ready.</p>
+                </div>
               )}
 
               {!isRecording ? (
