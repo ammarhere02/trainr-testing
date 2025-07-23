@@ -47,7 +47,6 @@ export default function Record(props: RecordProps) {
   const [error, setError] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [completedRecording, setCompletedRecording] = useState<any>(null);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<{
