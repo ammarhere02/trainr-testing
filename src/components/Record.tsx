@@ -47,6 +47,7 @@ export default function Record(props: RecordProps) {
   const [error, setError] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [completedRecording, setCompletedRecording] = useState<any>(null);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<{
@@ -61,6 +62,7 @@ export default function Record(props: RecordProps) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const combinedStreamRef = useRef<MediaStream | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -426,12 +428,14 @@ export default function Record(props: RecordProps) {
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
-          recordedChunksRef.current.push(event.data);
+          // Process and download immediately
+          processAndDownloadVideo([event.data]);
         }
       };
 
       mediaRecorder.onstop = () => {
-        handleRecordingComplete();
+        console.log('MediaRecorder stopped');
+        setIsProcessing(false);
       };
 
       mediaRecorderRef.current = mediaRecorder;
@@ -614,6 +618,8 @@ export default function Record(props: RecordProps) {
 
   // Stop recording
   const handleStopRecording = () => {
+    setIsProcessing(true);
+    
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
     }
@@ -677,6 +683,8 @@ export default function Record(props: RecordProps) {
     setCompletedRecording(newRecording);
     setShowCompletionModal(true);
     setRecordingTime(0);
+    
+    // Processing will be handled in the dataavailable event
   };
 
   // Convert WebM to MP4 using FFmpeg.wasm (simplified version)
