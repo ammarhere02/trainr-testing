@@ -132,7 +132,7 @@ export default function Record(props: RecordProps) {
           height: { ideal: 1080 },
           frameRate: { ideal: 30 }
         },
-        audio: micEnabled
+        audio: micEnabled // Only screen stream includes audio
       });
       return stream;
     } catch (err) {
@@ -150,7 +150,7 @@ export default function Record(props: RecordProps) {
           frameRate: { ideal: 30 },
           facingMode: 'user'
         } : false,
-        audio: micEnabled
+        audio: false // Don't include audio in camera stream to avoid conflicts
       });
       return stream;
     } catch (err) {
@@ -231,11 +231,11 @@ export default function Record(props: RecordProps) {
           // Show camera preview in circle
           if (cameraPreviewRef.current) {
             cameraPreviewRef.current.srcObject = cameraStream;
-            try {
-              await cameraPreviewRef.current.play();
-            } catch (playError) {
-              console.warn('Camera preview autoplay failed:', playError);
-            }
+            cameraPreviewRef.current.onloadedmetadata = () => {
+              if (cameraPreviewRef.current) {
+                cameraPreviewRef.current.play().catch(console.warn);
+              }
+            };
           }
         }
       } else if (recordingMode === 'camera') {
@@ -254,22 +254,22 @@ export default function Record(props: RecordProps) {
         // Show camera preview in circle for both mode
         if (cameraPreviewRef.current) {
           cameraPreviewRef.current.srcObject = cameraStream;
-          try {
-            await cameraPreviewRef.current.play();
-          } catch (playError) {
-            console.warn('Camera preview autoplay failed:', playError);
-          }
+          cameraPreviewRef.current.onloadedmetadata = () => {
+            if (cameraPreviewRef.current) {
+              cameraPreviewRef.current.play().catch(console.warn);
+            }
+          };
         }
       }
 
       // Show preview
       if (previewVideoRef.current) {
         previewVideoRef.current.srcObject = finalStream;
-        try {
-          await previewVideoRef.current.play();
-        } catch (playError) {
-          console.warn('Preview autoplay failed:', playError);
-        }
+        previewVideoRef.current.onloadedmetadata = () => {
+          if (previewVideoRef.current) {
+            previewVideoRef.current.play().catch(console.warn);
+          }
+        };
       }
 
       // Set up MediaRecorder with best available format
@@ -362,6 +362,11 @@ export default function Record(props: RecordProps) {
     if (cameraPreviewRef.current) {
       cameraPreviewRef.current.srcObject = null;
     }
+
+    // Reset refs
+    screenStreamRef.current = null;
+    cameraStreamRef.current = null;
+    combinedStreamRef.current = null;
 
     setIsRecording(false);
     setIsPaused(false);
@@ -557,12 +562,13 @@ export default function Record(props: RecordProps) {
             
             {/* Camera Circle Overlay - Show when recording with camera enabled */}
             {isRecording && cameraEnabled && (recordingMode === 'screen' || recordingMode === 'both') && (
-              <div className="absolute bottom-6 right-6 w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg bg-black">
+              <div className="fixed bottom-6 right-6 w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg bg-black z-50">
                 <video
                   ref={cameraPreviewRef}
                   className="w-full h-full object-cover"
                   muted
                   playsInline
+                  autoPlay
                 />
               </div>
             )}
