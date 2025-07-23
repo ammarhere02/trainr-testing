@@ -82,7 +82,7 @@ export default function Record(props: RecordProps) {
       setCompletedRecording({
         filename,
         size: blob.size,
-        duration: recordingDuration,
+        duration: recordingTime,
         url
       });
       
@@ -93,9 +93,6 @@ export default function Record(props: RecordProps) {
       setIsProcessing(false);
     }
   };
-
-    microphone: 'unknown'
-  });
 
   // Refs for media streams and recording
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
