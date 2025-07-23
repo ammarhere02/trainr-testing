@@ -150,7 +150,7 @@ export default function Record(props: RecordProps) {
           frameRate: { ideal: 30 },
           facingMode: 'user'
         } : false,
-        audio: false // Don't include audio in camera stream to avoid conflicts
+        audio: micEnabled && recordingMode === 'camera' // Only include audio for camera-only mode
       });
       return stream;
     } catch (err) {
@@ -231,17 +231,28 @@ export default function Record(props: RecordProps) {
           // Show camera preview in circle
           if (cameraPreviewRef.current) {
             cameraPreviewRef.current.srcObject = cameraStream;
-            cameraPreviewRef.current.onloadedmetadata = () => {
-              if (cameraPreviewRef.current) {
-                cameraPreviewRef.current.play().catch(console.warn);
-              }
-            };
+            // Wait for metadata to load, then play
+            await new Promise((resolve) => {
+              cameraPreviewRef.current!.onloadedmetadata = () => {
+                cameraPreviewRef.current!.play().then(resolve).catch(console.warn);
+              };
+            });
           }
         }
       } else if (recordingMode === 'camera') {
         const cameraStream = await getCameraStream();
         cameraStreamRef.current = cameraStream;
         finalStream = cameraStream;
+        
+        // For camera-only mode, show in main preview
+        if (previewVideoRef.current) {
+          previewVideoRef.current.srcObject = cameraStream;
+          await new Promise((resolve) => {
+            previewVideoRef.current!.onloadedmetadata = () => {
+              previewVideoRef.current!.play().then(resolve).catch(console.warn);
+            };
+          });
+        }
       } else {
         // Both screen and camera
         const screenStream = await getScreenStream();
@@ -254,22 +265,22 @@ export default function Record(props: RecordProps) {
         // Show camera preview in circle for both mode
         if (cameraPreviewRef.current) {
           cameraPreviewRef.current.srcObject = cameraStream;
-          cameraPreviewRef.current.onloadedmetadata = () => {
-            if (cameraPreviewRef.current) {
-              cameraPreviewRef.current.play().catch(console.warn);
-            }
-          };
+          await new Promise((resolve) => {
+            cameraPreviewRef.current!.onloadedmetadata = () => {
+              cameraPreviewRef.current!.play().then(resolve).catch(console.warn);
+            };
+          });
         }
       }
 
-      // Show preview
-      if (previewVideoRef.current) {
+      // Show preview for screen and both modes
+      if (previewVideoRef.current && recordingMode !== 'camera') {
         previewVideoRef.current.srcObject = finalStream;
-        previewVideoRef.current.onloadedmetadata = () => {
-          if (previewVideoRef.current) {
-            previewVideoRef.current.play().catch(console.warn);
-          }
-        };
+        await new Promise((resolve) => {
+          previewVideoRef.current!.onloadedmetadata = () => {
+            previewVideoRef.current!.play().then(resolve).catch(console.warn);
+          };
+        });
       }
 
       // Set up MediaRecorder with best available format
@@ -562,14 +573,17 @@ export default function Record(props: RecordProps) {
             
             {/* Camera Circle Overlay - Show when recording with camera enabled */}
             {isRecording && cameraEnabled && (recordingMode === 'screen' || recordingMode === 'both') && (
-              <div className="fixed bottom-6 right-6 w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg bg-black z-50">
+              <div className="fixed bottom-6 right-6 w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-xl bg-black z-50">
                 <video
                   ref={cameraPreviewRef}
                   className="w-full h-full object-cover"
                   muted
                   playsInline
                   autoPlay
+                  style={{ transform: 'scaleX(-1)' }}
                 />
+                {/* Recording indicator */}
+                <div className="absolute top-2 left-2 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
               </div>
             )}
             
@@ -583,6 +597,7 @@ export default function Record(props: RecordProps) {
                     className="w-full h-full object-cover"
                     muted
                     playsInline
+                    autoPlay
                   />
                 ) : (
                   <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
@@ -591,6 +606,9 @@ export default function Record(props: RecordProps) {
                         <Monitor className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                         <p className="text-gray-400">Screen Recording Preview</p>
                         <p className="text-gray-500 text-sm mt-2">Click record to start capturing your screen</p>
+                        {cameraEnabled && (
+                          <p className="text-gray-500 text-sm mt-1">Camera will appear in bottom-right corner</p>
+                        )}
                       </div>
                     ) : recordingMode === 'camera' ? (
                       <div className="text-center">
@@ -604,7 +622,7 @@ export default function Record(props: RecordProps) {
                           <>
                             <VideoOff className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                             <p className="text-gray-400">Camera Disabled</p>
-                            <p className="text-gray-500 text-sm mt-2">Click record to start recording from your camera</p>
+                            <p className="text-gray-500 text-sm mt-2">Enable camera to record video</p>
                           </>
                         )}
                       </div>
@@ -613,6 +631,9 @@ export default function Record(props: RecordProps) {
                         <Video className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                         <p className="text-gray-400">Screen + Camera Preview</p>
                         <p className="text-gray-500 text-sm mt-2">Click record to start recording screen and camera</p>
+                        {cameraEnabled && (
+                          <p className="text-gray-500 text-sm mt-1">Camera will appear in bottom-right corner</p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -729,10 +750,11 @@ export default function Record(props: RecordProps) {
               <ul className="text-sm text-blue-800 space-y-1">
                 <li>• Your browser will ask for {recordingMode === 'camera' ? 'camera' : recordingMode === 'screen' ? 'screen sharing' : 'camera and screen sharing'} permission</li>
                 <li>• Recordings are saved locally and can be downloaded</li>
-                {cameraEnabled && recordingMode === 'screen' && <li>• Your camera will appear in a circle overlay during recording</li>}
+                {cameraEnabled && (recordingMode === 'screen' || recordingMode === 'both') && <li>• Your camera will appear in a circle overlay during recording</li>}
                 {recordingMode === 'both' && <li>• Use screen + camera for the most engaging content</li>}
                 {recordingMode === 'screen' && <li>• Stop sharing your screen to automatically end recording</li>}
                 {recordingMode === 'camera' && <li>• Camera-only recordings are perfect for talking head videos</li>}
+                <li>• Make sure your camera and microphone permissions are enabled</li>
               </ul>
             </div>
           </div>
