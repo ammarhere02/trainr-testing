@@ -304,6 +304,9 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                     >
                       Continue Learning
                     </button>
+                    <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </button>
                     <div className="relative group">
                       <button
                         onClick={() => setShowCourseMenu(showCourseMenu === course.id ? null : course.id)}
