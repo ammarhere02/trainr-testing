@@ -50,7 +50,7 @@ export default function Record(props: RecordProps) {
   const [completedRecording, setCompletedRecording] = useState<any>(null);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<{
-    camera: 'unknown' | 'granted' | 'denied';
+    camera: 'unknown' | 'granted' | 'denied',
     microphone: 'unknown' | 'granted' | 'denied';
   }>({
     camera: 'unknown',
