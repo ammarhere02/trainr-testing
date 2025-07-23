@@ -54,6 +54,36 @@ export default function Record(props: RecordProps) {
     microphone: 'unknown' | 'granted' | 'denied';
   }>({
     camera: 'unknown',
+  const processAndDownloadVideo = async (recordedChunks: Blob[]) => {
+    try {
+      setIsProcessing(true);
+      
+      // Create blob from recorded chunks
+      const blob = new Blob(recordedChunks, { type: 'video/webm' });
+      
+      // Create download URL
+      const url = URL.createObjectURL(blob);
+      
+      // Create download link
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `recording-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.webm`;
+      
+      // Trigger download
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      // Clean up
+      URL.revokeObjectURL(url);
+      
+      setIsProcessing(false);
+    } catch (error) {
+      console.error('Error processing video:', error);
+      setIsProcessing(false);
+    }
+  };
+
     microphone: 'unknown'
   });
 
