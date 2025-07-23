@@ -303,16 +303,6 @@ function App() {
       )}
       
       {/* Side Menu for Educators - Hide when viewing profile */}
-      {isLoggedIn && userRole === 'educator' && currentView !== 'course-learning' && currentView !== 'member-profile' && (
-        <SideMenu 
-          currentView={currentView}
-          onViewChange={setCurrentView}
-          userRole={userRole}
-          onCollapseChange={setSidebarCollapsed}
-        />
-      )}
-      
-      {/* Side Menu for Educators - Hide when viewing profile, recording, or course learning */}
       {isLoggedIn && userRole === 'educator' && currentView !== 'course-learning' && currentView !== 'member-profile' && currentView !== 'member-record' && (
         <SideMenu 
           currentView={currentView}
