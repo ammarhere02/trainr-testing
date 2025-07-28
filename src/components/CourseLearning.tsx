@@ -52,6 +52,7 @@ By the end of this lesson, you'll understand how to create reusable components t
   const [tempLessonContent, setTempLessonContent] = useState(lessonContent);
   const [showLessonMenu, setShowLessonMenu] = useState(false);
   const [activeLessonMenu, setActiveLessonMenu] = useState<number | null>(null);
+  const [showThumbnail, setShowThumbnail] = useState(true);
   
   // Mock library videos
   const [libraryVideos] = useState([
@@ -145,6 +146,11 @@ By the end of this lesson, you'll understand how to create reusable components t
   const currentLessonData = course.modules
     .flatMap(module => module.lessons)
     .find(lesson => lesson.id === currentLessonId);
+
+  // Reset thumbnail visibility when video URL changes
+  React.useEffect(() => {
+    setShowThumbnail(true);
+  }, [currentLessonData?.videoUrl]);
 
   const handleVideoEdit = () => {
     if (currentLessonData?.videoUrl) {
@@ -600,16 +606,16 @@ By the end of this lesson, you'll understand how to create reusable components t
                     key={currentLessonData.videoUrl} // Force re-render when URL changes
                   />
                   {/* Thumbnail overlay for initial load */}
-                  {getThumbnailUrl(currentLessonData.videoUrl) && (
+                  {showThumbnail && getThumbnailUrl(currentLessonData.videoUrl) && (
                     <div className="absolute inset-0 bg-black">
                       <img
                         src={getThumbnailUrl(currentLessonData.videoUrl)}
                         alt="Video thumbnail"
                         className="w-full h-full object-cover"
                         onLoad={(e) => {
-                          // Hide thumbnail after iframe loads
+                          // Hide thumbnail after a delay
                           setTimeout(() => {
-                            e.currentTarget.parentElement?.remove();
+                            setShowThumbnail(false);
                           }, 1000);
                         }}
                       />
@@ -845,7 +851,15 @@ By the end of this lesson, you'll understand how to create reusable components t
                           <p className="text-sm text-blue-700 mb-2">Preview:</p>
                           <div className="bg-black rounded-lg overflow-hidden relative">
                             <div className="aspect-video">
-                              {getThumbnailUrl(videoLink) ? (
+                              <div className="relative w-full h-full">
+                                <iframe
+                                  src={getEmbedUrl(videoLink)}
+                                  className="w-full h-full"
+                                  frameBorder="0"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                  title="Video Preview"
+                                />
                                 <div className="relative w-full h-full">
                                   <img
                                     src={getThumbnailUrl(videoLink)}
@@ -861,16 +875,7 @@ By the end of this lesson, you'll understand how to create reusable components t
                                     Preview
                                   </div>
                                 </div>
-                              ) : (
-                                <iframe
-                                  src={getEmbedUrl(videoLink)}
-                                  className="w-full h-full"
-                                  frameBorder="0"
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                  allowFullScreen
-                                  title="Video Preview"
-                                />
-                              )}
+                              </div>
                             </div>
                           </div>
                         </div>
