@@ -234,7 +234,7 @@ By the end of this lesson, you'll understand how to create reusable components t
   };
 
   const getYouTubeVideoId = (url: string) => {
-    const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/;
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
     const match = url.match(regex);
     return match ? match[1] : null;
   };
@@ -242,18 +242,18 @@ By the end of this lesson, you'll understand how to create reusable components t
   const getEmbedUrl = (url: string) => {
     if (!url) return '';
     
-    // If it's already an embed URL, return as is
-    if (url.includes('youtube.com/embed/')) {
-      return url;
-    }
-    
-    // Convert YouTube watch URL to embed URL
     const videoId = getYouTubeVideoId(url);
     if (videoId) {
-      return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`;
+      return `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1&showinfo=0`;
     }
     
-    // For other video platforms, return the original URL
+    // For Vimeo URLs
+    if (url.includes('vimeo.com/')) {
+      const vimeoId = url.split('/').pop();
+      return `https://player.vimeo.com/video/${vimeoId}`;
+    }
+    
+    // Return original URL for other platforms
     return url;
   };
 
@@ -407,7 +407,8 @@ By the end of this lesson, you'll understand how to create reusable components t
         <div className="lg:col-span-3">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
             <div className="relative bg-black aspect-video">
-              {currentLessonData?.videoUrl && getEmbedUrl(currentLessonData.videoUrl) ? (
+              {currentLessonData?.videoUrl ? (
+                getEmbedUrl(currentLessonData.videoUrl) ? (
                 <iframe
                   src={getEmbedUrl(currentLessonData.videoUrl)}
                   className="w-full h-full"
@@ -417,6 +418,22 @@ By the end of this lesson, you'll understand how to create reusable components t
                   title={currentLessonData.title}
                   key={currentLessonData.videoUrl} // Force re-render when URL changes
                 />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center text-white">
+                      <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                      <p className="text-xl mb-2">Invalid video URL</p>
+                      {userRole === 'educator' && (
+                        <button
+                          onClick={handleVideoEdit}
+                          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                        >
+                          Fix Video URL
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center text-white">
@@ -434,7 +451,7 @@ By the end of this lesson, you'll understand how to create reusable components t
                 </div>
               )}
               
-              {userRole === 'educator' && currentLessonData?.videoUrl && (
+              {userRole === 'educator' && (
                 <div className="absolute top-4 right-4">
                   <button
                     onClick={handleVideoEdit}
@@ -588,6 +605,13 @@ By the end of this lesson, you'll understand how to create reusable components t
                       <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                         <p className="text-sm text-green-700">✓ Valid YouTube URL detected</p>
                         <p className="text-xs text-green-600">Video ID: {getYouTubeVideoId(videoLink)}</p>
+                        <p className="text-xs text-gray-600 mt-1">Preview: {getEmbedUrl(videoLink)}</p>
+                      </div>
+                    )}
+                    {videoLink && !getYouTubeVideoId(videoLink) && videoLink.length > 10 && (
+                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-sm text-yellow-700">⚠️ URL format not recognized</p>
+                        <p className="text-xs text-yellow-600">Make sure it's a valid YouTube URL</p>
                       </div>
                     )}
                   </div>
