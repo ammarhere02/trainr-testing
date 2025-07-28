@@ -53,6 +53,8 @@ By the end of this lesson, you'll understand how to create reusable components t
   const [showLessonMenu, setShowLessonMenu] = useState(false);
   const [activeLessonMenu, setActiveLessonMenu] = useState<number | null>(null);
   const [showThumbnail, setShowThumbnail] = useState(true);
+  const [editingLessonId, setEditingLessonId] = useState<number | null>(null);
+  const [editingLessonTitle, setEditingLessonTitle] = useState('');
   
   // Mock library videos
   const [libraryVideos] = useState([
@@ -312,6 +314,35 @@ By the end of this lesson, you'll understand how to create reusable components t
     setActiveLessonMenu(null);
   };
 
+  const startEditingLesson = (lessonId: number, currentTitle: string) => {
+    setEditingLessonId(lessonId);
+    setEditingLessonTitle(currentTitle);
+    setActiveLessonMenu(null);
+  };
+
+  const saveEditingLesson = () => {
+    if (editingLessonId && editingLessonTitle.trim()) {
+      setCourse(prev => ({
+        ...prev,
+        modules: prev.modules.map(module => ({
+          ...module,
+          lessons: module.lessons.map(lesson =>
+            lesson.id === editingLessonId 
+              ? { ...lesson, title: editingLessonTitle.trim() }
+              : lesson
+          )
+        }))
+      }));
+    }
+    setEditingLessonId(null);
+    setEditingLessonTitle('');
+  };
+
+  const cancelEditingLesson = () => {
+    setEditingLessonId(null);
+    setEditingLessonTitle('');
+  };
+
   const isValidVideoLink = (url: string) => {
     const videoPatterns = [
       /youtube\.com\/watch\?v=|youtu\.be\//,
@@ -520,7 +551,38 @@ By the end of this lesson, you'll understand how to create reusable components t
                               )}
                             </div>
                             <div>
-                              <div className="font-medium text-gray-900 text-sm">{lesson.title}</div>
+                              {editingLessonId === lesson.id ? (
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="text"
+                                    value={editingLessonTitle}
+                                    onChange={(e) => setEditingLessonTitle(e.target.value)}
+                                    onKeyPress={(e) => {
+                                      if (e.key === 'Enter') {
+                                        saveEditingLesson();
+                                      } else if (e.key === 'Escape') {
+                                        cancelEditingLesson();
+                                      }
+                                    }}
+                                    className="font-medium text-gray-900 text-sm bg-white border border-purple-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    autoFocus
+                                  />
+                                  <button
+                                    onClick={saveEditingLesson}
+                                    className="text-green-600 hover:text-green-700"
+                                  >
+                                    <CheckCircle className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={cancelEditingLesson}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="font-medium text-gray-900 text-sm">{lesson.title}</div>
+                              )}
                               <div className="text-xs text-gray-600">{lesson.duration}</div>
                             </div>
                           </div>
@@ -546,6 +608,12 @@ By the end of this lesson, you'll understand how to create reusable components t
                                     onClick={() => setActiveLessonMenu(null)}
                                   />
                                   <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                                    <button
+                                      onClick={() => startEditingLesson(lesson.id, lesson.title)}
+                                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
+                                      Edit Name
+                                    </button>
                                     <button
                                       onClick={() => moveLessonUp(lesson.id)}
                                       disabled={module.lessons.findIndex(l => l.id === lesson.id) === 0}
