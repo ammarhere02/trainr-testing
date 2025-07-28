@@ -511,43 +511,48 @@ By the end of this lesson, you'll understand how to create reusable components t
                             >
                               <MoreHorizontal className="w-4 h-4" />
                             </button>
-                          </div>
-                          {userRole === 'educator' && (
-                            {/* Lesson Menu Dropdown */}
-                            {activeLessonMenu === lesson.id && (
-                              <>
-                                <div 
-                                  className="fixed inset-0 z-10"
-                                  onClick={() => setActiveLessonMenu(null)}
-                                />
-                                <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                                  <button
-                                    onClick={() => moveLessonUp(lesson.id)}
-                                    disabled={module.lessons.findIndex(l => l.id === lesson.id) === 0}
-                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                  >
-                                    Move Up
-                                  </button>
-                                  <button
-                                    onClick={() => moveLessonDown(lesson.id)}
-                                    disabled={module.lessons.findIndex(l => l.id === lesson.id) === module.lessons.length - 1}
-                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                  >
-                                    Move Down
-                                  </button>
-                                  <button
-                                    onClick={() => duplicateLesson(lesson.id)}
-                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                  >
-                                    Duplicate
-                                  </button>
-                                  <hr className="my-1 border-gray-200" />
-                                  <button
-                                    onClick={() => deleteLesson(lesson.id)}
-                                    className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                  >
-                                    Delete
                           )}
+                          {userRole === 'educator' && (
+                            <div className="relative">
+                              {/* Lesson Menu Dropdown */}
+                              {activeLessonMenu === lesson.id && (
+                                <>
+                                  <div 
+                                    className="fixed inset-0 z-10"
+                                    onClick={() => setActiveLessonMenu(null)}
+                                  />
+                                  <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                                    <button
+                                      onClick={() => moveLessonUp(lesson.id)}
+                                      disabled={module.lessons.findIndex(l => l.id === lesson.id) === 0}
+                                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                      Move Up
+                                    </button>
+                                    <button
+                                      onClick={() => moveLessonDown(lesson.id)}
+                                      disabled={module.lessons.findIndex(l => l.id === lesson.id) === module.lessons.length - 1}
+                                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                      Move Down
+                                    </button>
+                                    <button
+                                      onClick={() => duplicateLesson(lesson.id)}
+                                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
+                                      Duplicate
+                                    </button>
+                                    <hr className="my-1 border-gray-200" />
+                                    <button
+                                      onClick={() => deleteLesson(lesson.id)}
+                                      className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
                           )}
                         </button>
                       ))}
@@ -715,170 +720,170 @@ By the end of this lesson, you'll understand how to create reusable components t
             className="fixed inset-0 z-40"
             onClick={() => setActiveLessonMenu(null)}
           />
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        </>
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-6">Edit Video</h3>
-              
-              <div className="space-y-6">
-                {/* Video Source Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Video Source
-                  </label>
-                  <div className="grid grid-cols-3 gap-3">
-                    <button
-                      onClick={() => setVideoSource('link')}
-                      className={`p-4 border-2 rounded-lg text-center transition-all ${
-                        videoSource === 'link'
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <Link className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-                      <span className="text-sm font-medium">Video Link</span>
-                    </button>
-                    <button
-                      onClick={() => setVideoSource('upload')}
-                      className={`p-4 border-2 rounded-lg text-center transition-all ${
-                        videoSource === 'upload'
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <Upload className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-                      <span className="text-sm font-medium">Upload</span>
-                    </button>
-                    <button
-                      onClick={() => setVideoSource('library')}
-                      className={`p-4 border-2 rounded-lg text-center transition-all ${
-                        videoSource === 'library'
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <Video className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-                      <span className="text-sm font-medium">Library</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Video Link Input */}
-                {videoSource === 'link' && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-6">Edit Video</h3>
+                
+                <div className="space-y-6">
+                  {/* Video Source Selection */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Video URL
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Video Source
                     </label>
-                    <input
-                      type="url"
-                      value={videoLink}
-                      onChange={(e) => setVideoLink(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="https://www.youtube.com/watch?v=..."
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Supports YouTube, Vimeo, Wistia, and Loom
-                    </p>
-                    {videoLink && getYouTubeVideoId(videoLink) && (
-                      <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <p className="text-sm text-green-700">✓ Valid YouTube URL detected</p>
-                        <p className="text-xs text-green-600">Video ID: {getYouTubeVideoId(videoLink)}</p>
-                        <p className="text-xs text-gray-600 mt-1">Embed URL: {getEmbedUrl(videoLink)}</p>
-                      </div>
-                    )}
-                    {videoLink && !isValidVideoUrl(videoLink) && videoLink.length > 10 && (
-                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-sm text-yellow-700">⚠️ URL format not recognized</p>
-                        <p className="text-xs text-yellow-600">Make sure it's a valid YouTube or Vimeo URL</p>
-                      </div>
-                    )}
-                    
-                    {/* Live Preview */}
-                    {videoLink && isValidVideoUrl(videoLink) && (
-                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-sm text-blue-700 mb-2">Preview:</p>
-                        <div className="bg-black rounded-lg overflow-hidden">
-                          <div className="aspect-video">
-                            <iframe
-                              src={getEmbedUrl(videoLink)}
-                              className="w-full h-full"
-                              frameBorder="0"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowFullScreen
-                              title="Video Preview"
-                            />
+                    <div className="grid grid-cols-3 gap-3">
+                      <button
+                        onClick={() => setVideoSource('link')}
+                        className={`p-4 border-2 rounded-lg text-center transition-all ${
+                          videoSource === 'link'
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <Link className="w-6 h-6 mx-auto mb-2 text-purple-600" />
+                        <span className="text-sm font-medium">Video Link</span>
+                      </button>
+                      <button
+                        onClick={() => setVideoSource('upload')}
+                        className={`p-4 border-2 rounded-lg text-center transition-all ${
+                          videoSource === 'upload'
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <Upload className="w-6 h-6 mx-auto mb-2 text-purple-600" />
+                        <span className="text-sm font-medium">Upload</span>
+                      </button>
+                      <button
+                        onClick={() => setVideoSource('library')}
+                        className={`p-4 border-2 rounded-lg text-center transition-all ${
+                          videoSource === 'library'
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <Video className="w-6 h-6 mx-auto mb-2 text-purple-600" />
+                        <span className="text-sm font-medium">Library</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Video Link Input */}
+                  {videoSource === 'link' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Video URL
+                      </label>
+                      <input
+                        type="url"
+                        value={videoLink}
+                        onChange={(e) => setVideoLink(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        placeholder="https://www.youtube.com/watch?v=..."
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Supports YouTube, Vimeo, Wistia, and Loom
+                      </p>
+                      {videoLink && getYouTubeVideoId(videoLink) && (
+                        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-sm text-green-700">✓ Valid YouTube URL detected</p>
+                          <p className="text-xs text-green-600">Video ID: {getYouTubeVideoId(videoLink)}</p>
+                          <p className="text-xs text-gray-600 mt-1">Embed URL: {getEmbedUrl(videoLink)}</p>
+                        </div>
+                      )}
+                      {videoLink && !isValidVideoUrl(videoLink) && videoLink.length > 10 && (
+                        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <p className="text-sm text-yellow-700">⚠️ URL format not recognized</p>
+                          <p className="text-xs text-yellow-600">Make sure it's a valid YouTube or Vimeo URL</p>
+                        </div>
+                      )}
+                      
+                      {/* Live Preview */}
+                      {videoLink && isValidVideoUrl(videoLink) && (
+                        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <p className="text-sm text-blue-700 mb-2">Preview:</p>
+                          <div className="bg-black rounded-lg overflow-hidden">
+                            <div className="aspect-video">
+                              <iframe
+                                src={getEmbedUrl(videoLink)}
+                                className="w-full h-full"
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                title="Video Preview"
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  )}
 
-                {/* File Upload */}
-                {videoSource === 'upload' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Upload Video File
-                    </label>
-                    <input
-                      type="file"
-                      accept="video/*"
-                      onChange={(e) => setUploadedFile(e.target.files?.[0] || null)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    />
-                    {uploadedFile && (
-                      <p className="text-sm text-green-600 mt-2">
-                        Selected: {uploadedFile.name}
-                      </p>
-                    )}
-                  </div>
-                )}
+                  {/* File Upload */}
+                  {videoSource === 'upload' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Upload Video File
+                      </label>
+                      <input
+                        type="file"
+                        accept="video/*"
+                        onChange={(e) => setUploadedFile(e.target.files?.[0] || null)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      />
+                      {uploadedFile && (
+                        <p className="text-sm text-green-600 mt-2">
+                          Selected: {uploadedFile.name}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
-                {/* Library Selection */}
-                {videoSource === 'library' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Choose from Library
-                    </label>
-                    <select
-                      value={selectedLibraryVideo}
-                      onChange={(e) => setSelectedLibraryVideo(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    >
-                      <option value="">Select a video</option>
-                      {libraryVideos.map((video) => (
-                        <option key={video.id} value={video.id.toString()}>
-                          {video.title} ({video.duration})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
+                  {/* Library Selection */}
+                  {videoSource === 'library' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Choose from Library
+                      </label>
+                      <select
+                        value={selectedLibraryVideo}
+                        onChange={(e) => setSelectedLibraryVideo(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      >
+                        <option value="">Select a video</option>
+                        {libraryVideos.map((video) => (
+                          <option key={video.id} value={video.id.toString()}>
+                            {video.title} ({video.duration})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
 
-              <div className="flex justify-end space-x-3 mt-8">
-                <button
-                  onClick={closeVideoModal}
-                  className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleVideoSave}
-                  disabled={
-                    (videoSource === 'link' && !videoLink) ||
-                    (videoSource === 'upload' && !uploadedFile) ||
-                    (videoSource === 'library' && !selectedLibraryVideo)
-                  }
-                  className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Add Video
-                </button>
+                <div className="flex justify-end space-x-3 mt-8">
+                  <button
+                    onClick={closeVideoModal}
+                    className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleVideoSave}
+                    disabled={
+                      (videoSource === 'link' && !videoLink) ||
+                      (videoSource === 'upload' && !uploadedFile) ||
+                      (videoSource === 'library' && !selectedLibraryVideo)
+                    }
+                    className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Add Video
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
