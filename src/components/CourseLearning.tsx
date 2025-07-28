@@ -165,6 +165,7 @@ By the end of this lesson, you'll understand how to create reusable components t
     }
 
     if (newVideoUrl) {
+      // Update the course data with the new video URL
       setCourse(prev => ({
         ...prev,
         modules: prev.modules.map(module => ({
@@ -174,9 +175,6 @@ By the end of this lesson, you'll understand how to create reusable components t
           )
         }))
       }));
-      
-      // Force re-render of video player by updating current video source
-      setCurrentVideoSource(newVideoUrl);
     }
 
     setShowVideoEditModal(false);
@@ -236,14 +234,27 @@ By the end of this lesson, you'll understand how to create reusable components t
   };
 
   const getYouTubeVideoId = (url: string) => {
-    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/;
     const match = url.match(regex);
     return match ? match[1] : null;
   };
 
   const getEmbedUrl = (url: string) => {
+    if (!url) return '';
+    
+    // If it's already an embed URL, return as is
+    if (url.includes('youtube.com/embed/')) {
+      return url;
+    }
+    
+    // Convert YouTube watch URL to embed URL
     const videoId = getYouTubeVideoId(url);
-    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`;
+    }
+    
+    // For other video platforms, return the original URL
+    return url;
   };
 
   const toggleModuleExpansion = (moduleId: number) => {
@@ -396,7 +407,7 @@ By the end of this lesson, you'll understand how to create reusable components t
         <div className="lg:col-span-3">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
             <div className="relative bg-black aspect-video">
-              {currentLessonData?.videoUrl ? (
+              {currentLessonData?.videoUrl && getEmbedUrl(currentLessonData.videoUrl) ? (
                 <iframe
                   src={getEmbedUrl(currentLessonData.videoUrl)}
                   className="w-full h-full"
@@ -404,6 +415,7 @@ By the end of this lesson, you'll understand how to create reusable components t
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                   title={currentLessonData.title}
+                  key={currentLessonData.videoUrl} // Force re-render when URL changes
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -572,6 +584,12 @@ By the end of this lesson, you'll understand how to create reusable components t
                     <p className="text-xs text-gray-500 mt-1">
                       Supports YouTube, Vimeo, Wistia, and Loom
                     </p>
+                    {videoLink && getYouTubeVideoId(videoLink) && (
+                      <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-sm text-green-700">✓ Valid YouTube URL detected</p>
+                        <p className="text-xs text-green-600">Video ID: {getYouTubeVideoId(videoLink)}</p>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -633,7 +651,7 @@ By the end of this lesson, you'll understand how to create reusable components t
                   }
                   className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Save Video
+                  Add Video
                 </button>
               </div>
             </div>
