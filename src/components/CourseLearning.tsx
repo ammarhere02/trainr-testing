@@ -464,28 +464,56 @@ By the end of this lesson, you'll understand how to create reusable components t
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center text-white">
                       <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            {currentLessonData?.videoUrl && getEmbedUrl(currentLessonData.videoUrl) ? (
+                      <p className="text-xl mb-2">
+                        {currentLessonData?.videoUrl ? 'Invalid video URL' : 'No video available'}
+                      </p>
+                      {currentLessonData?.videoUrl && (
+                        <p className="text-sm opacity-75 mb-4">Please check the video URL format</p>
+                      )}
+                      {userRole === 'educator' && (
+                        <button
                           onClick={handleVideoEdit}
                           className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
                         >
-                          Fix Video URL
+                          {currentLessonData?.videoUrl ? 'Fix Video URL' : 'Add Video'}
                         </button>
                       )}
                     </div>
                   </div>
                 )
-                <div className="flex items-center">
-                  <Clock className="w-4 h-4 mr-1" />
-                  {currentLessonData?.duration}
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center text-white">
+                    <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    <p className="text-xl mb-2">No video available</p>
+                    {userRole === 'educator' && (
+                      <button
+                        onClick={handleVideoEdit}
+                        className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                      >
+                        Add Video
+                      </button>
+                    )}
+                  </div>
                 </div>
-                  <p className="text-xl mb-2">
-                    {currentLessonData?.videoUrl ? 'Invalid video URL' : 'No video available'}
-                  </p>
-                  {currentLessonData?.videoUrl && (
-                    <p className="text-sm opacity-75 mb-4">Please check the video URL format</p>
-                  )}
-                  <Users className="w-4 h-4 mr-1" />
-                  2,847 students
+              )}
+            </div>
+            
+            {/* Video Info */}
+            <div className="p-4 border-t border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                {currentLessonData?.title}
+              </h2>
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center">
+                    <Clock className="w-4 h-4 mr-1" />
+                    {currentLessonData?.duration}
+                  </div>
+                  <div className="flex items-center">
+                    <Users className="w-4 h-4 mr-1" />
+                    2,847 students
+                  </div>
                 </div>
                 <div className="flex items-center">
                   <Star className="w-4 h-4 mr-1 text-yellow-400 fill-current" />
@@ -537,7 +565,7 @@ By the end of this lesson, you'll understand how to create reusable components t
             ) : (
               <div className="prose max-w-none text-gray-700">
                 {lessonContent.split('\n\n').map((paragraph, index) => (
-                      {currentLessonData?.videoUrl ? 'Fix Video URL' : 'Add Video'}
+                  <p key={index} className="mb-4">
                     {paragraph}
                   </p>
                 ))}
