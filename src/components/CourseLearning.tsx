@@ -51,6 +51,7 @@ export default function CourseLearning({ courseId, onBack, userRole = 'student' 
 By the end of this lesson, you'll understand how to create reusable components that can receive and display different data, and how to handle user interactions that change the component's appearance or behavior.`);
   const [tempLessonContent, setTempLessonContent] = useState(lessonContent);
   const [showLessonMenu, setShowLessonMenu] = useState(false);
+  const [activeLessonMenu, setActiveLessonMenu] = useState<number | null>(null);
   
   // Mock library videos
   const [libraryVideos] = useState([
@@ -221,6 +222,88 @@ By the end of this lesson, you'll understand how to create reusable components t
   const handleCancelEditLessonContent = () => {
     setTempLessonContent(lessonContent);
     setIsEditingLessonContent(false);
+  };
+
+  const moveLessonUp = (lessonId: number) => {
+    setCourse(prev => ({
+      ...prev,
+      modules: prev.modules.map(module => {
+        const lessonIndex = module.lessons.findIndex(lesson => lesson.id === lessonId);
+        if (lessonIndex > 0) {
+          const newLessons = [...module.lessons];
+          [newLessons[lessonIndex - 1], newLessons[lessonIndex]] = [newLessons[lessonIndex], newLessons[lessonIndex - 1]];
+          return { ...module, lessons: newLessons };
+        }
+        return module;
+      })
+    }));
+    setActiveLessonMenu(null);
+  };
+
+  const moveLessonDown = (lessonId: number) => {
+    setCourse(prev => ({
+      ...prev,
+      modules: prev.modules.map(module => {
+        const lessonIndex = module.lessons.findIndex(lesson => lesson.id === lessonId);
+        if (lessonIndex < module.lessons.length - 1 && lessonIndex !== -1) {
+          const newLessons = [...module.lessons];
+          [newLessons[lessonIndex], newLessons[lessonIndex + 1]] = [newLessons[lessonIndex + 1], newLessons[lessonIndex]];
+          return { ...module, lessons: newLessons };
+        }
+        return module;
+      })
+    }));
+    setActiveLessonMenu(null);
+  };
+
+  const deleteLesson = (lessonId: number) => {
+    if (confirm('Are you sure you want to delete this lesson?')) {
+      setCourse(prev => ({
+        ...prev,
+        modules: prev.modules.map(module => ({
+          ...module,
+          lessons: module.lessons.filter(lesson => lesson.id !== lessonId)
+        }))
+      }));
+      
+      // If we're deleting the current lesson, switch to the first available lesson
+      if (currentLessonId === lessonId) {
+        const firstLesson = course.modules.flatMap(m => m.lessons).find(l => l.id !== lessonId);
+        if (firstLesson) {
+          setCurrentLessonId(firstLesson.id);
+        }
+      }
+    }
+    setActiveLessonMenu(null);
+  };
+
+  const duplicateLesson = (lessonId: number) => {
+    const lessonToDuplicate = course.modules
+      .flatMap(module => module.lessons)
+      .find(lesson => lesson.id === lessonId);
+    
+    if (lessonToDuplicate) {
+      const newLesson = {
+        ...lessonToDuplicate,
+        id: Date.now(),
+        title: `${lessonToDuplicate.title} (Copy)`,
+        completed: false
+      };
+      
+      setCourse(prev => ({
+        ...prev,
+        modules: prev.modules.map(module => {
+          const lessonIndex = module.lessons.findIndex(lesson => lesson.id === lessonId);
+          if (lessonIndex !== -1) {
+            const newLessons = [...module.lessons];
+            newLessons.splice(lessonIndex + 1, 0, newLesson);
+            return { ...module, lessons: newLessons };
+          }
+          return module;
+        })
+      }));
+    }
+    setActiveLessonMenu(null);
   };
 
   const isValidVideoLink = (url: string) => {
@@ -421,14 +504,52 @@ By the end of this lesson, you'll understand how to create reusable components t
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                // Handle lesson menu actions here
-                                console.log('Lesson menu clicked for:', lesson.title);
+                                setActiveLessonMenu(activeLessonMenu === lesson.id ? null : lesson.id);
                               }}
                               className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
                               title="Lesson options"
                             >
                               <MoreHorizontal className="w-4 h-4" />
                             </button>
+                            
+                            {/* Lesson Menu Dropdown */}
+                            {activeLessonMenu === lesson.id && (
+                              <>
+                                <div 
+                                  className="fixed inset-0 z-10"
+                                  onClick={() => setActiveLessonMenu(null)}
+                                />
+                                <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                                  <button
+                                    onClick={() => moveLessonUp(lesson.id)}
+                                    disabled={module.lessons.findIndex(l => l.id === lesson.id) === 0}
+                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    Move Up
+                                  </button>
+                                  <button
+                                    onClick={() => moveLessonDown(lesson.id)}
+                                    disabled={module.lessons.findIndex(l => l.id === lesson.id) === module.lessons.length - 1}
+                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    Move Down
+                                  </button>
+                                  <button
+                                    onClick={() => duplicateLesson(lesson.id)}
+                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                  >
+                                    Duplicate
+                                  </button>
+                                  <hr className="my-1 border-gray-200" />
+                                  <button
+                                    onClick={() => deleteLesson(lesson.id)}
+                                    className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </>
+                            )}
                           )}
                         </button>
                       ))}
@@ -590,7 +711,14 @@ By the end of this lesson, you'll understand how to create reusable components t
 
       {/* Video Edit Modal */}
       {showVideoEditModal && (
+        <>
+          {/* Backdrop to close lesson menu */}
+          <div 
+            className="fixed inset-0 z-40"
+            onClick={() => setActiveLessonMenu(null)}
+          />
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        </>
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-6">Edit Video</h3>
