@@ -511,7 +511,8 @@ By the end of this lesson, you'll understand how to create reusable components t
                             >
                               <MoreHorizontal className="w-4 h-4" />
                             </button>
-                            
+                          </div>
+                          {userRole === 'educator' && (
                             {/* Lesson Menu Dropdown */}
                             {activeLessonMenu === lesson.id && (
                               <>
@@ -546,10 +547,7 @@ By the end of this lesson, you'll understand how to create reusable components t
                                     className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                                   >
                                     Delete
-                                  </button>
-                                </div>
-                              </>
-                            )}
+                          )}
                           )}
                         </button>
                       ))}
