@@ -174,6 +174,9 @@ By the end of this lesson, you'll understand how to create reusable components t
           )
         }))
       }));
+      
+      // Force re-render of video player by updating current video source
+      setCurrentVideoSource(newVideoUrl);
     }
 
     setShowVideoEditModal(false);
