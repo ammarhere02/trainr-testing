@@ -364,6 +364,24 @@ By the end of this lesson, you'll understand how to create reusable components t
     return '';
   };
 
+  const getThumbnailUrl = (url: string) => {
+    if (!url) return '';
+    
+    // YouTube thumbnail
+    const youtubeId = getYouTubeVideoId(url);
+    if (youtubeId) {
+      return `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+    }
+    
+    // Vimeo thumbnail (would need API call in real app)
+    const vimeoId = getVimeoVideoId(url);
+    if (vimeoId) {
+      return `https://vumbnail.com/${vimeoId}.jpg`;
+    }
+    
+    return '';
+  };
+
   const toggleModuleExpansion = (moduleId: number) => {
     setExpandedModules(prev => ({
       ...prev,
@@ -571,15 +589,38 @@ By the end of this lesson, you'll understand how to create reusable components t
               {currentLessonData?.videoUrl ? (
                 isValidVideoUrl(currentLessonData.videoUrl) ? (
                 getEmbedUrl(currentLessonData.videoUrl) ? (
-                <iframe
-                  src={getEmbedUrl(currentLessonData.videoUrl)}
-                  className="w-full h-full"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title={currentLessonData.title}
-                  key={currentLessonData.videoUrl} // Force re-render when URL changes
-                />
+                <div className="relative w-full h-full">
+                  <iframe
+                    src={getEmbedUrl(currentLessonData.videoUrl)}
+                    className="w-full h-full"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title={currentLessonData.title}
+                    key={currentLessonData.videoUrl} // Force re-render when URL changes
+                  />
+                  {/* Thumbnail overlay for initial load */}
+                  {getThumbnailUrl(currentLessonData.videoUrl) && (
+                    <div className="absolute inset-0 bg-black">
+                      <img
+                        src={getThumbnailUrl(currentLessonData.videoUrl)}
+                        alt="Video thumbnail"
+                        className="w-full h-full object-cover"
+                        onLoad={(e) => {
+                          // Hide thumbnail after iframe loads
+                          setTimeout(() => {
+                            e.currentTarget.parentElement?.remove();
+                          }, 1000);
+                        }}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="bg-red-600 rounded-full p-4">
+                          <Play className="w-8 h-8 text-white ml-1" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center text-white">
@@ -802,16 +843,34 @@ By the end of this lesson, you'll understand how to create reusable components t
                       {videoLink && isValidVideoUrl(videoLink) && (
                         <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                           <p className="text-sm text-blue-700 mb-2">Preview:</p>
-                          <div className="bg-black rounded-lg overflow-hidden">
+                          <div className="bg-black rounded-lg overflow-hidden relative">
                             <div className="aspect-video">
-                              <iframe
-                                src={getEmbedUrl(videoLink)}
-                                className="w-full h-full"
-                                frameBorder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                title="Video Preview"
-                              />
+                              {getThumbnailUrl(videoLink) ? (
+                                <div className="relative w-full h-full">
+                                  <img
+                                    src={getThumbnailUrl(videoLink)}
+                                    alt="Video thumbnail"
+                                    className="w-full h-full object-cover"
+                                  />
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="bg-red-600 rounded-full p-3">
+                                      <Play className="w-6 h-6 text-white ml-0.5" />
+                                    </div>
+                                  </div>
+                                  <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                                    Preview
+                                  </div>
+                                </div>
+                              ) : (
+                                <iframe
+                                  src={getEmbedUrl(videoLink)}
+                                  className="w-full h-full"
+                                  frameBorder="0"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                  title="Video Preview"
+                                />
+                              )}
                             </div>
                           </div>
                         </div>
