@@ -234,7 +234,54 @@ By the end of this lesson, you'll understand how to create reusable components t
   };
 
   const getYouTubeVideoId = (url: string) => {
-    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    if (!url) return null;
+    
+    // Handle different YouTube URL formats
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
+      /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+      /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+      /(?:youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) return match[1];
+    }
+    
+    return null;
+  };
+
+  const getVimeoVideoId = (url: string) => {
+    const match = url.match(/vimeo\.com\/(\d+)/);
+    return match ? match[1] : null;
+  };
+
+  const isValidVideoUrl = (url: string) => {
+    if (!url) return false;
+    return getYouTubeVideoId(url) !== null || getVimeoVideoId(url) !== null;
+  };
+
+  const getEmbedUrl = (url: string) => {
+    if (!url) return '';
+    
+    // YouTube
+    const youtubeId = getYouTubeVideoId(url);
+    if (youtubeId) {
+      return `https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1&showinfo=0`;
+    }
+    
+    // Vimeo
+    const vimeoId = getVimeoVideoId(url);
+    if (vimeoId) {
+      return `https://player.vimeo.com/video/${vimeoId}`;
+    }
+    
+    // Return empty string for invalid URLs
+    return '';
+  };
+
+  const getEmbedUrl_OLD = (url: string) => {
     const match = url.match(regex);
     return match ? match[1] : null;
   };
@@ -408,6 +455,7 @@ By the end of this lesson, you'll understand how to create reusable components t
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
             <div className="relative bg-black aspect-video">
               {currentLessonData?.videoUrl ? (
+                isValidVideoUrl(currentLessonData.videoUrl) ? (
                 getEmbedUrl(currentLessonData.videoUrl) ? (
                 <iframe
                   src={getEmbedUrl(currentLessonData.videoUrl)}
@@ -418,6 +466,23 @@ By the end of this lesson, you'll understand how to create reusable components t
                   title={currentLessonData.title}
                   key={currentLessonData.videoUrl} // Force re-render when URL changes
                 />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center text-white">
+                      <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                      <p className="text-xl mb-2">Invalid video URL</p>
+                      <p className="text-sm opacity-75 mb-4">Please check the video URL format</p>
+                      {userRole === 'educator' && (
+                        <button
+                          onClick={handleVideoEdit}
+                          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                        >
+                          Fix Video URL
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center text-white">
@@ -606,12 +671,19 @@ By the end of this lesson, you'll understand how to create reusable components t
                         <p className="text-sm text-green-700">✓ Valid YouTube URL detected</p>
                         <p className="text-xs text-green-600">Video ID: {getYouTubeVideoId(videoLink)}</p>
                         <p className="text-xs text-gray-600 mt-1">Preview: {getEmbedUrl(videoLink)}</p>
+                        <p className="text-xs text-gray-600 mt-1">Preview: {getEmbedUrl(videoLink)}</p>
                       </div>
                     )}
                     {videoLink && !getYouTubeVideoId(videoLink) && videoLink.length > 10 && (
                       <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                         <p className="text-sm text-yellow-700">⚠️ URL format not recognized</p>
                         <p className="text-xs text-yellow-600">Make sure it's a valid YouTube URL</p>
+                      </div>
+                    )}
+                    {videoLink && !isValidVideoUrl(videoLink) && videoLink.length > 10 && (
+                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-sm text-yellow-700">⚠️ URL format not recognized</p>
+                        <p className="text-xs text-yellow-600">Make sure it's a valid YouTube or Vimeo URL</p>
                       </div>
                     )}
                   </div>
