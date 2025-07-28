@@ -464,9 +464,7 @@ By the end of this lesson, you'll understand how to create reusable components t
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center text-white">
                       <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                      <p className="text-xl mb-2">Invalid video URL</p>
-                      {userRole === 'educator' && (
-                        <button
+            {currentLessonData?.videoUrl && getEmbedUrl(currentLessonData.videoUrl) ? (
                           onClick={handleVideoEdit}
                           className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
                         >
@@ -476,44 +474,16 @@ By the end of this lesson, you'll understand how to create reusable components t
                     </div>
                   </div>
                 )
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-xl mb-2">No video available</p>
-                    {userRole === 'educator' && (
-                      <button
-                        onClick={handleVideoEdit}
-                        className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-                      >
-                        Add Video
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-              
-              {userRole === 'educator' && (
-                <div className="absolute top-4 right-4">
-                  <button
-                    onClick={handleVideoEdit}
-                    className="bg-black/70 hover:bg-black/80 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center"
-                  >
-                    <Edit3 className="w-4 h-4 mr-2" />
-                    Edit Video
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">{currentLessonData?.title}</h2>
-              <div className="flex items-center space-x-4 text-sm text-gray-600">
                 <div className="flex items-center">
                   <Clock className="w-4 h-4 mr-1" />
                   {currentLessonData?.duration}
                 </div>
-                <div className="flex items-center">
+                  <p className="text-xl mb-2">
+                    {currentLessonData?.videoUrl ? 'Invalid video URL' : 'No video available'}
+                  </p>
+                  {currentLessonData?.videoUrl && (
+                    <p className="text-sm opacity-75 mb-4">Please check the video URL format</p>
+                  )}
                   <Users className="w-4 h-4 mr-1" />
                   2,847 students
                 </div>
@@ -567,7 +537,7 @@ By the end of this lesson, you'll understand how to create reusable components t
             ) : (
               <div className="prose max-w-none text-gray-700">
                 {lessonContent.split('\n\n').map((paragraph, index) => (
-                  <p key={index} className={index > 0 ? 'mt-4' : ''}>
+                      {currentLessonData?.videoUrl ? 'Fix Video URL' : 'Add Video'}
                     {paragraph}
                   </p>
                 ))}
@@ -647,20 +617,32 @@ By the end of this lesson, you'll understand how to create reusable components t
                       <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                         <p className="text-sm text-green-700">✓ Valid YouTube URL detected</p>
                         <p className="text-xs text-green-600">Video ID: {getYouTubeVideoId(videoLink)}</p>
-                        <p className="text-xs text-gray-600 mt-1">Preview: {getEmbedUrl(videoLink)}</p>
-                        <p className="text-xs text-gray-600 mt-1">Preview: {getEmbedUrl(videoLink)}</p>
-                      </div>
-                    )}
-                    {videoLink && !getYouTubeVideoId(videoLink) && videoLink.length > 10 && (
-                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-sm text-yellow-700">⚠️ URL format not recognized</p>
-                        <p className="text-xs text-yellow-600">Make sure it's a valid YouTube URL</p>
+                        <p className="text-xs text-gray-600 mt-1">Embed URL: {getEmbedUrl(videoLink)}</p>
                       </div>
                     )}
                     {videoLink && !isValidVideoUrl(videoLink) && videoLink.length > 10 && (
                       <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                         <p className="text-sm text-yellow-700">⚠️ URL format not recognized</p>
                         <p className="text-xs text-yellow-600">Make sure it's a valid YouTube or Vimeo URL</p>
+                      </div>
+                    )}
+                    
+                    {/* Live Preview */}
+                    {videoLink && isValidVideoUrl(videoLink) && (
+                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-sm text-blue-700 mb-2">Preview:</p>
+                        <div className="bg-black rounded-lg overflow-hidden">
+                          <div className="aspect-video">
+                            <iframe
+                              src={getEmbedUrl(videoLink)}
+                              className="w-full h-full"
+                              frameBorder="0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                              title="Video Preview"
+                            />
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
