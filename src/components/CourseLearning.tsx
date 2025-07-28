@@ -334,6 +334,61 @@ By the end of this lesson, you'll understand how to create reusable components t
       </div>
 
       <div className="grid lg:grid-cols-4 gap-6 p-6">
+        {/* Course Sidebar */}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Course Content</h3>
+            
+            <div className="space-y-4">
+              {course.modules.map((module) => (
+                <div key={module.id} className="border border-gray-200 rounded-lg">
+                  <button
+                    onClick={() => toggleModuleExpansion(module.id)}
+                    className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="font-medium text-gray-900">{module.title}</span>
+                    {expandedModules[module.id] ? (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-gray-500" />
+                    )}
+                  </button>
+                  
+                  {expandedModules[module.id] && (
+                    <div className="border-t border-gray-200">
+                      {module.lessons.map((lesson) => (
+                        <button
+                          key={lesson.id}
+                          onClick={() => setCurrentLessonId(lesson.id)}
+                          className={`w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors ${
+                            currentLessonId === lesson.id ? 'bg-purple-50 border-l-4 border-purple-500' : ''
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                              lesson.completed ? 'bg-green-500' : 'bg-gray-300'
+                            }`}>
+                              {lesson.completed ? (
+                                <CheckCircle className="w-4 h-4 text-white" />
+                              ) : (
+                                <Play className="w-3 h-3 text-white" />
+                              )}
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-900 text-sm">{lesson.title}</div>
+                              <div className="text-xs text-gray-600">{lesson.duration}</div>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Video Player */}
         <div className="lg:col-span-3">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
@@ -444,61 +499,6 @@ By the end of this lesson, you'll understand how to create reusable components t
                 ))}
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Course Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Course Content</h3>
-            
-            <div className="space-y-4">
-              {course.modules.map((module) => (
-                <div key={module.id} className="border border-gray-200 rounded-lg">
-                  <button
-                    onClick={() => toggleModuleExpansion(module.id)}
-                    className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
-                  >
-                    <span className="font-medium text-gray-900">{module.title}</span>
-                    {expandedModules[module.id] ? (
-                      <ChevronDown className="w-4 h-4 text-gray-500" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-gray-500" />
-                    )}
-                  </button>
-                  
-                  {expandedModules[module.id] && (
-                    <div className="border-t border-gray-200">
-                      {module.lessons.map((lesson) => (
-                        <button
-                          key={lesson.id}
-                          onClick={() => setCurrentLessonId(lesson.id)}
-                          className={`w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors ${
-                            currentLessonId === lesson.id ? 'bg-purple-50 border-l-4 border-purple-500' : ''
-                          }`}
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                              lesson.completed ? 'bg-green-500' : 'bg-gray-300'
-                            }`}>
-                              {lesson.completed ? (
-                                <CheckCircle className="w-4 h-4 text-white" />
-                              ) : (
-                                <Play className="w-3 h-3 text-white" />
-                              )}
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-900 text-sm">{lesson.title}</div>
-                              <div className="text-xs text-gray-600">{lesson.duration}</div>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </div>
