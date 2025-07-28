@@ -939,107 +939,96 @@ export default function CourseLearning({ courseId, onBack, userRole = 'student' 
               </div>
 
               <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Video Source
+                    </label>
+                    <select
+                      value={videoSource}
+                      onChange={(e) => setVideoSource(e.target.value as 'link' | 'upload' | 'library')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    >
+                      <option value="link">Video Link</option>
+                      <option value="upload">Upload File</option>
+                      <option value="library">From Library</option>
+                    </select>
+                  </div>
+                </div>
+
                 {/* Video Link Input */}
-                <div>
-                  <div className="relative">
-                    <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                {videoSource === 'link' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Video URL
+                    </label>
                     <input
                       type="url"
                       value={videoLink}
-                      onChange={(e) => {
-                        setVideoLink(e.target.value);
-                        if (e.target.value.trim()) setVideoSource('link');
-                      }}
-                      placeholder="YouTube, Loom, Vimeo, or Wistia link"
-                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-700 placeholder-gray-400"
+                      onChange={(e) => setVideoLink(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="https://youtube.com/watch?v=..."
                     />
                   </div>
-                  {videoLink && !isValidVideoLink(videoLink) && (
-                    <p className="text-red-500 text-sm mt-2">Please enter a valid YouTube, Vimeo, Wistia, or Loom URL</p>
-                  )}
-                </div>
+                )}
 
-                {/* Upload Section */}
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
-                  <div className="flex flex-col items-center">
-                    <Upload className="w-12 h-12 text-gray-400 mb-4" />
-                    <p className="text-gray-600 mb-2">Drag and drop video here</p>
-                    <p className="text-gray-500 text-sm mb-4">or select file</p>
-                    
-                    <label className="cursor-pointer">
-                      <span className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors">
-                        Choose File
-                      </span>
-                      <input
-                        type="file"
-                        accept="video/*"
-                        onChange={handleVideoUpload}
-                        className="hidden"
-                      />
+                {/* File Upload */}
+                {videoSource === 'upload' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Upload Video
                     </label>
-                    
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={handleVideoUpload}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
                     {uploadedFile && (
-                      <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <p className="text-green-800 text-sm font-medium">{uploadedFile.name}</p>
-                        <p className="text-green-600 text-xs">Ready to upload</p>
-                      </div>
+                      <p className="text-sm text-green-600 mt-2">Selected: {uploadedFile.name}</p>
                     )}
                   </div>
-                </div>
+                )}
 
                 {/* Library Selection */}
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Or select from library</h4>
-                  <div className="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto">
-                    {libraryVideos.map((video) => (
-                      <button
-                        key={video.id}
-                        onClick={() => {
-                          setSelectedLibraryVideo(video.id.toString());
-                          setVideoSource('library');
-                        }}
-                        className={`flex items-center space-x-3 p-3 rounded-lg border-2 transition-colors text-left ${
-                          selectedLibraryVideo === video.id.toString()
-                            ? 'border-purple-300 bg-purple-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <img
-                          src={video.thumbnail}
-                          alt={video.title}
-                          className="w-16 h-12 object-cover rounded"
-                        />
-                        <div className="flex-1">
-                          <h5 className="font-medium text-gray-900 text-sm">{video.title}</h5>
-                          <p className="text-gray-500 text-xs">{video.duration}</p>
-                        </div>
-                        {selectedLibraryVideo === video.id.toString() && (
-                          <CheckCircle className="w-5 h-5 text-purple-600" />
-                        )}
-                      </button>
-                    ))}
+                {videoSource === 'library' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Select from Library
+                    </label>
+                    <select
+                      value={selectedLibraryVideo}
+                      onChange={(e) => setSelectedLibraryVideo(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    >
+                      <option value="">Choose a video...</option>
+                      {libraryVideos.map((video) => (
+                        <option key={video.id} value={video.id.toString()}>
+                          {video.title} ({video.duration})
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                </div>
+                )}
               </div>
 
-              {/* Action Buttons */}
               <div className="flex justify-end space-x-3 mt-8">
                 <button
                   onClick={closeVideoModal}
-                  className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors font-medium"
+                  className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors"
                 >
-                  CANCEL
+                  Cancel
                 </button>
                 <button
                   onClick={handleAddVideo}
                   disabled={!canAddVideo() || isUploading}
                   className={`px-6 py-2 rounded-lg font-medium transition-colors ${
                     canAddVideo() && !isUploading
-                      ? 'bg-gray-800 text-white hover:bg-gray-900'
+                      ? 'bg-purple-600 text-white hover:bg-purple-700'
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
                 >
-                  {isUploading ? 'ADDING...' : 'ADD'}
+                  {isUploading ? 'Adding...' : 'Add Video'}
                 </button>
               </div>
             </div>
