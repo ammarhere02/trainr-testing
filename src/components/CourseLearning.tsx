@@ -47,6 +47,12 @@ export default function CourseLearning({ courseId, onBack, userRole = 'student' 
     2: false,
     3: false
   });
+  const [isEditingLessonContent, setIsEditingLessonContent] = useState(false);
+  const [lessonContent, setLessonContent] = useState(`In this lesson, we'll dive deep into React props and state management. You'll learn how to pass data between components and manage local component state effectively. We'll cover practical examples and best practices to help you build more dynamic and interactive React applications.
+
+By the end of this lesson, you'll understand how to create reusable components that can receive and display different data, and how to handle user interactions that change the component's appearance or behavior.`);
+  const [tempLessonContent, setTempLessonContent] = useState(lessonContent);
+  const [showLessonMenu, setShowLessonMenu] = useState(false);
   
   // Mock library videos
   const [libraryVideos] = useState([
@@ -441,6 +447,36 @@ export default function CourseLearning({ courseId, onBack, userRole = 'student' 
     resetVideoForm();
   };
 
+  const handleMarkAsComplete = () => {
+    if (currentLessonData) {
+      setCourse(prev => ({
+        ...prev,
+        modules: prev.modules.map(module => ({
+          ...module,
+          lessons: module.lessons.map(lesson =>
+            lesson.id === currentLessonData.id ? { ...lesson, completed: true } : lesson
+          )
+        }))
+      }));
+    }
+  };
+
+  const handleEditLessonContent = () => {
+    setTempLessonContent(lessonContent);
+    setIsEditingLessonContent(true);
+    setShowLessonMenu(false);
+  };
+
+  const handleSaveLessonContent = () => {
+    setLessonContent(tempLessonContent);
+    setIsEditingLessonContent(false);
+  };
+
+  const handleCancelEditLessonContent = () => {
+    setTempLessonContent(lessonContent);
+    setIsEditingLessonContent(false);
+  };
+
   const isValidVideoLink = (url: string) => {
     const videoPatterns = [
       /youtube\.com\/watch\?v=|youtu\.be\//,
@@ -807,15 +843,62 @@ export default function CourseLearning({ courseId, onBack, userRole = 'student' 
                 <p className="text-gray-600">Lesson {currentLesson + 1} of {getTotalLessons()}</p>
               </div>
               <div className="flex items-center space-x-2">
-                <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                <button 
+                  onClick={handleMarkAsComplete}
+                  className={`p-2 transition-colors ${
+                    currentLessonData?.completed 
+                      ? 'text-green-600 hover:text-green-700' 
+                      : 'text-gray-400 hover:text-green-600'
+                  }`}
+                  title={currentLessonData?.completed ? 'Completed' : 'Mark as complete'}
+                >
                   <CheckCircle className="w-5 h-5" />
                 </button>
-                <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                <button 
+                  onClick={handleEditLessonContent}
+                  className="p-2 text-gray-400 hover:text-purple-600 transition-colors"
+                  title="Edit lesson content"
+                >
                   <Edit3 className="w-5 h-5" />
                 </button>
-                <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                  <MoreHorizontal className="w-5 h-5" />
-                </button>
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowLessonMenu(!showLessonMenu)}
+                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="More options"
+                  >
+                    <MoreHorizontal className="w-5 h-5" />
+                  </button>
+                  
+                  {showLessonMenu && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-10"
+                        onClick={() => setShowLessonMenu(false)}
+                      />
+                      <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                        <button
+                          onClick={handleEditLessonContent}
+                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          Edit lesson content
+                        </button>
+                        <button
+                          onClick={handleVideoEdit}
+                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          Change video
+                        </button>
+                        <button
+                          onClick={handleMarkAsComplete}
+                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          {currentLessonData?.completed ? 'Mark as incomplete' : 'Mark as complete'}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -905,18 +988,50 @@ export default function CourseLearning({ courseId, onBack, userRole = 'student' 
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-gray-900">Lesson Overview</h2>
+              {userRole === 'educator' && !isEditingLessonContent && (
+                <button
+                  onClick={handleEditLessonContent}
+                  className="text-purple-600 hover:text-purple-700 transition-colors"
+                  title="Edit content"
+                >
+                  <Edit3 className="w-4 h-4" />
+                </button>
+              )}
             </div>
-            <div className="prose max-w-none text-gray-700">
-              <p>
-                In this lesson, we'll dive deep into React props and state management. You'll learn how to pass data between 
-                components and manage local component state effectively. We'll cover practical examples and best practices 
-                to help you build more dynamic and interactive React applications.
-              </p>
-              <p className="mt-4">
-                By the end of this lesson, you'll understand how to create reusable components that can receive and display 
-                different data, and how to handle user interactions that change the component's appearance or behavior.
-              </p>
-            </div>
+            
+            {isEditingLessonContent ? (
+              <div className="space-y-4">
+                <textarea
+                  value={tempLessonContent}
+                  onChange={(e) => setTempLessonContent(e.target.value)}
+                  rows={8}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                  placeholder="Enter lesson overview content..."
+                />
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={handleCancelEditLessonContent}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveLessonContent}
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="prose max-w-none text-gray-700">
+                {lessonContent.split('\n\n').map((paragraph, index) => (
+                  <p key={index} className={index > 0 ? 'mt-4' : ''}>
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
