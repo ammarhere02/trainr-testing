@@ -157,6 +157,7 @@ By the end of this lesson, you'll understand how to create reusable components t
     
     if (videoSource === 'link' && videoLink) {
       newVideoUrl = videoLink;
+      console.log('Saving video link:', videoLink);
     } else if (videoSource === 'upload' && uploadedFile) {
       newVideoUrl = URL.createObjectURL(uploadedFile);
     } else if (videoSource === 'library' && selectedLibraryVideo) {
@@ -165,16 +166,21 @@ By the end of this lesson, you'll understand how to create reusable components t
     }
 
     if (newVideoUrl) {
+      console.log('Updating course with video URL:', newVideoUrl);
       // Update the course data with the new video URL
       setCourse(prev => ({
         ...prev,
         modules: prev.modules.map(module => ({
           ...module,
           lessons: module.lessons.map(lesson =>
-            lesson.id === currentLessonId ? { ...lesson, videoUrl: newVideoUrl } : lesson
+            lesson.id === currentLessonId ? { 
+              ...lesson, 
+              videoUrl: newVideoUrl 
+            } : lesson
           )
         }))
       }));
+      console.log('Video URL updated for lesson:', currentLessonId);
     }
 
     setShowVideoEditModal(false);
@@ -240,13 +246,19 @@ By the end of this lesson, you'll understand how to create reusable components t
   };
 
   const getEmbedUrl = (url: string) => {
+      console.log('Already embed URL:', url);
     if (!url) return '';
+    
+    console.log('Getting embed URL for:', url);
     
     const videoId = getYouTubeVideoId(url);
     if (videoId) {
-      return `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1&showinfo=0`;
+      const embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`;
+      console.log('Generated embed URL:', embedUrl);
+      return embedUrl;
     }
     
+    console.log('No video ID found, returning original URL:', url);
     // For Vimeo URLs
     if (url.includes('vimeo.com/')) {
       const vimeoId = url.split('/').pop();
@@ -405,9 +417,21 @@ By the end of this lesson, you'll understand how to create reusable components t
 
         {/* Video Player */}
         <div className="lg:col-span-3">
+          {/* Debug info - remove this later */}
+          {userRole === 'educator' && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4 text-xs">
+              <strong>Debug Info:</strong><br/>
+              Current Lesson ID: {currentLessonId}<br/>
+              Current Lesson Data: {JSON.stringify(currentLessonData, null, 2)}<br/>
+              Video URL: {currentLessonData?.videoUrl || 'No video URL'}<br/>
+              Embed URL: {currentLessonData?.videoUrl ? getEmbedUrl(currentLessonData.videoUrl) : 'No embed URL'}
+            </div>
+          )}
+          
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
             <div className="relative bg-black aspect-video">
               {currentLessonData?.videoUrl ? (
+                getEmbedUrl(currentLessonData.videoUrl) ? (
                 getEmbedUrl(currentLessonData.videoUrl) ? (
                 <iframe
                   src={getEmbedUrl(currentLessonData.videoUrl)}
@@ -418,6 +442,23 @@ By the end of this lesson, you'll understand how to create reusable components t
                   title={currentLessonData.title}
                   key={currentLessonData.videoUrl} // Force re-render when URL changes
                 />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center text-white">
+                      <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                      <p className="text-xl mb-2">Invalid video URL</p>
+                      <p className="text-sm mb-4">URL: {currentLessonData.videoUrl}</p>
+                      {userRole === 'educator' && (
+                        <button
+                          onClick={handleVideoEdit}
+                          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                        >
+                          Fix Video URL
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center text-white">
@@ -451,7 +492,7 @@ By the end of this lesson, you'll understand how to create reusable components t
                 </div>
               )}
               
-              {userRole === 'educator' && (
+              {userRole === 'educator' && currentLessonData?.videoUrl && (
                 <div className="absolute top-4 right-4">
                   <button
                     onClick={handleVideoEdit}
