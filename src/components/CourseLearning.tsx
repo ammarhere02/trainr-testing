@@ -417,6 +417,19 @@ By the end of this lesson, you'll understand how to create reusable components t
                               <div className="text-xs text-gray-600">{lesson.duration}</div>
                             </div>
                           </div>
+                          {userRole === 'educator' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Handle lesson menu actions here
+                                console.log('Lesson menu clicked for:', lesson.title);
+                              }}
+                              className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                              title="Lesson options"
+                            >
+                              <MoreHorizontal className="w-4 h-4" />
+                            </button>
+                          )}
                         </button>
                       ))}
                     </div>
