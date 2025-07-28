@@ -281,29 +281,6 @@ By the end of this lesson, you'll understand how to create reusable components t
     return '';
   };
 
-  const getEmbedUrl_OLD = (url: string) => {
-    const match = url.match(regex);
-    return match ? match[1] : null;
-  };
-
-  const getEmbedUrl = (url: string) => {
-    if (!url) return '';
-    
-    const videoId = getYouTubeVideoId(url);
-    if (videoId) {
-      return `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1&showinfo=0`;
-    }
-    
-    // For Vimeo URLs
-    if (url.includes('vimeo.com/')) {
-      const vimeoId = url.split('/').pop();
-      return `https://player.vimeo.com/video/${vimeoId}`;
-    }
-    
-    // Return original URL for other platforms
-    return url;
-  };
-
   const toggleModuleExpansion = (moduleId: number) => {
     setExpandedModules(prev => ({
       ...prev,
