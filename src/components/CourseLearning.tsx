@@ -1123,7 +1123,6 @@ By the end of this lesson, you'll understand how to create reusable components t
           </div>
         </>
       )}
-    </div>
       {/* Add Folder Modal */}
       {showAddFolderModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -1176,5 +1175,6 @@ By the end of this lesson, you'll understand how to create reusable components t
           </div>
         </div>
       )}
+    </div>
   );
 }
