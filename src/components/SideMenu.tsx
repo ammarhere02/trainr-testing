@@ -123,6 +123,8 @@ export default function SideMenu({ currentView, onViewChange, userRole, onCollap
                     } else {
                       if (item.key === 'member') {
                         onViewChange('member-community');
+                     } else if (item.key === 'sales') {
+                       onViewChange('sales');
                       } else {
                         onViewChange(item.key);
                       }

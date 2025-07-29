@@ -196,10 +196,33 @@ function App() {
           return <Dashboard />;
         case 'courses':
           return <Courses onStartLearning={handleStartLearning} />;
-        case 'products':
-          return <Products onStartLearning={handleStartLearning} />;
-        case 'payments':
-          return <div className="p-8"><h1 className="text-3xl font-bold text-gray-900">Payments</h1><p className="text-gray-600 mt-2">Manage payment processing and transactions</p></div>;
+        case 'sales':
+          return (
+            <div className="p-8">
+              <div className="max-w-2xl mx-auto text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <DollarSign className="w-8 h-8 text-green-600" />
+                </div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-4">Payments</h1>
+                <p className="text-xl text-gray-600 mb-6">Manage payment processing and transactions</p>
+                <p className="text-gray-500 leading-relaxed">
+                  Set up payment gateways, manage subscriptions, track revenue, and handle refunds all in one place.
+                </p>
+                <div className="mt-8 bg-green-50 rounded-lg p-6">
+                  <h3 className="font-semibold text-green-900 mb-2">Payment Features:</h3>
+                  <ul className="text-sm text-green-800 space-y-1 text-left">
+                    <li>• Stripe & PayPal integration</li>
+                    <li>• Subscription management</li>
+                    <li>• Revenue analytics</li>
+                    <li>• Automated invoicing</li>
+                    <li>• Refund processing</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          );
+        case 'sales-coupons':
+          return <Coupons />;
         case 'content-planner':
           return <Content />;
         case 'testimonials':
@@ -236,18 +259,70 @@ function App() {
           return <Contacts />;
         case 'website':
           return <Funnel userRole={userRole} />;
-        case 'member-area':
-          return <Community />;
+        case 'member':
+          return <Community userRole={userRole} />;
         case 'member-record':
           return <Record onBack={() => setCurrentView('dashboard')} />;
         case 'library':
-          return <div className="p-8"><h1 className="text-3xl font-bold text-gray-900">Video Library</h1><p className="text-gray-600 mt-2">All your recorded videos are stored here</p></div>;
+          return (
+            <div className="p-8">
+              <div className="max-w-2xl mx-auto text-center">
+                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Video className="w-8 h-8 text-blue-600" />
+                </div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-4">Video Library</h1>
+                <p className="text-xl text-gray-600 mb-6">All your recorded videos are stored here</p>
+                <p className="text-gray-500 leading-relaxed">
+                  Access all your recorded lessons, live sessions, and uploaded content in one organized library.
+                </p>
+                <div className="mt-8 bg-blue-50 rounded-lg p-6">
+                  <h3 className="font-semibold text-blue-900 mb-2">Library Features:</h3>
+                  <ul className="text-sm text-blue-800 space-y-1 text-left">
+                    <li>• Organized video storage</li>
+                    <li>• Search and filter videos</li>
+                    <li>• Video analytics</li>
+                    <li>• Bulk operations</li>
+                    <li>• Cloud backup</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          );
         case 'meet':
           return <Meet />;
         case 'settings':
           return <Settings userRole={userRole} />;
         case 'contact-support':
-          return <div className="p-8"><h1 className="text-3xl font-bold text-gray-900">Contact Support</h1><p className="text-gray-600 mt-2">Get help from our support team</p></div>;
+          return (
+            <div className="p-8">
+              <div className="max-w-2xl mx-auto text-center">
+                <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <HelpCircle className="w-8 h-8 text-purple-600" />
+                </div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-4">Contact Support</h1>
+                <p className="text-xl text-gray-600 mb-6">Get help from our support team</p>
+                <p className="text-gray-500 leading-relaxed mb-8">
+                  Our dedicated support team is here to help you succeed. Get answers to your questions and resolve any issues quickly.
+                </p>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="bg-purple-50 rounded-lg p-6">
+                    <h3 className="font-semibold text-purple-900 mb-2">Live Chat</h3>
+                    <p className="text-sm text-purple-800 mb-4">Get instant help from our team</p>
+                    <button className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors">
+                      Start Chat
+                    </button>
+                  </div>
+                  <div className="bg-blue-50 rounded-lg p-6">
+                    <h3 className="font-semibold text-blue-900 mb-2">Email Support</h3>
+                    <p className="text-sm text-blue-800 mb-4">Send us a detailed message</p>
+                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                      Send Email
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
       }
     }
 
