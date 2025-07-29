@@ -55,6 +55,7 @@ By the end of this lesson, you'll understand how to create reusable components t
   const [showThumbnail, setShowThumbnail] = useState(true);
   const [editingLessonId, setEditingLessonId] = useState<number | null>(null);
   const [editingLessonTitle, setEditingLessonTitle] = useState('');
+  const [showCourseMenu, setShowCourseMenu] = useState(false);
   
   // Mock library videos
   const [libraryVideos] = useState([
@@ -343,6 +344,32 @@ By the end of this lesson, you'll understand how to create reusable components t
     setEditingLessonTitle('');
   };
 
+  const handleEditCourse = () => {
+    console.log('Edit course');
+    setShowCourseMenu(false);
+    // Add edit course logic here
+  };
+
+  const handleAddFolder = () => {
+    console.log('Add folder');
+    setShowCourseMenu(false);
+    // Add folder logic here
+  };
+
+  const handleAddLesson = () => {
+    console.log('Add lesson');
+    setShowCourseMenu(false);
+    // Add lesson logic here
+  };
+
+  const handleDeleteCourse = () => {
+    if (confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
+      console.log('Delete course');
+      setShowCourseMenu(false);
+      // Add delete course logic here
+    }
+  };
+
   const isValidVideoLink = (url: string) => {
     const videoPatterns = [
       /youtube\.com\/watch\?v=|youtu\.be\//,
@@ -513,7 +540,56 @@ By the end of this lesson, you'll understand how to create reusable components t
         {/* Course Sidebar */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Course Content</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">{course.title}</h3>
+              {userRole === 'educator' && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowCourseMenu(!showCourseMenu)}
+                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Course options"
+                  >
+                    <MoreHorizontal className="w-5 h-5" />
+                  </button>
+                  
+                  {showCourseMenu && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-10"
+                        onClick={() => setShowCourseMenu(false)}
+                      />
+                      <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                        <button
+                          onClick={handleEditCourse}
+                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          Edit course
+                        </button>
+                        <button
+                          onClick={handleAddFolder}
+                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          Add folder
+                        </button>
+                        <button
+                          onClick={handleAddLesson}
+                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          Add lesson
+                        </button>
+                        <hr className="my-1 border-gray-200" />
+                        <button
+                          onClick={handleDeleteCourse}
+                          className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          Delete course
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
             
             <div className="space-y-4">
               {course.modules.map((module) => (
