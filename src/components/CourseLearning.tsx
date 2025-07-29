@@ -58,6 +58,9 @@ By the end of this lesson, you'll understand how to create reusable components t
   const [showCourseMenu, setShowCourseMenu] = useState(false);
   const [showAddFolderModal, setShowAddFolderModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  const [activeFolderMenu, setActiveFolderMenu] = useState<number | null>(null);
+  const [editingFolderId, setEditingFolderId] = useState<number | null>(null);
+  const [editingFolderName, setEditingFolderName] = useState('');
   
   // Mock library videos
   const [libraryVideos] = useState([
@@ -386,6 +389,94 @@ By the end of this lesson, you'll understand how to create reusable components t
     setNewFolderName('');
     setShowAddFolderModal(false);
   };
+
+  const handleEditFolder = (moduleId: number, currentName: string) => {
+    setEditingFolderId(moduleId);
+    setEditingFolderName(currentName);
+    setActiveFolderMenu(null);
+  };
+
+  const handleSaveFolderEdit = () => {
+    if (!editingFolderId || !editingFolderName.trim()) return;
+    
+    setCourse(prev => ({
+      ...prev,
+      modules: prev.modules.map(module =>
+        module.id === editingFolderId 
+          ? { ...module, title: editingFolderName.trim() }
+          : module
+      )
+    }));
+    
+    setEditingFolderId(null);
+    setEditingFolderName('');
+  };
+
+  const handleCancelFolderEdit = () => {
+    setEditingFolderId(null);
+    setEditingFolderName('');
+  };
+
+  const handleDuplicateFolder = (moduleId: number) => {
+    const moduleToDuplicate = course.modules.find(m => m.id === moduleId);
+    if (!moduleToDuplicate) return;
+    
+    const duplicatedModule = {
+      ...moduleToDuplicate,
+      id: Date.now(),
+      title: `${moduleToDuplicate.title} (Copy)`,
+      lessons: moduleToDuplicate.lessons.map(lesson => ({
+        ...lesson,
+        id: Date.now() + Math.random(),
+        title: `${lesson.title} (Copy)`,
+        completed: false
+      }))
+    };
+    
+    setCourse(prev => ({
+      ...prev,
+      modules: [...prev.modules, duplicatedModule]
+    }));
+    
+    // Expand the new module
+    setExpandedModules(prev => ({
+      ...prev,
+      [duplicatedModule.id]: true
+    }));
+    
+    setActiveFolderMenu(null);
+  };
+
+  const handleDeleteFolder = (moduleId: number) => {
+    const moduleToDelete = course.modules.find(m => m.id === moduleId);
+    if (!moduleToDelete) return;
+    
+    if (confirm(`Are you sure you want to delete "${moduleToDelete.title}"? This will also delete all lessons in this folder.`)) {
+      setCourse(prev => ({
+        ...prev,
+        modules: prev.modules.filter(module => module.id !== moduleId)
+      }));
+      
+      // If we're deleting the module containing the current lesson, switch to first available lesson
+      const currentLessonInModule = moduleToDelete.lessons.find(l => l.id === currentLessonId);
+      if (currentLessonInModule) {
+        const firstAvailableLesson = course.modules
+          .filter(m => m.id !== moduleId)
+          .flatMap(m => m.lessons)[0];
+        if (firstAvailableLesson) {
+          setCurrentLessonId(firstAvailableLesson.id);
+        }
+      }
+    }
+    
+    setActiveFolderMenu(null);
+  };
+
+  const handleAddLessonToFolder = (moduleId: number) => {
+    // Placeholder for add lesson functionality
+    console.log('Add lesson to folder:', moduleId);
+    setActiveFolderMenu(null);
+  };
   const handleAddLesson = () => {
     console.log('Add lesson');
     setShowCourseMenu(false);
@@ -624,17 +715,105 @@ By the end of this lesson, you'll understand how to create reusable components t
             <div className="space-y-4">
               {course.modules.map((module) => (
                 <div key={module.id} className="border border-gray-200 rounded-lg">
-                  <button
-                    onClick={() => toggleModuleExpansion(module.id)}
-                    className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
-                  >
-                    <span className="font-medium text-gray-900">{module.title}</span>
-                    {expandedModules[module.id] ? (
-                      <ChevronDown className="w-4 h-4 text-gray-500" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-gray-500" />
+                  <div className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                    <button
+                      onClick={() => toggleModuleExpansion(module.id)}
+                      className="flex-1 flex items-center justify-between text-left"
+                    >
+                      {editingFolderId === module.id ? (
+                        <div className="flex items-center space-x-2 flex-1">
+                          <input
+                            type="text"
+                            value={editingFolderName}
+                            onChange={(e) => setEditingFolderName(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                handleSaveFolderEdit();
+                              } else if (e.key === 'Escape') {
+                                handleCancelFolderEdit();
+                              }
+                            }}
+                            className="font-medium text-gray-900 bg-white border border-purple-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500 flex-1"
+                            autoFocus
+                          />
+                          <button
+                            onClick={handleSaveFolderEdit}
+                            className="text-green-600 hover:text-green-700"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={handleCancelFolderEdit}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="font-medium text-gray-900">{module.title}</span>
+                      )}
+                      {editingFolderId !== module.id && (
+                        <div className="ml-4">
+                          {expandedModules[module.id] ? (
+                            <ChevronDown className="w-4 h-4 text-gray-500" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-gray-500" />
+                          )}
+                        </div>
+                      )}
+                    </button>
+                    
+                    {userRole === 'educator' && editingFolderId !== module.id && (
+                      <div className="relative ml-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveFolderMenu(activeFolderMenu === module.id ? null : module.id);
+                          }}
+                          className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                          title="Folder options"
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </button>
+                        
+                        {activeFolderMenu === module.id && (
+                          <>
+                            <div 
+                              className="fixed inset-0 z-10"
+                              onClick={() => setActiveFolderMenu(null)}
+                            />
+                            <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                              <button
+                                onClick={() => handleAddLessonToFolder(module.id)}
+                                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                              >
+                                Add lesson
+                              </button>
+                              <button
+                                onClick={() => handleEditFolder(module.id, module.title)}
+                                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                              >
+                                Edit folder
+                              </button>
+                              <button
+                                onClick={() => handleDuplicateFolder(module.id)}
+                                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                              >
+                                Duplicate folder
+                              </button>
+                              <hr className="my-1 border-gray-200" />
+                              <button
+                                onClick={() => handleDeleteFolder(module.id)}
+                                className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                              >
+                                Delete folder
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     )}
-                  </button>
+                  </div>
                   
                   {expandedModules[module.id] && (
                     <div className="border-t border-gray-200">
