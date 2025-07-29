@@ -56,6 +56,8 @@ By the end of this lesson, you'll understand how to create reusable components t
   const [editingLessonId, setEditingLessonId] = useState<number | null>(null);
   const [editingLessonTitle, setEditingLessonTitle] = useState('');
   const [showCourseMenu, setShowCourseMenu] = useState(false);
+  const [showAddFolderModal, setShowAddFolderModal] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
   
   // Mock library videos
   const [libraryVideos] = useState([
@@ -351,11 +353,39 @@ By the end of this lesson, you'll understand how to create reusable components t
   };
 
   const handleAddFolder = () => {
-    console.log('Add folder');
+    setShowAddFolderModal(true);
     setShowCourseMenu(false);
-    // Add folder logic here
   };
 
+  const handleCreateFolder = () => {
+    if (!newFolderName.trim()) return;
+    
+    const newModule = {
+      id: Date.now(),
+      title: newFolderName.trim(),
+      lessons: []
+    };
+    
+    setCourse(prev => ({
+      ...prev,
+      modules: [...prev.modules, newModule]
+    }));
+    
+    // Expand the new module by default
+    setExpandedModules(prev => ({
+      ...prev,
+      [newModule.id]: true
+    }));
+    
+    // Reset and close modal
+    setNewFolderName('');
+    setShowAddFolderModal(false);
+  };
+
+  const handleCancelAddFolder = () => {
+    setNewFolderName('');
+    setShowAddFolderModal(false);
+  };
   const handleAddLesson = () => {
     console.log('Add lesson');
     setShowCourseMenu(false);
@@ -1094,5 +1124,57 @@ By the end of this lesson, you'll understand how to create reusable components t
         </>
       )}
     </div>
+      {/* Add Folder Modal */}
+      {showAddFolderModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-6">Add New Folder</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Folder Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newFolderName}
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleCreateFolder();
+                      } else if (e.key === 'Escape') {
+                        handleCancelAddFolder();
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="e.g., React Fundamentals"
+                    autoFocus
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Folders help organize your lessons into logical sections
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={handleCancelAddFolder}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateFolder}
+                  disabled={!newFolderName.trim()}
+                  className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Create Folder
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }
