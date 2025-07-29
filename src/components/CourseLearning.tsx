@@ -1053,6 +1053,7 @@ By the end of this lesson, you'll understand how to create reusable components t
                   <p className="text-sm text-gray-600">{currentLessonData?.duration}</p>
                 </div>
                 {userRole === 'educator' && (
+                  <button
                     onClick={handleVideoEdit}
                     className="text-purple-600 hover:text-purple-700 text-sm font-medium"
                   >
