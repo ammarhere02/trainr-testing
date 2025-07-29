@@ -692,12 +692,6 @@ By the end of this lesson, you'll understand how to create reusable components t
                         >
                           Add folder
                         </button>
-                        <button
-                          onClick={handleAddLesson}
-                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          Add lesson
-                        </button>
                         <hr className="my-1 border-gray-200" />
                         <button
                           onClick={handleDeleteCourse}
