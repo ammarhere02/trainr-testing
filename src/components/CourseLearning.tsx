@@ -647,6 +647,14 @@ By the end of this lesson, you'll understand how to create reusable components t
                         >
                           {currentLessonData?.completed ? 'Mark as incomplete' : 'Mark as complete'}
                         </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-4 gap-6 p-6">
@@ -933,70 +941,71 @@ By the end of this lesson, you'll understand how to create reusable components t
           </div>
         </div>
 
-        {/* Current Lesson Info - Above Video */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">{currentLesson.title}</h2>
-          {currentLesson.description && (
-            <p className="text-gray-600">{currentLesson.description}</p>
-          )}
-        </div>
-
-        {/* Video Player */}
+        {/* Main Content */}
         <div className="lg:col-span-3">
+          {/* Current Lesson Info - Above Video */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">{currentLessonData?.title}</h2>
+            {currentLessonData?.description && (
+              <p className="text-gray-600">{currentLessonData.description}</p>
+            )}
+          </div>
+
+          {/* Video Player */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
             <div className="relative bg-black aspect-video">
               {currentLessonData?.videoUrl ? (
                 isValidVideoUrl(currentLessonData.videoUrl) ? (
-                getEmbedUrl(currentLessonData.videoUrl) ? (
-                <div className="relative w-full h-full">
-                  <iframe
-                    src={getEmbedUrl(currentLessonData.videoUrl)}
-                    className="w-full h-full"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    title={currentLessonData.title}
-                    key={currentLessonData.videoUrl} // Force re-render when URL changes
-                  />
-                  {/* Thumbnail overlay for initial load */}
-                  {showThumbnail && getThumbnailUrl(currentLessonData.videoUrl) && (
-                    <div className="absolute inset-0 bg-black">
-                      <img
-                        src={getThumbnailUrl(currentLessonData.videoUrl)}
-                        alt="Video thumbnail"
-                        className="w-full h-full object-cover"
-                        onLoad={(e) => {
-                          // Hide thumbnail after a delay
-                          setTimeout(() => {
-                            setShowThumbnail(false);
-                          }, 1000);
-                        }}
+                  getEmbedUrl(currentLessonData.videoUrl) ? (
+                    <div className="relative w-full h-full">
+                      <iframe
+                        src={getEmbedUrl(currentLessonData.videoUrl)}
+                        className="w-full h-full"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        title={currentLessonData.title}
+                        key={currentLessonData.videoUrl} // Force re-render when URL changes
                       />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="bg-red-600 rounded-full p-4">
-                          <Play className="w-8 h-8 text-white ml-1" />
+                      {/* Thumbnail overlay for initial load */}
+                      {showThumbnail && getThumbnailUrl(currentLessonData.videoUrl) && (
+                        <div className="absolute inset-0 bg-black">
+                          <img
+                            src={getThumbnailUrl(currentLessonData.videoUrl)}
+                            alt="Video thumbnail"
+                            className="w-full h-full object-cover"
+                            onLoad={(e) => {
+                              // Hide thumbnail after a delay
+                              setTimeout(() => {
+                                setShowThumbnail(false);
+                              }, 1000);
+                            }}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="bg-red-600 rounded-full p-4">
+                              <Play className="w-8 h-8 text-white ml-1" />
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center text-white">
-                      <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                      <p className="text-xl mb-2">Invalid video URL</p>
-                      <p className="text-sm opacity-75 mb-4">Please check the video URL format</p>
-                      {userRole === 'educator' && (
-                        <button
-                          onClick={handleVideoEdit}
-                          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-                        >
-                          Fix Video URL
-                        </button>
                       )}
                     </div>
-                  </div>
-                )
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center text-white">
+                        <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                        <p className="text-xl mb-2">Invalid video URL</p>
+                        <p className="text-sm opacity-75 mb-4">Please check the video URL format</p>
+                        {userRole === 'educator' && (
+                          <button
+                            onClick={handleVideoEdit}
+                            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                          >
+                            Fix Video URL
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center text-white">
@@ -1038,183 +1047,265 @@ By the end of this lesson, you'll understand how to create reusable components t
             
             {/* Video Info */}
             <div className="p-4 border-t border-gray-200">
-                <div className="space-y-6">
-                  {/* Video Source Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Video Source
-                    </label>
-                    <div className="grid grid-cols-3 gap-3">
-                      <button
-                        onClick={() => setVideoSource('link')}
-                        className={`p-4 border-2 rounded-lg text-center transition-all ${
-                          videoSource === 'link'
-                            ? 'border-purple-500 bg-purple-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <Link className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-                        <span className="text-sm font-medium">Video Link</span>
-                      </button>
-                      <button
-                        onClick={() => setVideoSource('upload')}
-                        className={`p-4 border-2 rounded-lg text-center transition-all ${
-                          videoSource === 'upload'
-                            ? 'border-purple-500 bg-purple-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <Upload className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-                        <span className="text-sm font-medium">Upload</span>
-                      </button>
-                      <button
-                        onClick={() => setVideoSource('library')}
-                        className={`p-4 border-2 rounded-lg text-center transition-all ${
-                          videoSource === 'library'
-                            ? 'border-purple-500 bg-purple-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <Video className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-                        <span className="text-sm font-medium">Library</span>
-                      </button>
-                    </div>
-                  </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-gray-900">{currentLessonData?.title}</h3>
+                  <p className="text-sm text-gray-600">{currentLessonData?.duration}</p>
+                </div>
+                {userRole === 'educator' && (
+                  <button
+                    onClick={handleVideoEdit}
+                    className="text-purple-600 hover:text-purple-700 text-sm font-medium"
+                  >
+                    Change Video
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
 
-                  {/* Video Link Input */}
-                  {videoSource === 'link' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Video URL
-                      </label>
-                      <input
-                        type="url"
-                        value={videoLink}
-                        onChange={(e) => setVideoLink(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        placeholder="https://www.youtube.com/watch?v=..."
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Supports YouTube, Vimeo, Wistia, and Loom
-                      </p>
-                      {videoLink && getYouTubeVideoId(videoLink) && (
-                        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                          <p className="text-sm text-green-700">✓ Valid YouTube URL detected</p>
-                          <p className="text-xs text-green-600">Video ID: {getYouTubeVideoId(videoLink)}</p>
-                          <p className="text-xs text-gray-600 mt-1">Embed URL: {getEmbedUrl(videoLink)}</p>
-                        </div>
-                      )}
-                      {videoLink && !isValidVideoUrl(videoLink) && videoLink.length > 10 && (
-                        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                          <p className="text-sm text-yellow-700">⚠️ URL format not recognized</p>
-                          <p className="text-xs text-yellow-600">Make sure it's a valid YouTube or Vimeo URL</p>
-                        </div>
-                      )}
-                      
-                      {/* Live Preview */}
-                      {videoLink && isValidVideoUrl(videoLink) && (
-                        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                          <p className="text-sm text-blue-700 mb-2">Preview:</p>
-                          <div className="bg-black rounded-lg overflow-hidden relative">
-                            <div className="aspect-video">
+          {/* Lesson Content */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Lesson Content</h3>
+              {userRole === 'educator' && !isEditingLessonContent && (
+                <button
+                  onClick={handleEditLessonContent}
+                  className="text-purple-600 hover:text-purple-700 text-sm font-medium flex items-center"
+                >
+                  <Edit3 className="w-4 h-4 mr-1" />
+                  Edit
+                </button>
+              )}
+            </div>
+            
+            {isEditingLessonContent ? (
+              <div className="space-y-4">
+                <textarea
+                  value={tempLessonContent}
+                  onChange={(e) => setTempLessonContent(e.target.value)}
+                  className="w-full h-64 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                  placeholder="Enter lesson content..."
+                />
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={handleCancelEditLessonContent}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveLessonContent}
+                    className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="prose max-w-none">
+                <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                  {lessonContent}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Video Edit Modal */}
+      {showVideoEditModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-gray-900">Change Video</h3>
+                <button
+                  onClick={closeVideoModal}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                {/* Video Source Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Video Source
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    <button
+                      onClick={() => setVideoSource('link')}
+                      className={`p-4 border-2 rounded-lg text-center transition-all ${
+                        videoSource === 'link'
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <Link className="w-6 h-6 mx-auto mb-2 text-purple-600" />
+                      <span className="text-sm font-medium">Video Link</span>
+                    </button>
+                    <button
+                      onClick={() => setVideoSource('upload')}
+                      className={`p-4 border-2 rounded-lg text-center transition-all ${
+                        videoSource === 'upload'
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <Upload className="w-6 h-6 mx-auto mb-2 text-purple-600" />
+                      <span className="text-sm font-medium">Upload</span>
+                    </button>
+                    <button
+                      onClick={() => setVideoSource('library')}
+                      className={`p-4 border-2 rounded-lg text-center transition-all ${
+                        videoSource === 'library'
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <Video className="w-6 h-6 mx-auto mb-2 text-purple-600" />
+                      <span className="text-sm font-medium">Library</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Video Link Input */}
+                {videoSource === 'link' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Video URL
+                    </label>
+                    <input
+                      type="url"
+                      value={videoLink}
+                      onChange={(e) => setVideoLink(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="https://www.youtube.com/watch?v=..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Supports YouTube, Vimeo, Wistia, and Loom
+                    </p>
+                    {videoLink && getYouTubeVideoId(videoLink) && (
+                      <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-sm text-green-700">✓ Valid YouTube URL detected</p>
+                        <p className="text-xs text-green-600">Video ID: {getYouTubeVideoId(videoLink)}</p>
+                        <p className="text-xs text-gray-600 mt-1">Embed URL: {getEmbedUrl(videoLink)}</p>
+                      </div>
+                    )}
+                    {videoLink && !isValidVideoUrl(videoLink) && videoLink.length > 10 && (
+                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-sm text-yellow-700">⚠️ URL format not recognized</p>
+                        <p className="text-xs text-yellow-600">Make sure it's a valid YouTube or Vimeo URL</p>
+                      </div>
+                    )}
+                    
+                    {/* Live Preview */}
+                    {videoLink && isValidVideoUrl(videoLink) && (
+                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-sm text-blue-700 mb-2">Preview:</p>
+                        <div className="bg-black rounded-lg overflow-hidden relative">
+                          <div className="aspect-video">
+                            <div className="relative w-full h-full">
+                              <iframe
+                                src={getEmbedUrl(videoLink)}
+                                className="w-full h-full"
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                title="Video Preview"
+                              />
                               <div className="relative w-full h-full">
-                                <iframe
-                                  src={getEmbedUrl(videoLink)}
-                                  className="w-full h-full"
-                                  frameBorder="0"
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                  allowFullScreen
-                                  title="Video Preview"
+                                <img
+                                  src={getThumbnailUrl(videoLink)}
+                                  alt="Video thumbnail"
+                                  className="w-full h-full object-cover"
                                 />
-                                <div className="relative w-full h-full">
-                                  <img
-                                    src={getThumbnailUrl(videoLink)}
-                                    alt="Video thumbnail"
-                                    className="w-full h-full object-cover"
-                                  />
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="bg-red-600 rounded-full p-3">
-                                      <Play className="w-6 h-6 text-white ml-0.5" />
-                                    </div>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <div className="bg-red-600 rounded-full p-3">
+                                    <Play className="w-6 h-6 text-white ml-0.5" />
                                   </div>
-                                  <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
-                                    Preview
-                                  </div>
+                                </div>
+                                <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                                  Preview
                                 </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
-                  {/* File Upload */}
-                  {videoSource === 'upload' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Upload Video File
-                      </label>
-                      <input
-                        type="file"
-                        accept="video/*"
-                        onChange={(e) => setUploadedFile(e.target.files?.[0] || null)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
-                      {uploadedFile && (
-                        <p className="text-sm text-green-600 mt-2">
-                          Selected: {uploadedFile.name}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                {/* File Upload */}
+                {videoSource === 'upload' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Upload Video File
+                    </label>
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => setUploadedFile(e.target.files?.[0] || null)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                    {uploadedFile && (
+                      <p className="text-sm text-green-600 mt-2">
+                        Selected: {uploadedFile.name}
+                      </p>
+                    )}
+                  </div>
+                )}
 
-                  {/* Library Selection */}
-                  {videoSource === 'library' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Choose from Library
-                      </label>
-                      <select
-                        value={selectedLibraryVideo}
-                        onChange={(e) => setSelectedLibraryVideo(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      >
-                        <option value="">Select a video</option>
-                        {libraryVideos.map((video) => (
-                          <option key={video.id} value={video.id.toString()}>
-                            {video.title} ({video.duration})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
+                {/* Library Selection */}
+                {videoSource === 'library' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Choose from Library
+                    </label>
+                    <select
+                      value={selectedLibraryVideo}
+                      onChange={(e) => setSelectedLibraryVideo(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    >
+                      <option value="">Select a video</option>
+                      {libraryVideos.map((video) => (
+                        <option key={video.id} value={video.id.toString()}>
+                          {video.title} ({video.duration})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
 
-                <div className="flex justify-end space-x-3 mt-8">
-                  <button
-                    onClick={closeVideoModal}
-                    className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleVideoSave}
-                    disabled={
-                      (videoSource === 'link' && !videoLink) ||
-                      (videoSource === 'upload' && !uploadedFile) ||
-                      (videoSource === 'library' && !selectedLibraryVideo)
-                    }
-                    className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Add Video
-                  </button>
-                </div>
+              <div className="flex justify-end space-x-3 mt-8">
+                <button
+                  onClick={closeVideoModal}
+                  className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleVideoSave}
+                  disabled={
+                    (videoSource === 'link' && !videoLink) ||
+                    (videoSource === 'upload' && !uploadedFile) ||
+                    (videoSource === 'library' && !selectedLibraryVideo)
+                  }
+                  className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Add Video
+                </button>
               </div>
             </div>
           </div>
-        </>
+        </div>
       )}
+      
       {/* Add Folder Modal */}
       {showAddFolderModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
