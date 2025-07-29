@@ -647,14 +647,6 @@ By the end of this lesson, you'll understand how to create reusable components t
                         >
                           {currentLessonData?.completed ? 'Mark as incomplete' : 'Mark as complete'}
                         </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
       </div>
 
       <div className="grid lg:grid-cols-4 gap-6 p-6">
@@ -939,6 +931,14 @@ By the end of this lesson, you'll understand how to create reusable components t
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Current Lesson Info - Above Video */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{currentLesson.title}</h2>
+          {currentLesson.description && (
+            <p className="text-gray-600">{currentLesson.description}</p>
+          )}
         </div>
 
         {/* Video Player */}
