@@ -858,7 +858,7 @@ export default function Record({ onBack }: RecordProps) {
                 style={{ maxHeight: '300px' }}
               />
               <div className="mt-3 text-sm text-gray-600">
-                Click download to save video file
+                Click download to save as MP4 file
               </div>
             </div>
           )}
@@ -1001,7 +1001,7 @@ export default function Record({ onBack }: RecordProps) {
                       <button
                         onClick={() => downloadRecording(recording)}
                         className="p-1 text-gray-400 hover:text-purple-600 transition-colors"
-                        title="Download MP4"
+                        title="Download Video"
                       >
                         <Download className="w-4 h-4" />
                       </button>
