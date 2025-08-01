@@ -320,9 +320,9 @@ export default function Record({ onBack }: RecordProps) {
       };
 
       recorder.onstop = () => {
-        // Create blob with the recorded format
+        // Create blob with the recorded chunks
         const recordedBlob = new Blob(chunks, { type: mimeType });
-        const url = URL.createObjectURL(webmBlob);
+        const url = URL.createObjectURL(recordedBlob);
         
         // Store the completed recording data temporarily
         const completedRecording = {
