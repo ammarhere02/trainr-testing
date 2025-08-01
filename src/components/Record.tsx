@@ -297,9 +297,9 @@ export default function Record({ onBack }: RecordProps) {
       setCurrentStream(finalStream);
 
       // Set up MediaRecorder with better codec support
-      let mimeType = 'video/webm;codecs=vp9,opus';
+      let mimeType = 'video/webm;codecs=vp9';
       if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'video/webm;codecs=vp8,opus';
+        mimeType = 'video/webm;codecs=vp8';
         if (!MediaRecorder.isTypeSupported(mimeType)) {
           mimeType = 'video/webm';
         }
@@ -307,7 +307,8 @@ export default function Record({ onBack }: RecordProps) {
 
       const recorder = new MediaRecorder(finalStream, {
         mimeType: mimeType,
-        videoBitsPerSecond: 2500000 // 2.5 Mbps for good quality
+        videoBitsPerSecond: 5000000, // 5 Mbps for better quality
+        audioBitsPerSecond: 128000   // 128 kbps for audio
       });
 
       const chunks: Blob[] = [];
@@ -319,20 +320,21 @@ export default function Record({ onBack }: RecordProps) {
       };
 
       recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/mp4' });
-        const url = URL.createObjectURL(blob);
+        // Create blob with proper WebM type first, then convert for download
+        const webmBlob = new Blob(chunks, { type: mimeType });
+        const url = URL.createObjectURL(webmBlob);
         
         // Store the completed recording data temporarily
         const completedRecording = {
           id: Date.now(),
           title: `Recording ${new Date().toLocaleString()}`,
           url: url,
-          blob: blob,
+          blob: webmBlob,
           duration: recordingTime,
           date: new Date().toISOString(),
-          size: blob.size,
+          size: webmBlob.size,
           type: recordingMode,
-          mimeType: blob.type
+          mimeType: webmBlob.type
         };
         
         setPreviewUrl(url);
@@ -455,20 +457,46 @@ export default function Record({ onBack }: RecordProps) {
   // Download recording as MP4
   const downloadRecording = (recording: any) => {
     if (recording.blob) {
+      // Create a new blob with proper MP4 MIME type
+      const mp4Blob = new Blob([recording.blob], { type: 'video/mp4' });
+      const url = URL.createObjectURL(mp4Blob);
+      
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(recording.blob);
-      a.download = `${recording.title}.mp4`; // Changed from .mp4 to .mp4 for clarity
+      a.href = url;
+      a.download = `${recording.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
+      a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(a.href); // Clean up
+      
+      // Clean up after a delay to ensure download starts
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 1000);
     } else if (recording.url) {
-      const a = document.createElement('a');
-      a.href = recording.url;
-      a.download = `${recording.title}.mp4`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      // For existing recordings, try to download from URL
+      fetch(recording.url)
+        .then(response => response.blob())
+        .then(blob => {
+          const mp4Blob = new Blob([blob], { type: 'video/mp4' });
+          const url = URL.createObjectURL(mp4Blob);
+          
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${recording.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          
+          setTimeout(() => {
+            URL.revokeObjectURL(url);
+          }, 1000);
+        })
+        .catch(error => {
+          console.error('Download failed:', error);
+          alert('Download failed. Please try recording again.');
+        });
     }
   };
 
