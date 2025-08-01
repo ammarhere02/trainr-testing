@@ -320,8 +320,8 @@ export default function Record({ onBack }: RecordProps) {
       };
 
       recorder.onstop = () => {
-        // Create blob with proper WebM type first, then convert for download
-        const webmBlob = new Blob(chunks, { type: mimeType });
+        // Create blob with the recorded format
+        const recordedBlob = new Blob(chunks, { type: mimeType });
         const url = URL.createObjectURL(webmBlob);
         
         // Store the completed recording data temporarily
@@ -329,12 +329,12 @@ export default function Record({ onBack }: RecordProps) {
           id: Date.now(),
           title: `Recording ${new Date().toLocaleString()}`,
           url: url,
-          blob: webmBlob,
+          blob: recordedBlob,
           duration: recordingTime,
           date: new Date().toISOString(),
-          size: webmBlob.size,
+          size: recordedBlob.size,
           type: recordingMode,
-          mimeType: webmBlob.type
+          mimeType: recordedBlob.type
         };
         
         setPreviewUrl(url);
@@ -457,13 +457,13 @@ export default function Record({ onBack }: RecordProps) {
   // Download recording as MP4
   const downloadRecording = (recording: any) => {
     if (recording.blob) {
-      // Create a new blob with proper MP4 MIME type
-      const mp4Blob = new Blob([recording.blob], { type: 'video/mp4' });
-      const url = URL.createObjectURL(mp4Blob);
+      // Use the original blob but with proper file extension
+      const url = URL.createObjectURL(recording.blob);
       
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${recording.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
+      // Download as WebM since that's the actual format
+      a.download = `${recording.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.webm`;
       a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
@@ -478,12 +478,11 @@ export default function Record({ onBack }: RecordProps) {
       fetch(recording.url)
         .then(response => response.blob())
         .then(blob => {
-          const mp4Blob = new Blob([blob], { type: 'video/mp4' });
-          const url = URL.createObjectURL(mp4Blob);
+          const url = URL.createObjectURL(blob);
           
           const a = document.createElement('a');
           a.href = url;
-          a.download = `${recording.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
+          a.download = `${recording.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.webm`;
           a.style.display = 'none';
           document.body.appendChild(a);
           a.click();
