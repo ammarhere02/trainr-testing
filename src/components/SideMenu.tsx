@@ -54,6 +54,7 @@ export default function SideMenu({ currentView, onViewChange, userRole, onCollap
       submenu: [
         { key: 'courses', label: 'Manage Courses', icon: BookOpen },
         { key: 'member-record', label: 'Record', icon: Video },
+        { key: 'screen-recorder', label: 'Screen Recorder', icon: Monitor },
         { key: 'library', label: 'Library', icon: FileText }
       ]
     },
