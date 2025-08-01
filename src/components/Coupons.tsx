@@ -46,7 +46,6 @@ export default function Coupons() {
     applicableProducts: 'all'
   });
 
-  const [coupons, setCoupons] = useState([
   const [coupons, setCoupons] = useState(() => {
     const saved = localStorage.getItem('coupons-data');
     return saved ? JSON.parse(saved) : [
@@ -118,7 +117,8 @@ export default function Coupons() {
       revenue: 45670,
       applicableProducts: 'all'
     }
-  ]});
+  ];
+  });
 
   // Filter coupons based on search and filters
   const filteredCoupons = coupons.filter(coupon => {
