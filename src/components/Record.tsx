@@ -109,15 +109,27 @@ export default function Record({ onBack }: RecordProps) {
             width: { ideal: 1920 },
             height: { ideal: 1080 },
             frameRate: { ideal: 30 }
-          },
-          audio: true
+          }
         });
+
+        // Get microphone audio separately if needed
+        let micStream: MediaStream | null = null;
+        if (isMicOn) {
+          try {
+            micStream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+              video: false
+            });
+          } catch (micError) {
+            console.warn('Microphone access denied, continuing without audio');
+          }
+        }
 
         if (recordingMode === 'both') {
           // Get camera stream
           const cameraStream = await navigator.mediaDevices.getUserMedia({
             video: isCameraOn,
-            audio: isMicOn
+            audio: false // Audio handled separately above
           });
 
           // Combine streams (in a real app, you'd use more sophisticated mixing)
@@ -126,6 +138,18 @@ export default function Record({ onBack }: RecordProps) {
           if (videoRef.current) {
             videoRef.current.srcObject = cameraStream;
           }
+
+          // Combine audio tracks if microphone is available
+          if (micStream) {
+            const combinedStream = new MediaStream([
+              ...screenStream.getVideoTracks(),
+              ...micStream.getAudioTracks()
+            ]);
+            stream = combinedStream;
+          }
+        } else if (micStream) {
+          // Combine screen video with microphone audio
+          stream = new MediaStream([...screenStream.getVideoTracks(), ...micStream.getAudioTracks()]);
         } else {
           stream = screenStream;
         }
