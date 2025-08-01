@@ -858,7 +858,7 @@ export default function Record({ onBack }: RecordProps) {
                 style={{ maxHeight: '300px' }}
               />
               <div className="mt-3 text-sm text-gray-600">
-                Click download to save as MP4 file
+                Click download to save video file
               </div>
             </div>
           )}
