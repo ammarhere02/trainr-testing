@@ -64,7 +64,6 @@ export default function Contacts() {
     emailMarketing: true
   });
 
-  const [contacts, setContacts] = useState([
   const [contacts, setContacts] = useState(() => {
     const saved = localStorage.getItem('contacts-data');
     return saved ? JSON.parse(saved) : [
@@ -475,8 +474,8 @@ export default function Contacts() {
                   <div className="flex items-center">
                     <input
                       type="checkbox"
-                    checked={selectedContacts.length === paginatedContacts.length && paginatedContacts.length > 0}
-                    onChange={handleSelectAll}
+                      checked={selectedContacts.length === paginatedContacts.length && paginatedContacts.length > 0}
+                      onChange={handleSelectAll}
                       className="rounded mr-6"
                     />
                   </div>
