@@ -82,7 +82,6 @@ export default function Testimonials() {
     theme: 'modern'
   });
 
-  const [testimonials, setTestimonials] = useState([
   const [testimonials, setTestimonials] = useState(() => {
     const saved = localStorage.getItem('testimonials-data');
     return saved ? JSON.parse(saved) : [
@@ -146,7 +145,6 @@ export default function Testimonials() {
     }
   ]});
 
-  const [collectionForms, setCollectionForms] = useState([
   const [collectionForms, setCollectionForms] = useState(() => {
     const saved = localStorage.getItem('testimonial-forms-data');
     return saved ? JSON.parse(saved) : [
