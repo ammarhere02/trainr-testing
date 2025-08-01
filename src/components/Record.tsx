@@ -935,7 +935,7 @@ export default function Record({ onBack }: RecordProps) {
               <li>• Check your lighting if using camera</li>
               <li>• Test your setup before important recordings</li>
               <li>• In "Both" mode, drag the camera circle to reposition</li>
-              <li>• Recordings are saved as MP4 files</li>
+              <li>• Recordings are saved as WebM video files</li>
             </ul>
           </div>
         </div>
@@ -1001,7 +1001,7 @@ export default function Record({ onBack }: RecordProps) {
                       <button
                         onClick={() => downloadRecording(recording)}
                         className="p-1 text-gray-400 hover:text-purple-600 transition-colors"
-                        title="Download Video"
+                        title="Download MP4"
                       >
                         <Download className="w-4 h-4" />
                       </button>
