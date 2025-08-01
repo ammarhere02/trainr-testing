@@ -30,7 +30,8 @@ import {
   X,
   CheckCircle,
   AlertCircle,
-  Loader
+  Loader,
+  Move
 } from 'lucide-react';
 
 interface RecordProps {
@@ -48,14 +49,21 @@ export default function Record({ onBack }: RecordProps) {
   const [showSettings, setShowSettings] = useState(false);
   const [recordings, setRecordings] = useState<any[]>([]);
   const [currentStream, setCurrentStream] = useState<MediaStream | null>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [cameraPosition, setCameraPosition] = useState({ x: 20, y: 20 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const screenVideoRef = useRef<HTMLVideoElement>(null);
+  const cameraVideoRef = useRef<HTMLVideoElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Load saved recordings
   useEffect(() => {
@@ -95,29 +103,87 @@ export default function Record({ onBack }: RecordProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Handle camera drag
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (recordingMode !== 'both' || !isRecording) return;
+    
+    setIsDragging(true);
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    const container = document.querySelector('.recording-container');
+    if (!container) return;
+    
+    const containerRect = container.getBoundingClientRect();
+    const newX = e.clientX - containerRect.left - dragOffset.x;
+    const newY = e.clientY - containerRect.top - dragOffset.y;
+    
+    // Keep camera within bounds
+    const maxX = containerRect.width - 200; // Camera width
+    const maxY = containerRect.height - 150; // Camera height
+    
+    setCameraPosition({
+      x: Math.max(20, Math.min(newX, maxX)),
+      y: Math.max(20, Math.min(newY, maxY))
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, dragOffset]);
+
   // Start recording
   const startRecording = async () => {
     try {
       setIsProcessing(true);
-      let stream: MediaStream;
+      let finalStream: MediaStream;
 
       if (recordingMode === 'screen' || recordingMode === 'both') {
-        // Get screen capture
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({
+        // Get screen capture with proper options
+        const screenStreamResult = await navigator.mediaDevices.getDisplayMedia({
           video: {
             mediaSource: 'screen',
             width: { ideal: 1920 },
             height: { ideal: 1080 },
             frameRate: { ideal: 30 }
-          }
+          },
+          audio: false // Don't request system audio to avoid permission issues
         });
+
+        setScreenStream(screenStreamResult);
+        
+        if (screenVideoRef.current) {
+          screenVideoRef.current.srcObject = screenStreamResult;
+        }
 
         // Get microphone audio separately if needed
         let micStream: MediaStream | null = null;
         if (isMicOn) {
           try {
             micStream = await navigator.mediaDevices.getUserMedia({
-              audio: true,
+              audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                sampleRate: 44100
+              },
               video: false
             });
           } catch (micError) {
@@ -127,55 +193,118 @@ export default function Record({ onBack }: RecordProps) {
 
         if (recordingMode === 'both') {
           // Get camera stream
-          const cameraStream = await navigator.mediaDevices.getUserMedia({
-            video: isCameraOn,
-            audio: false // Audio handled separately above
+          const cameraStreamResult = await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+              frameRate: { ideal: 30 }
+            },
+            audio: false // Audio handled separately
           });
 
-          // Combine streams (in a real app, you'd use more sophisticated mixing)
-          stream = screenStream;
+          setCameraStream(cameraStreamResult);
           
-          if (videoRef.current) {
-            videoRef.current.srcObject = cameraStream;
+          if (cameraVideoRef.current) {
+            cameraVideoRef.current.srcObject = cameraStreamResult;
           }
 
-          // Combine audio tracks if microphone is available
+          // Create canvas to combine screen and camera
+          const canvas = canvasRef.current;
+          if (canvas) {
+            const ctx = canvas.getContext('2d');
+            canvas.width = 1920;
+            canvas.height = 1080;
+
+            // Create a new stream from canvas
+            const canvasStream = canvas.captureStream(30);
+            
+            // Add audio track if available
+            if (micStream) {
+              micStream.getAudioTracks().forEach(track => {
+                canvasStream.addTrack(track);
+              });
+            }
+
+            finalStream = canvasStream;
+
+            // Start compositing
+            const composite = () => {
+              if (!isRecording) return;
+              
+              if (ctx && screenVideoRef.current && cameraVideoRef.current) {
+                // Draw screen
+                ctx.drawImage(screenVideoRef.current, 0, 0, canvas.width, canvas.height);
+                
+                // Draw camera overlay as circle
+                const cameraSize = 200;
+                const cameraX = (cameraPosition.x / 100) * (canvas.width - cameraSize);
+                const cameraY = (cameraPosition.y / 100) * (canvas.height - cameraSize);
+                
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(cameraX + cameraSize/2, cameraY + cameraSize/2, cameraSize/2, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.drawImage(cameraVideoRef.current, cameraX, cameraY, cameraSize, cameraSize);
+                ctx.restore();
+                
+                // Add border to camera circle
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(cameraX + cameraSize/2, cameraY + cameraSize/2, cameraSize/2, 0, Math.PI * 2);
+                ctx.stroke();
+              }
+              
+              requestAnimationFrame(composite);
+            };
+            composite();
+          }
+        } else {
+          // Screen only
           if (micStream) {
-            const combinedStream = new MediaStream([
-              ...screenStream.getVideoTracks(),
+            // Combine screen video with microphone audio
+            finalStream = new MediaStream([
+              ...screenStreamResult.getVideoTracks(),
               ...micStream.getAudioTracks()
             ]);
-            stream = combinedStream;
+          } else {
+            finalStream = screenStreamResult;
           }
-        } else if (micStream) {
-          // Combine screen video with microphone audio
-          stream = new MediaStream([...screenStream.getVideoTracks(), ...micStream.getAudioTracks()]);
-        } else {
-          stream = screenStream;
-        }
-
-        if (screenVideoRef.current) {
-          screenVideoRef.current.srcObject = screenStream;
         }
 
         setIsScreenSharing(true);
       } else {
         // Camera only
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: isCameraOn,
+        finalStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            frameRate: { ideal: 30 }
+          },
           audio: isMicOn
         });
 
+        setCameraStream(finalStream);
+        
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+          videoRef.current.srcObject = finalStream;
         }
       }
 
-      setCurrentStream(stream);
+      setCurrentStream(finalStream);
 
-      // Set up MediaRecorder
-      const recorder = new MediaRecorder(stream, {
-        mimeType: 'video/webm;codecs=vp9'
+      // Set up MediaRecorder with better codec support
+      let mimeType = 'video/webm;codecs=vp9,opus';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/webm;codecs=vp8,opus';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = 'video/webm';
+        }
+      }
+
+      const recorder = new MediaRecorder(finalStream, {
+        mimeType: mimeType,
+        videoBitsPerSecond: 2500000 // 2.5 Mbps for good quality
       });
 
       const chunks: Blob[] = [];
@@ -187,7 +316,7 @@ export default function Record({ onBack }: RecordProps) {
       };
 
       recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
+        const blob = new Blob(chunks, { type: 'video/mp4' });
         const url = URL.createObjectURL(blob);
         setPreviewUrl(url);
         
@@ -196,15 +325,23 @@ export default function Record({ onBack }: RecordProps) {
           id: Date.now(),
           title: `Recording ${new Date().toLocaleString()}`,
           url: url,
+          blob: blob,
           duration: recordingTime,
           date: new Date().toISOString(),
           size: blob.size,
-          type: recordingMode
+          type: recordingMode,
+          mimeType: blob.type
         };
         
         const updatedRecordings = [newRecording, ...recordings];
         setRecordings(updatedRecordings);
-        localStorage.setItem('recorded-videos', JSON.stringify(updatedRecordings));
+        
+        // Save to localStorage (without blob for storage efficiency)
+        const recordingsForStorage = updatedRecordings.map(r => ({
+          ...r,
+          blob: undefined // Don't store blob in localStorage
+        }));
+        localStorage.setItem('recorded-videos', JSON.stringify(recordingsForStorage));
         
         setIsProcessing(false);
       };
@@ -218,14 +355,30 @@ export default function Record({ onBack }: RecordProps) {
       setIsProcessing(false);
 
       // Handle screen share end
-      stream.getVideoTracks()[0].addEventListener('ended', () => {
-        stopRecording();
-      });
+      if (screenStream) {
+        screenStream.getVideoTracks()[0].addEventListener('ended', () => {
+          stopRecording();
+        });
+      }
 
     } catch (error) {
       console.error('Failed to start recording:', error);
       setIsProcessing(false);
-      alert('Failed to start recording. Please check your permissions.');
+      
+      // More specific error messages
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          alert('Permission denied. Please allow access to your screen/camera and try again.');
+        } else if (error.name === 'NotFoundError') {
+          alert('No recording devices found. Please check your camera/microphone.');
+        } else if (error.name === 'NotSupportedError') {
+          alert('Screen recording is not supported in this browser.');
+        } else {
+          alert(`Recording failed: ${error.message}`);
+        }
+      } else {
+        alert('Failed to start recording. Please try again.');
+      }
     }
   };
 
@@ -236,9 +389,18 @@ export default function Record({ onBack }: RecordProps) {
       mediaRecorder.stop();
     }
 
+    // Stop all streams
     if (currentStream) {
       currentStream.getTracks().forEach(track => track.stop());
       setCurrentStream(null);
+    }
+    if (screenStream) {
+      screenStream.getTracks().forEach(track => track.stop());
+      setScreenStream(null);
+    }
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
     }
 
     setIsRecording(false);
@@ -252,6 +414,9 @@ export default function Record({ onBack }: RecordProps) {
     }
     if (screenVideoRef.current) {
       screenVideoRef.current.srcObject = null;
+    }
+    if (cameraVideoRef.current) {
+      cameraVideoRef.current.srcObject = null;
     }
   };
 
@@ -269,8 +434,10 @@ export default function Record({ onBack }: RecordProps) {
 
   // Toggle camera
   const toggleCamera = async () => {
-    if (currentStream) {
-      const videoTrack = currentStream.getVideoTracks()[0];
+    if (recordingMode === 'screen') return;
+    
+    if (cameraStream) {
+      const videoTrack = cameraStream.getVideoTracks()[0];
       if (videoTrack) {
         videoTrack.enabled = !isCameraOn;
       }
@@ -289,14 +456,25 @@ export default function Record({ onBack }: RecordProps) {
     setIsMicOn(!isMicOn);
   };
 
-  // Download recording
+  // Download recording as MP4
   const downloadRecording = (recording: any) => {
-    const a = document.createElement('a');
-    a.href = recording.url;
-    a.download = `${recording.title}.webm`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    if (recording.blob) {
+      // Use the blob if available
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(recording.blob);
+      a.download = `${recording.title}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } else if (recording.url) {
+      // Fallback to URL
+      const a = document.createElement('a');
+      a.href = recording.url;
+      a.download = `${recording.title}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
   };
 
   // Delete recording
@@ -319,6 +497,12 @@ export default function Record({ onBack }: RecordProps) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Hidden canvas for compositing */}
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
+      
+      {/* Hidden camera video for compositing */}
+      <video ref={cameraVideoRef} autoPlay muted playsInline style={{ display: 'none' }} />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-4">
@@ -402,8 +586,9 @@ export default function Record({ onBack }: RecordProps) {
             </div>
 
             {/* Video Preview Area */}
-            <div className="relative bg-gray-900 aspect-video">
-              {isScreenSharing && (
+            <div className="relative bg-gray-900 aspect-video recording-container">
+              {/* Screen Video */}
+              {(recordingMode === 'screen' || recordingMode === 'both') && (
                 <video
                   ref={screenVideoRef}
                   autoPlay
@@ -413,20 +598,47 @@ export default function Record({ onBack }: RecordProps) {
                 />
               )}
               
-              {(recordingMode === 'camera' || recordingMode === 'both') && (
+              {/* Camera Video (for camera-only mode) */}
+              {recordingMode === 'camera' && (
                 <video
                   ref={videoRef}
                   autoPlay
                   muted
                   playsInline
-                  className={`${
-                    recordingMode === 'both' 
-                      ? 'absolute bottom-4 right-4 w-48 h-36 object-cover rounded-lg border-2 border-white shadow-lg' 
-                      : 'w-full h-full object-cover'
-                  }`}
+                  className="w-full h-full object-cover"
                 />
               )}
 
+              {/* Camera Overlay (for both mode) */}
+              {recordingMode === 'both' && isRecording && cameraStream && (
+                <div
+                  className="absolute w-48 h-36 rounded-full overflow-hidden border-4 border-white shadow-lg cursor-move"
+                  style={{
+                    left: `${cameraPosition.x}px`,
+                    top: `${cameraPosition.y}px`,
+                  }}
+                  onMouseDown={handleMouseDown}
+                >
+                  <video
+                    autoPlay
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover"
+                    style={{ transform: 'scaleX(-1)' }} // Mirror camera
+                    ref={(el) => {
+                      if (el && cameraStream) {
+                        el.srcObject = cameraStream;
+                      }
+                    }}
+                  />
+                  <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs flex items-center">
+                    <Move className="w-3 h-3 mr-1" />
+                    Drag
+                  </div>
+                </div>
+              )}
+
+              {/* Preview State */}
               {!isRecording && !isScreenSharing && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center text-white">
@@ -443,7 +655,7 @@ export default function Record({ onBack }: RecordProps) {
                     <p className="text-gray-300">
                       {recordingMode === 'screen' && 'Record your screen and audio'}
                       {recordingMode === 'camera' && 'Record using your camera'}
-                      {recordingMode === 'both' && 'Record screen with camera overlay'}
+                      {recordingMode === 'both' && 'Record screen with moveable camera overlay'}
                     </p>
                   </div>
                 </div>
@@ -464,7 +676,7 @@ export default function Record({ onBack }: RecordProps) {
             <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
               <div className="flex items-center justify-center space-x-4">
                 {/* Camera Toggle */}
-                {(recordingMode === 'camera' || recordingMode === 'both') && (
+                {recordingMode !== 'screen' && (
                   <button
                     onClick={toggleCamera}
                     disabled={isRecording}
@@ -542,7 +754,7 @@ export default function Record({ onBack }: RecordProps) {
                   <button
                     onClick={() => downloadRecording(recordings[0])}
                     className="text-purple-600 hover:text-purple-700 transition-colors"
-                    title="Download"
+                    title="Download as MP4"
                   >
                     <Download className="w-5 h-5" />
                   </button>
@@ -557,6 +769,9 @@ export default function Record({ onBack }: RecordProps) {
                 className="w-full rounded-lg bg-gray-900"
                 style={{ maxHeight: '300px' }}
               />
+              <div className="mt-3 text-sm text-gray-600">
+                Click download to save as MP4 file
+              </div>
             </div>
           )}
         </div>
@@ -589,8 +804,8 @@ export default function Record({ onBack }: RecordProps) {
                   </select>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Include System Audio</span>
-                  <input type="checkbox" defaultChecked className="rounded" />
+                  <span className="text-sm font-medium text-gray-700">Include Microphone</span>
+                  <input type="checkbox" checked={isMicOn} onChange={() => setIsMicOn(!isMicOn)} className="rounded" />
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-700">Auto-save Recordings</span>
@@ -631,7 +846,8 @@ export default function Record({ onBack }: RecordProps) {
               <li>• Use a quiet environment for clear audio</li>
               <li>• Check your lighting if using camera</li>
               <li>• Test your setup before important recordings</li>
-              <li>• Keep recordings under 30 minutes for best quality</li>
+              <li>• In "Both" mode, drag the camera circle to reposition</li>
+              <li>• Recordings are saved as MP4 files</li>
             </ul>
           </div>
         </div>
@@ -697,7 +913,7 @@ export default function Record({ onBack }: RecordProps) {
                       <button
                         onClick={() => downloadRecording(recording)}
                         className="p-1 text-gray-400 hover:text-purple-600 transition-colors"
-                        title="Download"
+                        title="Download MP4"
                       >
                         <Download className="w-4 h-4" />
                       </button>
