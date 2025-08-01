@@ -58,6 +58,9 @@ export default function Record({ onBack }: RecordProps) {
   const [cameraPosition, setCameraPosition] = useState({ x: 20, y: 20 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [completedRecording, setCompletedRecording] = useState<any>(null);
+  const [recordingTitle, setRecordingTitle] = useState('');
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const screenVideoRef = useRef<HTMLVideoElement>(null);
@@ -318,10 +321,9 @@ export default function Record({ onBack }: RecordProps) {
       recorder.onstop = () => {
         const blob = new Blob(chunks, { type: 'video/mp4' });
         const url = URL.createObjectURL(blob);
-        setPreviewUrl(url);
         
-        // Save recording
-        const newRecording = {
+        // Store the completed recording data temporarily
+        const completedRecording = {
           id: Date.now(),
           title: `Recording ${new Date().toLocaleString()}`,
           url: url,
@@ -333,15 +335,9 @@ export default function Record({ onBack }: RecordProps) {
           mimeType: blob.type
         };
         
-        const updatedRecordings = [newRecording, ...recordings];
-        setRecordings(updatedRecordings);
-        
-        // Save to localStorage (without blob for storage efficiency)
-        const recordingsForStorage = updatedRecordings.map(r => ({
-          ...r,
-          blob: undefined // Don't store blob in localStorage
-        }));
-        localStorage.setItem('recorded-videos', JSON.stringify(recordingsForStorage));
+        setPreviewUrl(url);
+        setCompletedRecording(completedRecording);
+        setShowSaveModal(true);
         
         setIsProcessing(false);
       };
@@ -459,15 +455,14 @@ export default function Record({ onBack }: RecordProps) {
   // Download recording as MP4
   const downloadRecording = (recording: any) => {
     if (recording.blob) {
-      // Use the blob if available
       const a = document.createElement('a');
       a.href = URL.createObjectURL(recording.blob);
-      a.download = `${recording.title}.mp4`;
+      a.download = `${recording.title}.mp4`; // Changed from .mp4 to .mp4 for clarity
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      URL.revokeObjectURL(a.href); // Clean up
     } else if (recording.url) {
-      // Fallback to URL
       const a = document.createElement('a');
       a.href = recording.url;
       a.download = `${recording.title}.mp4`;
@@ -493,6 +488,72 @@ export default function Record({ onBack }: RecordProps) {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // Save recording to library
+  const saveToLibrary = () => {
+    if (!completedRecording) return;
+    
+    const recordingToSave = {
+      ...completedRecording,
+      title: recordingTitle || completedRecording.title
+    };
+    
+    const updatedRecordings = [recordingToSave, ...recordings];
+    setRecordings(updatedRecordings);
+    
+    // Save to localStorage (without blob for storage efficiency)
+    const recordingsForStorage = updatedRecordings.map(r => ({
+      ...r,
+      blob: undefined // Don't store blob in localStorage
+    }));
+    localStorage.setItem('recorded-videos', JSON.stringify(recordingsForStorage));
+    
+    setShowSaveModal(false);
+    setCompletedRecording(null);
+    setRecordingTitle('');
+  };
+
+  // Download recording directly
+  const downloadDirectly = () => {
+    if (!completedRecording) return;
+    
+    const recordingToDownload = {
+      ...completedRecording,
+      title: recordingTitle || completedRecording.title
+    };
+    
+    downloadRecording(recordingToDownload);
+    setShowSaveModal(false);
+    setCompletedRecording(null);
+    setRecordingTitle('');
+  };
+
+  // Save and download
+  const saveAndDownload = () => {
+    if (!completedRecording) return;
+    
+    const recordingToSave = {
+      ...completedRecording,
+      title: recordingTitle || completedRecording.title
+    };
+    
+    // Save to library
+    const updatedRecordings = [recordingToSave, ...recordings];
+    setRecordings(updatedRecordings);
+    
+    const recordingsForStorage = updatedRecordings.map(r => ({
+      ...r,
+      blob: undefined
+    }));
+    localStorage.setItem('recorded-videos', JSON.stringify(recordingsForStorage));
+    
+    // Download
+    downloadRecording(recordingToSave);
+    
+    setShowSaveModal(false);
+    setCompletedRecording(null);
+    setRecordingTitle('');
   };
 
   return (
@@ -935,6 +996,82 @@ export default function Record({ onBack }: RecordProps) {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Save Recording Modal */}
+      {showSaveModal && completedRecording && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Recording Completed!</h3>
+              
+              {/* Recording Preview */}
+              <div className="mb-6">
+                <video
+                  src={completedRecording.url}
+                  className="w-full h-32 object-cover rounded-lg bg-gray-900"
+                  poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23374151'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='16'%3ERecording Preview%3C/text%3E%3C/svg%3E"
+                />
+                <div className="mt-2 text-sm text-gray-600">
+                  Duration: {formatTime(completedRecording.duration)} • Size: {formatFileSize(completedRecording.size)}
+                </div>
+              </div>
+
+              {/* Recording Title */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Recording Title (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={recordingTitle}
+                  onChange={(e) => setRecordingTitle(e.target.value)}
+                  placeholder={completedRecording.title}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-3">
+                <button
+                  onClick={saveAndDownload}
+                  className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center"
+                >
+                  <Save className="w-5 h-5 mr-2" />
+                  Save to Library & Download MP4
+                </button>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={saveToLibrary}
+                    className="bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Only
+                  </button>
+                  <button
+                    onClick={downloadDirectly}
+                    className="bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download MP4
+                  </button>
+                </div>
+                
+                <button
+                  onClick={() => {
+                    setShowSaveModal(false);
+                    setCompletedRecording(null);
+                    setRecordingTitle('');
+                  }}
+                  className="w-full text-gray-600 hover:text-gray-800 py-2 transition-colors"
+                >
+                  Discard Recording
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
