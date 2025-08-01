@@ -47,6 +47,9 @@ export default function Coupons() {
   });
 
   const [coupons, setCoupons] = useState([
+  const [coupons, setCoupons] = useState(() => {
+    const saved = localStorage.getItem('coupons-data');
+    return saved ? JSON.parse(saved) : [
     {
       id: 1,
       code: 'WELCOME50',
@@ -115,7 +118,7 @@ export default function Coupons() {
       revenue: 45670,
       applicableProducts: 'all'
     }
-  ]);
+  ]});
 
   // Filter coupons based on search and filters
   const filteredCoupons = coupons.filter(coupon => {
@@ -192,7 +195,9 @@ export default function Coupons() {
       applicableProducts: newCoupon.applicableProducts
     };
 
-    setCoupons(prev => [couponData, ...prev]);
+    const updatedCoupons = [couponData, ...coupons];
+    setCoupons(updatedCoupons);
+    localStorage.setItem('coupons-data', JSON.stringify(updatedCoupons));
     setShowCreateModal(false);
     setNewCoupon({
       code: '',
@@ -211,15 +216,19 @@ export default function Coupons() {
 
   // Toggle coupon active status
   const toggleCouponStatus = (couponId: number) => {
-    setCoupons(prev => prev.map(coupon => 
+    const updatedCoupons = coupons.map(coupon => 
       coupon.id === couponId ? { ...coupon, isActive: !coupon.isActive } : coupon
-    ));
+    );
+    setCoupons(updatedCoupons);
+    localStorage.setItem('coupons-data', JSON.stringify(updatedCoupons));
   };
 
   // Delete coupon
   const deleteCoupon = (couponId: number) => {
     if (confirm('Are you sure you want to delete this coupon?')) {
-      setCoupons(prev => prev.filter(coupon => coupon.id !== couponId));
+      const updatedCoupons = coupons.filter(coupon => coupon.id !== couponId);
+      setCoupons(updatedCoupons);
+      localStorage.setItem('coupons-data', JSON.stringify(updatedCoupons));
     }
   };
 

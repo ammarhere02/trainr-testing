@@ -37,7 +37,9 @@ export default function Content() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingContent, setEditingContent] = useState<any>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
-  const [contentItems, setContentItems] = useState([
+  const [contentItems, setContentItems] = useState(() => {
+    const saved = localStorage.getItem('content-items');
+    return saved ? JSON.parse(saved) : [
     {
       id: 1,
       title: 'React Hooks Deep Dive Tutorial',
@@ -123,7 +125,7 @@ export default function Content() {
       videoSource: 'library',
       videoUrl: 'trainr://video/abc123'
     }
-  ]);
+  ]});
   const [libraryVideos, setLibraryVideos] = useState([
     {
       id: 1,
@@ -290,7 +292,9 @@ export default function Content() {
     };
     
     // Add to content items (in real app, this would be an API call)
-    setContentItems(prev => [newItem, ...prev]);
+    const updatedItems = [newItem, ...contentItems];
+    setContentItems(updatedItems);
+    localStorage.setItem('content-items', JSON.stringify(updatedItems));
     
     // Reset form and close modal
     setNewContent({
@@ -347,9 +351,11 @@ export default function Content() {
     };
     
     // Update content items
-    setContentItems(prev => prev.map(item => 
+    const updatedItems = contentItems.map(item => 
       item.id === editingContent.id ? updatedItem : item
-    ));
+    );
+    setContentItems(updatedItems);
+    localStorage.setItem('content-items', JSON.stringify(updatedItems));
     
     // Reset and close
     setEditingContent(null);

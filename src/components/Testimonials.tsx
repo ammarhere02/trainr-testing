@@ -83,6 +83,9 @@ export default function Testimonials() {
   });
 
   const [testimonials, setTestimonials] = useState([
+  const [testimonials, setTestimonials] = useState(() => {
+    const saved = localStorage.getItem('testimonials-data');
+    return saved ? JSON.parse(saved) : [
     {
       id: 1,
       type: 'video',
@@ -141,9 +144,12 @@ export default function Testimonials() {
       formId: 2,
       location: 'Austin, TX'
     }
-  ]);
+  ]});
 
   const [collectionForms, setCollectionForms] = useState([
+  const [collectionForms, setCollectionForms] = useState(() => {
+    const saved = localStorage.getItem('testimonial-forms-data');
+    return saved ? JSON.parse(saved) : [
     {
       id: 1,
       name: 'Web Development Course Feedback',
@@ -188,7 +194,7 @@ export default function Testimonials() {
         theme: 'minimal'
       }
     }
-  ]);
+  ]});
 
   const tabs = [
     { id: 'collect', label: 'Collect', icon: Plus },
@@ -232,7 +238,9 @@ export default function Testimonials() {
       }
     };
 
-    setCollectionForms(prev => [newFormData, ...prev]);
+    const updatedForms = [newFormData, ...collectionForms];
+    setCollectionForms(updatedForms);
+    localStorage.setItem('testimonial-forms-data', JSON.stringify(updatedForms));
     setShowCreateForm(false);
     setNewForm({
       name: '',
@@ -255,21 +263,27 @@ export default function Testimonials() {
   };
 
   const handleApproveTestimonial = (id: number) => {
-    setTestimonials(prev => prev.map(t => 
+    const updatedTestimonials = testimonials.map(t => 
       t.id === id ? { ...t, status: 'approved' } : t
-    ));
+    );
+    setTestimonials(updatedTestimonials);
+    localStorage.setItem('testimonials-data', JSON.stringify(updatedTestimonials));
   };
 
   const handleRejectTestimonial = (id: number) => {
-    setTestimonials(prev => prev.map(t => 
+    const updatedTestimonials = testimonials.map(t => 
       t.id === id ? { ...t, status: 'rejected' } : t
-    ));
+    );
+    setTestimonials(updatedTestimonials);
+    localStorage.setItem('testimonials-data', JSON.stringify(updatedTestimonials));
   };
 
   const handleToggleFeatured = (id: number) => {
-    setTestimonials(prev => prev.map(t => 
+    const updatedTestimonials = testimonials.map(t => 
       t.id === id ? { ...t, featured: !t.featured } : t
-    ));
+    );
+    setTestimonials(updatedTestimonials);
+    localStorage.setItem('testimonials-data', JSON.stringify(updatedTestimonials));
   };
 
   const copyToClipboard = (text: string) => {

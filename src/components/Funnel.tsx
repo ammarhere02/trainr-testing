@@ -53,7 +53,10 @@ export default function Funnel({ userRole = 'student' }: FunnelProps) {
   const [tempTitle, setTempTitle] = useState(title);
   const [description, setDescription] = useState('Learn how to build modern web applications from scratch with React, Node.js, and MongoDB');
   const [tempDescription, setTempDescription] = useState(description);
-  const [videoUrl, setVideoUrl] = useState('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+  const [videoUrl, setVideoUrl] = useState(() => {
+    const saved = localStorage.getItem('funnel-video-url');
+    return saved || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+  });
   const [tempVideoUrl, setTempVideoUrl] = useState(videoUrl);
   
   const [benefits, setBenefits] = useState([
@@ -124,6 +127,7 @@ export default function Funnel({ userRole = 'student' }: FunnelProps) {
 
   const handleSaveVideo = () => {
     setVideoUrl(tempVideoUrl);
+    localStorage.setItem('funnel-video-url', tempVideoUrl);
     setIsEditingVideo(false);
   };
 

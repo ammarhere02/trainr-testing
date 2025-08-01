@@ -50,9 +50,11 @@ export default function Community({ userRole = 'student' }: CommunityProps) {
   const togglePinPost = (postId: number) => {
     if (userRole !== 'educator') return;
     
-    setPosts(prev => prev.map(post => 
+    const updatedPosts = posts.map(post => 
       post.id === postId ? { ...post, isPinned: !post.isPinned } : post
-    ));
+    );
+    setPosts(updatedPosts);
+    localStorage.setItem('community-posts', JSON.stringify(updatedPosts));
   };
 
   const filters = [
@@ -75,7 +77,9 @@ export default function Community({ userRole = 'student' }: CommunityProps) {
   const selectedCategoryData = categories.find(cat => cat.id === selectedCategory);
 
   // Update posts state
-  const [posts, setPosts] = useState([
+  const [posts, setPosts] = useState(() => {
+    const saved = localStorage.getItem('community-posts');
+    return saved ? JSON.parse(saved) : [
     {
       id: 1,
       author: 'Max Perzon',
@@ -143,7 +147,7 @@ export default function Community({ userRole = 'student' }: CommunityProps) {
       ],
       lastComment: 'New comment 3h ago'
     }
-  ]);
+  ]});
 
   // Handle post creation
   const handleCreatePost = () => {

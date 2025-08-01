@@ -13,6 +13,9 @@ export default function Courses({ onStartLearning }: CoursesProps) {
   const [courseToDelete, setCourseToDelete] = React.useState<any>(null);
   const [courseToEdit, setCourseToEdit] = React.useState<any>(null);
   const [courses, setCourses] = React.useState([
+  const [courses, setCourses] = React.useState(() => {
+    const saved = localStorage.getItem('courses-data');
+    return saved ? JSON.parse(saved) : [
     {
       id: 1,
       title: 'Complete Web Development Bootcamp',
@@ -46,7 +49,7 @@ export default function Courses({ onStartLearning }: CoursesProps) {
       price: 0,
       published: true
     }
-  ]);
+  ]});
   
   const [newCourse, setNewCourse] = React.useState({
     name: '',
@@ -91,7 +94,7 @@ export default function Courses({ onStartLearning }: CoursesProps) {
 
   const saveEditCourse = () => {
     if (courseToEdit) {
-      setCourses(prev => prev.map(course => 
+      const updatedCourses = courses.map(course => 
         course.id === courseToEdit.id 
           ? { 
               ...course, 
@@ -103,7 +106,9 @@ export default function Courses({ onStartLearning }: CoursesProps) {
               published: editCourse.published
             }
           : course
-      ));
+      );
+      setCourses(updatedCourses);
+      localStorage.setItem('courses-data', JSON.stringify(updatedCourses));
       setShowEditModal(false);
       setCourseToEdit(null);
       setEditCourse({
@@ -134,7 +139,9 @@ export default function Courses({ onStartLearning }: CoursesProps) {
 
   const confirmDeleteCourse = () => {
     if (courseToDelete) {
-      setCourses(prev => prev.filter(course => course.id !== courseToDelete.id));
+      const updatedCourses = courses.filter(course => course.id !== courseToDelete.id);
+      setCourses(updatedCourses);
+      localStorage.setItem('courses-data', JSON.stringify(updatedCourses));
       setShowDeleteModal(false);
       setCourseToDelete(null);
     }
@@ -160,7 +167,9 @@ export default function Courses({ onStartLearning }: CoursesProps) {
     };
 
     // Add to courses array
-    setCourses(prev => [...prev, courseData]);
+    const updatedCourses = [...courses, courseData];
+    setCourses(updatedCourses);
+    localStorage.setItem('courses-data', JSON.stringify(updatedCourses));
     
     // In real app, this would also send to backend
     console.log('Course added:', courseData);

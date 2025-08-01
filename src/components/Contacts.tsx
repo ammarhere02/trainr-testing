@@ -65,6 +65,9 @@ export default function Contacts() {
   });
 
   const [contacts, setContacts] = useState([
+  const [contacts, setContacts] = useState(() => {
+    const saved = localStorage.getItem('contacts-data');
+    return saved ? JSON.parse(saved) : [
     {
       id: 1,
       firstName: 'Jack',
@@ -128,7 +131,7 @@ export default function Contacts() {
       notes: 'Active in community discussions',
       avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=50'
     }
-  ]);
+  ]});
 
   const [tags, setTags] = useState([
     { id: 1, name: 'customer', color: 'bg-green-100 text-green-700', count: 1 },
@@ -187,7 +190,9 @@ export default function Contacts() {
       avatar: `https://images.pexels.com/photos/${Math.floor(Math.random() * 1000000)}/pexels-photo-${Math.floor(Math.random() * 1000000)}.jpeg?auto=compress&cs=tinysrgb&w=50`
     };
 
-    setContacts(prev => [contactData, ...prev]);
+    const updatedContacts = [contactData, ...contacts];
+    setContacts(updatedContacts);
+    localStorage.setItem('contacts-data', JSON.stringify(updatedContacts));
     setShowAddModal(false);
     setNewContact({
       firstName: '',
@@ -296,7 +301,9 @@ export default function Contacts() {
         return contact;
       }).filter(contact => contact.email); // Only import contacts with email
 
-      setContacts(prev => [...newContacts, ...prev]);
+      const updatedContacts = [...newContacts, ...contacts];
+      setContacts(updatedContacts);
+      localStorage.setItem('contacts-data', JSON.stringify(updatedContacts));
       setShowAddModal(false);
       setCsvFile(null);
       setCsvPreview([]);
@@ -307,7 +314,9 @@ export default function Contacts() {
 
   const handleDeleteContact = (contactId: number) => {
     if (confirm('Are you sure you want to delete this contact?')) {
-      setContacts(prev => prev.filter(c => c.id !== contactId));
+      const updatedContacts = contacts.filter(c => c.id !== contactId);
+      setContacts(updatedContacts);
+      localStorage.setItem('contacts-data', JSON.stringify(updatedContacts));
     }
   };
 

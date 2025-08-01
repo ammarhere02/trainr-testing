@@ -16,7 +16,9 @@ export default function Events() {
   });
 
   // Mock scheduled calls data
-  const scheduledCalls = [
+  const [scheduledCalls, setScheduledCalls] = useState(() => {
+    const saved = localStorage.getItem('scheduled-calls');
+    return saved ? JSON.parse(saved) : [
     {
       id: 1,
       title: 'Web Development Q&A Session',
@@ -53,7 +55,7 @@ export default function Events() {
       host: 'Mike Chen',
       description: 'Monthly community networking and collaboration session'
     }
-  ];
+  ]});
 
   // Generate calendar days
   const generateCalendarDays = () => {
@@ -96,7 +98,32 @@ export default function Events() {
   };
 
   const handleAddCall = () => {
-    // Add call handling logic here
+    const newCall = {
+      id: Date.now(),
+      title: newCall.title,
+      date: newCall.date,
+      time: newCall.time,
+      duration: parseInt(newCall.duration),
+      url: newCall.url,
+      attendees: 0,
+      maxAttendees: parseInt(newCall.maxAttendees),
+      host: 'You',
+      description: newCall.description
+    };
+    
+    const updatedCalls = [...scheduledCalls, newCall];
+    setScheduledCalls(updatedCalls);
+    localStorage.setItem('scheduled-calls', JSON.stringify(updatedCalls));
+    setShowAddCall(false);
+    setNewCall({
+      title: '',
+      date: '',
+      time: '',
+      duration: '60',
+      url: '',
+      description: '',
+      maxAttendees: '100'
+    });
   };
 
   return (
