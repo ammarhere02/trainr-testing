@@ -12,7 +12,6 @@ export default function Courses({ onStartLearning }: CoursesProps) {
   const [showCourseMenu, setShowCourseMenu] = React.useState<number | null>(null);
   const [courseToDelete, setCourseToDelete] = React.useState<any>(null);
   const [courseToEdit, setCourseToEdit] = React.useState<any>(null);
-  const [courses, setCourses] = React.useState([
   const [courses, setCourses] = React.useState(() => {
     const saved = localStorage.getItem('courses-data');
     return saved ? JSON.parse(saved) : [
