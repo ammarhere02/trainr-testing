@@ -112,7 +112,7 @@ export class CloudflareStreamAPI {
 
   // Get direct video URL for downloads
   getDirectUrl(videoId: string): string {
-    const streamDomain = process.env.VITE_CLOUDFLARE_STREAM_DOMAIN || 'videodelivery.net';
+    const streamDomain = import.meta.env.VITE_CLOUDFLARE_STREAM_DOMAIN || 'videodelivery.net';
     return `https://${streamDomain.replace('customer-', 'videodelivery-')}/${videoId}/downloads/default.mp4`;
   }
 
@@ -124,7 +124,7 @@ export class CloudflareStreamAPI {
     if (options.height) params.set('height', options.height.toString());
     
     const queryString = params.toString();
-    const streamDomain = process.env.VITE_CLOUDFLARE_STREAM_DOMAIN || 'videodelivery.net';
+    const streamDomain = import.meta.env.VITE_CLOUDFLARE_STREAM_DOMAIN || 'videodelivery.net';
     return `https://${streamDomain.replace('customer-', 'videodelivery-')}/${videoId}/thumbnails/thumbnail.jpg${queryString ? `?${queryString}` : ''}`;
   }
 }
@@ -136,8 +136,8 @@ export const getStreamAPI = (): CloudflareStreamAPI => {
   if (!streamAPI) {
     // These would come from environment variables in production
     const config = {
-      accountId: process.env.VITE_CLOUDFLARE_ACCOUNT_ID || '',
-      apiToken: process.env.VITE_CLOUDFLARE_STREAM_TOKEN || ''
+      accountId: import.meta.env.VITE_CLOUDFLARE_ACCOUNT_ID || '',
+      apiToken: import.meta.env.VITE_CLOUDFLARE_STREAM_TOKEN || ''
     };
     
     if (!config.accountId || !config.apiToken) {
