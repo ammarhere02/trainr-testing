@@ -156,6 +156,7 @@ export const getStreamAPI = (): CloudflareStreamAPI => {
 
 // Helper function to check if Cloudflare Stream is configured
 export const isStreamConfigured = (): boolean => {
-  // Temporarily disabled until API token permissions are fixed
-  return false;
+  const accountId = import.meta.env.VITE_CLOUDFLARE_ACCOUNT_ID;
+  const apiToken = import.meta.env.VITE_CLOUDFLARE_STREAM_TOKEN;
+  return !!(accountId && apiToken);
 };
