@@ -106,12 +106,14 @@ export class CloudflareStreamAPI {
     if (options.controls !== false) params.set('controls', 'true');
     
     const queryString = params.toString();
-    return `https://embed.cloudflarestream.com/${videoId}${queryString ? `?${queryString}` : ''}`;
+    const streamDomain = process.env.VITE_CLOUDFLARE_STREAM_DOMAIN || 'embed.cloudflarestream.com';
+    return `https://${streamDomain}/${videoId}${queryString ? `?${queryString}` : ''}`;
   }
 
   // Get direct video URL for downloads
   getDirectUrl(videoId: string): string {
-    return `https://videodelivery.net/${videoId}/downloads/default.mp4`;
+    const streamDomain = process.env.VITE_CLOUDFLARE_STREAM_DOMAIN || 'videodelivery.net';
+    return `https://${streamDomain.replace('customer-', 'videodelivery-')}/${videoId}/downloads/default.mp4`;
   }
 
   // Get thumbnail URL
@@ -122,7 +124,8 @@ export class CloudflareStreamAPI {
     if (options.height) params.set('height', options.height.toString());
     
     const queryString = params.toString();
-    return `https://videodelivery.net/${videoId}/thumbnails/thumbnail.jpg${queryString ? `?${queryString}` : ''}`;
+    const streamDomain = process.env.VITE_CLOUDFLARE_STREAM_DOMAIN || 'videodelivery.net';
+    return `https://${streamDomain.replace('customer-', 'videodelivery-')}/${videoId}/thumbnails/thumbnail.jpg${queryString ? `?${queryString}` : ''}`;
   }
 }
 
