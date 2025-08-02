@@ -482,29 +482,18 @@ export default function Record({ onBack }: RecordProps) {
       setTimeout(() => {
         URL.revokeObjectURL(url);
       }, 1000);
-    } else if (recording.url) {
-      // For existing recordings, try to download from URL
-      fetch(recording.url)
-        .then(response => response.blob())
-        .then(blob => {
-          const url = URL.createObjectURL(blob);
-          
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${recording.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.webm`;
-          a.style.display = 'none';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          
-          setTimeout(() => {
-            URL.revokeObjectURL(url);
-          }, 1000);
-        })
-        .catch(error => {
-          console.error('Download failed:', error);
-          alert('Download failed. Please try recording again.');
-        });
+    } else if (recording.isStreamHosted && recording.downloadUrl) {
+      // For Cloudflare Stream hosted videos, use the direct download URL
+      const a = document.createElement('a');
+      a.href = recording.downloadUrl;
+      a.download = `${recording.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } else {
+      // For locally saved recordings without valid blob, inform user
+      alert('This recording is no longer available for download. The file was saved locally but the temporary link has expired. Please record a new video.');
     }
   };
 
