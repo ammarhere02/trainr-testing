@@ -156,29 +156,6 @@ export const getStreamAPI = (): CloudflareStreamAPI => {
 
 // Helper function to check if Cloudflare Stream is configured
 export const isStreamConfigured = (): boolean => {
-  try {
-    const accountId = import.meta.env.VITE_CLOUDFLARE_ACCOUNT_ID;
-    const apiToken = import.meta.env.VITE_CLOUDFLARE_STREAM_TOKEN;
-    
-    console.log('Checking Stream config:', {
-      hasAccountId: !!accountId,
-      hasApiToken: !!apiToken,
-      accountIdLength: accountId?.length || 0
-    });
-    
-    if (!accountId || !apiToken) {
-      console.log('Missing Cloudflare Stream credentials');
-      return false;
-    }
-    
-    if (accountId.length < 10) {
-      console.log('Invalid Cloudflare Stream credentials format');
-      return false;
-    }
-    
-    return true;
-  } catch {
-    console.log('Error checking Stream configuration');
-    return false;
-  }
+  // Temporarily disabled until API token permissions are fixed
+  return false;
 };
