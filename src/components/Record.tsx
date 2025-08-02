@@ -354,7 +354,6 @@ export default function Record({ onBack }: RecordProps) {
       };
 
       setMediaRecorder(recorder);
-      setRecordedChunks(chunks);
       
       recorder.start(1000); // Collect data every second
       setIsRecording(true);
@@ -534,6 +533,7 @@ export default function Record({ onBack }: RecordProps) {
     }));
     localStorage.setItem('recorded-videos', JSON.stringify(recordingsForStorage));
     
+    setPreviewUrl(recordingToSave.url);
     setShowSaveModal(false);
     setCompletedRecording(null);
     setRecordingTitle('');
@@ -588,13 +588,14 @@ export default function Record({ onBack }: RecordProps) {
       }));
       localStorage.setItem('recorded-videos', JSON.stringify(recordingsForStorage));
       
+      setPreviewUrl(recordingToSave.url);
       setShowSaveModal(false);
       setCompletedRecording(null);
       setRecordingTitle('');
       
     } catch (error) {
       console.error('Upload to Cloudflare Stream failed:', error);
-      alert('Upload failed. Please try again or save locally.');
+      alert(`Upload failed: ${error.message}. Please try again or save locally.`);
     } finally {
       setIsUploadingToStream(false);
       setUploadProgress(0);
@@ -611,6 +612,11 @@ export default function Record({ onBack }: RecordProps) {
     };
     
     downloadRecording(recordingToDownload);
+    
+    // Don't close modal, let user decide if they want to also save to library
+    // setShowSaveModal(false);
+    // setCompletedRecording(null);
+    // setRecordingTitle('');
     setShowSaveModal(false);
     setCompletedRecording(null);
     setRecordingTitle('');
@@ -638,6 +644,7 @@ export default function Record({ onBack }: RecordProps) {
       }));
       localStorage.setItem('recorded-videos', JSON.stringify(recordingsForStorage));
       
+      setPreviewUrl(recordingToSave.url);
       downloadRecording(recordingToSave);
       
       setShowSaveModal(false);
