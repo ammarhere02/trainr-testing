@@ -886,7 +886,7 @@ export default function Record({ onBack }: RecordProps) {
                     <button
                       onClick={togglePause}
                       className="bg-yellow-600 hover:bg-yellow-700 text-white p-3 rounded-full transition-colors"
-                      title={recording.isStreamHosted ? "Download from Cloud" : "Download Video"}
+                      title={isPaused ? "Resume" : "Pause"}
                     >
                       {isPaused ? (
                         <Play className="w-5 h-5" />
@@ -894,15 +894,6 @@ export default function Record({ onBack }: RecordProps) {
                         <Pause className="w-5 h-5" />
                       )}
                     </button>
-                    {recording.isStreamHosted && (
-                      <button
-                        onClick={() => window.open(recording.streamUrl, '_blank')}
-                        className="p-1 text-gray-400 hover:text-green-600 transition-colors"
-                        title="View in Cloud Player"
-                      >
-                        <Cloud className="w-4 h-4" />
-                      </button>
-                    )}
                     <button
                       onClick={stopRecording}
                       className="bg-red-600 hover:bg-red-700 text-white p-3 rounded-full transition-colors"
