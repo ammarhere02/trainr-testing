@@ -636,33 +636,38 @@ export default function Record({ onBack }: RecordProps) {
   const saveAndUploadToStream = async () => {
     if (!completedRecording) return;
     
+    // Always save to library first
+    const recordingToSave = {
+      ...completedRecording,
+      title: recordingTitle || completedRecording.title
+    };
+    
+    const updatedRecordings = [recordingToSave, ...recordings];
+    setRecordings(updatedRecordings);
+    
+    const recordingsForStorage = updatedRecordings.map(r => ({
+      ...r,
+      blob: undefined
+    }));
+    localStorage.setItem('recorded-videos', JSON.stringify(recordingsForStorage));
+    setPreviewUrl(recordingToSave.url);
+    
+    // Try to upload to Cloudflare Stream if configured
     if (streamConfigured) {
       console.log('Attempting to upload to Cloudflare Stream...');
-      await uploadToStream();
+      try {
+        await uploadToStream();
+      } catch (error) {
+        console.error('Cloudflare upload failed, but recording saved locally:', error);
+        // Don't show error to user since local save succeeded
+      }
     } else {
-      console.log('Cloudflare Stream not configured, saving locally and downloading...');
-      // Fallback to local save + download
-      const recordingToSave = {
-        ...completedRecording,
-        title: recordingTitle || completedRecording.title
-      };
-      
-      const updatedRecordings = [recordingToSave, ...recordings];
-      setRecordings(updatedRecordings);
-      
-      const recordingsForStorage = updatedRecordings.map(r => ({
-        ...r,
-        blob: undefined
-      }));
-      localStorage.setItem('recorded-videos', JSON.stringify(recordingsForStorage));
-      
-      setPreviewUrl(recordingToSave.url);
-      downloadRecording(recordingToSave);
-      
-      setShowSaveModal(false);
-      setCompletedRecording(null);
-      setRecordingTitle('');
+      console.log('Cloudflare Stream not configured, saved locally only');
     }
+    
+    setShowSaveModal(false);
+    setCompletedRecording(null);
+    setRecordingTitle('');
   };
 
   return (

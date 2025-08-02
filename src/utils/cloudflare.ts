@@ -159,8 +159,7 @@ export const isStreamConfigured = (): boolean => {
     console.log('Checking Stream config:', {
       hasAccountId: !!accountId,
       hasApiToken: !!apiToken,
-      accountIdLength: accountId?.length || 0,
-      tokenLength: apiToken?.length || 0
+      accountIdLength: accountId?.length || 0
     });
     
     if (!accountId || !apiToken) {
@@ -168,7 +167,7 @@ export const isStreamConfigured = (): boolean => {
       return false;
     }
     
-    if (accountId.length < 10 || apiToken.length < 10) {
+    if (accountId.length < 10) {
       console.log('Invalid Cloudflare Stream credentials format');
       return false;
     }
