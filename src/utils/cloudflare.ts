@@ -57,6 +57,15 @@ export class CloudflareStreamAPI {
   }
 
   async uploadVideo(videoBlob: Blob, metadata: { name: string; description?: string }): Promise<StreamVideo> {
+    // Validate video blob before upload
+    if (!videoBlob || videoBlob.size === 0) {
+      throw new Error('Cannot upload empty video file.');
+    }
+    
+    if (videoBlob.size < 1000) { // Less than 1KB is likely invalid
+      throw new Error('Video file is too small to be valid.');
+    }
+
     const formData = new FormData();
     formData.append('file', videoBlob);
     

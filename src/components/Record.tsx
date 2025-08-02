@@ -591,9 +591,11 @@ export default function Record({ onBack }: RecordProps) {
     } catch (error) {
       console.error('Upload to Cloudflare Stream failed:', error);
       
-      // More specific error handling
+      // Handle specific error cases
       let errorMessage = 'Upload failed: ';
-      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+      if (error.message.includes('Cannot upload empty video file') || error.message.includes('too small to be valid')) {
+        errorMessage = 'Recording is empty, please try again.';
+      } else if (error.message.includes('401') || error.message.includes('Unauthorized')) {
         errorMessage += 'Invalid API token. Please check your Cloudflare Stream credentials.';
       } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
         errorMessage += 'API token does not have Stream permissions. Please check token permissions.';
