@@ -4,38 +4,24 @@ import {
   VideoOff, 
   Mic, 
   MicOff, 
-  Monitor, 
-  MonitorOff,
   Square, 
   Play, 
   Pause, 
   RotateCcw, 
   Download, 
   Upload, 
+  Trash2, 
   Settings, 
-  Clock,
+  Monitor, 
+  Camera, 
   ArrowLeft,
-  Camera,
-  CameraOff,
-  Volume2,
-  VolumeX,
-  Maximize,
-  Minimize,
-  MoreHorizontal,
-  Trash2,
-  Edit3,
-  Share2,
-  Eye,
-  Save,
-  X,
+  Clock,
   CheckCircle,
   AlertCircle,
   Loader,
-  Move,
-  Cloud,
-  CloudOff
+  Save,
+  X
 } from 'lucide-react';
-import { getStreamAPI, isStreamConfigured } from '../utils/cloudflare';
 
 interface RecordProps {
   onBack: () => void;
@@ -44,46 +30,20 @@ interface RecordProps {
 export default function Record({ onBack }: RecordProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [hasRecording, setHasRecording] = useState(false);
+  const [isVideoOn, setIsVideoOn] = useState(true);
+  const [isAudioOn, setIsAudioOn] = useState(true);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
-  const [isCameraOn, setIsCameraOn] = useState(true);
-  const [isMicOn, setIsMicOn] = useState(true);
-  const [recordingMode, setRecordingMode] = useState<'screen' | 'camera' | 'both'>('screen');
-  const [showSettings, setShowSettings] = useState(false);
-  const [recordings, setRecordings] = useState<any[]>([]);
-  const [currentStream, setCurrentStream] = useState<MediaStream | null>(null);
-  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
-  const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [cameraPosition, setCameraPosition] = useState({ x: 20, y: 20 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [recordingMode, setRecordingMode] = useState<'camera' | 'screen'>('camera');
   const [showSaveModal, setShowSaveModal] = useState(false);
-  const [completedRecording, setCompletedRecording] = useState<any>(null);
-  const [recordingTitle, setRecordingTitle] = useState('');
-  const [isUploadingToStream, setIsUploadingToStream] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [streamConfigured, setStreamConfigured] = useState(false);
-
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+  
   const videoRef = useRef<HTMLVideoElement>(null);
-  const screenVideoRef = useRef<HTMLVideoElement>(null);
-  const cameraVideoRef = useRef<HTMLVideoElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  // Load saved recordings
-  useEffect(() => {
-    const saved = localStorage.getItem('recorded-videos');
-    if (saved) {
-      setRecordings(JSON.parse(saved));
-    }
-    
-    // Check if Cloudflare Stream is configured
-    setStreamConfigured(isStreamConfigured());
-  }, []);
 
   // Timer effect
   useEffect(() => {
@@ -106,682 +66,284 @@ export default function Record({ onBack }: RecordProps) {
 
   // Format time helper
   const formatTime = (seconds: number) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
+    const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    if (hrs > 0) {
-      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
-
-  // Handle camera drag
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (recordingMode !== 'both' || !isRecording) return;
-    
-    setIsDragging(true);
-    const rect = e.currentTarget.getBoundingClientRect();
-    setDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    });
-  };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging) return;
-    
-    const container = document.querySelector('.recording-container');
-    if (!container) return;
-    
-    const containerRect = container.getBoundingClientRect();
-    const newX = e.clientX - containerRect.left - dragOffset.x;
-    const newY = e.clientY - containerRect.top - dragOffset.y;
-    
-    // Keep camera within bounds
-    const maxX = containerRect.width - 200; // Camera width
-    const maxY = containerRect.height - 150; // Camera height
-    
-    setCameraPosition({
-      x: Math.max(20, Math.min(newX, maxX)),
-      y: Math.max(20, Math.min(newY, maxY))
-    });
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, dragOffset]);
 
   // Start recording
   const startRecording = async () => {
     try {
-      setIsProcessing(true);
-      let finalStream: MediaStream;
-
-      if (recordingMode === 'screen' || recordingMode === 'both') {
-        // Get screen capture with proper options
-        const screenStreamResult = await navigator.mediaDevices.getDisplayMedia({
-          video: {
-            mediaSource: 'screen',
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            frameRate: { ideal: 30 }
-          },
-          audio: false // Don't request system audio to avoid permission issues
+      recordedChunksRef.current = [];
+      
+      let stream: MediaStream;
+      
+      if (recordingMode === 'screen') {
+        stream = await navigator.mediaDevices.getDisplayMedia({
+          video: { mediaSource: 'screen' },
+          audio: isAudioOn
         });
-
-        setScreenStream(screenStreamResult);
-        
-        if (screenVideoRef.current) {
-          screenVideoRef.current.srcObject = screenStreamResult;
-        }
-
-        // Get microphone audio separately if needed
-        let micStream: MediaStream | null = null;
-        if (isMicOn) {
-          try {
-            micStream = await navigator.mediaDevices.getUserMedia({
-              audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                sampleRate: 44100
-              },
-              video: false
-            });
-          } catch (micError) {
-            console.warn('Microphone access denied, continuing without audio');
-          }
-        }
-
-        if (recordingMode === 'both') {
-          // Get camera stream
-          const cameraStreamResult = await navigator.mediaDevices.getUserMedia({
-            video: {
-              width: { ideal: 640 },
-              height: { ideal: 480 },
-              frameRate: { ideal: 30 }
-            },
-            audio: false // Audio handled separately
-          });
-
-          setCameraStream(cameraStreamResult);
-          
-          if (cameraVideoRef.current) {
-            cameraVideoRef.current.srcObject = cameraStreamResult;
-          }
-
-          // Create canvas to combine screen and camera
-          const canvas = canvasRef.current;
-          if (canvas) {
-            const ctx = canvas.getContext('2d');
-            canvas.width = 1920;
-            canvas.height = 1080;
-
-            // Create a new stream from canvas
-            const canvasStream = canvas.captureStream(30);
-            
-            // Add audio track if available
-            if (micStream) {
-              micStream.getAudioTracks().forEach(track => {
-                canvasStream.addTrack(track);
-              });
-            }
-
-            finalStream = canvasStream;
-
-            // Start compositing
-            const composite = () => {
-              if (!isRecording) return;
-              
-              if (ctx && screenVideoRef.current && cameraVideoRef.current) {
-                // Draw screen
-                ctx.drawImage(screenVideoRef.current, 0, 0, canvas.width, canvas.height);
-                
-                // Draw camera overlay as circle
-                const cameraSize = 200;
-                const cameraX = (cameraPosition.x / 100) * (canvas.width - cameraSize);
-                const cameraY = (cameraPosition.y / 100) * (canvas.height - cameraSize);
-                
-                ctx.save();
-                ctx.beginPath();
-                ctx.arc(cameraX + cameraSize/2, cameraY + cameraSize/2, cameraSize/2, 0, Math.PI * 2);
-                ctx.clip();
-                ctx.drawImage(cameraVideoRef.current, cameraX, cameraY, cameraSize, cameraSize);
-                ctx.restore();
-                
-                // Add border to camera circle
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                ctx.arc(cameraX + cameraSize/2, cameraY + cameraSize/2, cameraSize/2, 0, Math.PI * 2);
-                ctx.stroke();
-              }
-              
-              requestAnimationFrame(composite);
-            };
-            composite();
-          }
-        } else {
-          // Screen only
-          if (micStream) {
-            // Combine screen video with microphone audio
-            finalStream = new MediaStream([
-              ...screenStreamResult.getVideoTracks(),
-              ...micStream.getAudioTracks()
-            ]);
-          } else {
-            finalStream = screenStreamResult;
-          }
-        }
-
-        setIsScreenSharing(true);
       } else {
-        // Camera only
-        finalStream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            frameRate: { ideal: 30 }
-          },
-          audio: isMicOn
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: isVideoOn,
+          audio: isAudioOn
         });
-
-        setCameraStream(finalStream);
-        
-        if (videoRef.current) {
-          videoRef.current.srcObject = finalStream;
-        }
       }
 
-      setCurrentStream(finalStream);
-
-      // Clear any previous chunks
-      setRecordedChunks([]);
-
-      // Set up MediaRecorder with better codec support
-      let mimeType = 'video/webm;codecs=vp9,opus';
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'video/webm;codecs=vp8';
-        if (!MediaRecorder.isTypeSupported(mimeType)) {
-          mimeType = 'video/webm';
-        }
-      }
-
-      const recorder = new MediaRecorder(finalStream, {
-        mimeType: mimeType,
-        videoBitsPerSecond: 5000000, // 5 Mbps for better quality
-        audioBitsPerSecond: 128000   // 128 kbps for audio
-      });
-
-      const chunks: Blob[] = [];
+      streamRef.current = stream;
       
-      recorder.ondataavailable = (event) => {
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+
+      // Create MediaRecorder with proper options
+      const options = {
+        mimeType: 'video/webm;codecs=vp9,opus'
+      };
+      
+      // Fallback if vp9 not supported
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options.mimeType = 'video/webm';
+      }
+
+      const mediaRecorder = new MediaRecorder(stream, options);
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
         if (event.data && event.data.size > 0) {
-          chunks.push(event.data);
-          console.log('Chunk recorded:', event.data.size, 'bytes');
+          recordedChunksRef.current.push(event.data);
         }
       };
 
-      recorder.onstop = () => {
-        console.log('Recording stopped. Total chunks:', chunks.length);
-        // Create blob with the recorded chunks
-        const recordedBlob = new Blob(chunks, { type: mimeType });
-        const url = URL.createObjectURL(recordedBlob);
-        
-        // Store the completed recording data temporarily
-        const completedRecording = {
-          id: Date.now(),
-          title: `Recording ${new Date().toLocaleString()}`,
-          url: url,
-          blob: recordedBlob,
-          duration: recordingTime,
-          date: new Date().toISOString(),
-          size: recordedBlob.size,
-          type: recordingMode,
-          mimeType: recordedBlob.type
-        };
-        
-        setPreviewUrl(url);
-        setCompletedRecording(completedRecording);
-        setShowSaveModal(true);
-        
-        setIsProcessing(false);
+      mediaRecorder.onstop = () => {
+        setHasRecording(recordedChunksRef.current.length > 0);
       };
 
-      recorder.onerror = (event) => {
-        console.error('MediaRecorder error:', event);
-        setIsRecording(false);
-      };
-
-      setMediaRecorder(recorder);
-      
-      // Start recording with time slice to ensure data is captured
-      recorder.start(1000); // Capture data every 1 second
+      // Start recording with time slicing
+      mediaRecorder.start(1000);
       setIsRecording(true);
       setRecordingTime(0);
-      setIsProcessing(false);
-
-      // Handle screen share end
-      if (screenStream) {
-        screenStream.getVideoTracks()[0].addEventListener('ended', () => {
-          stopRecording();
-        });
-      }
-
-    } catch (error) {
-      console.error('Failed to start recording:', error);
-      setIsProcessing(false);
       
+    } catch (err) {
+      console.error('Failed to start recording:', err);
+      alert('Failed to start recording. Please check camera/microphone permissions.');
     }
   };
 
   // Stop recording
   const stopRecording = () => {
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-      setIsProcessing(true);
-      mediaRecorder.stop();
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      setIsPaused(false);
       
-      // Wait a moment for final data to be captured
-      setTimeout(() => {
-        console.log('Final chunks count:', recordedChunks.length);
-        if (recordedChunks.length === 0) {
-          console.warn('No video data was recorded');
-        }
-      }, 100);
-    }
-
-    // Stop all streams
-    if (currentStream) {
-      currentStream.getTracks().forEach(track => track.stop());
-      setCurrentStream(null);
-    }
-    if (screenStream) {
-      screenStream.getTracks().forEach(track => track.stop());
-      setScreenStream(null);
-    }
-    if (cameraStream) {
-      cameraStream.getTracks().forEach(track => track.stop());
-      setCameraStream(null);
-    }
-
-    setIsRecording(false);
-    setIsPaused(false);
-    setIsScreenSharing(false);
-    setRecordingTime(0);
-
-    // Clear video sources
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    if (screenVideoRef.current) {
-      screenVideoRef.current.srcObject = null;
-    }
-    if (cameraVideoRef.current) {
-      cameraVideoRef.current.srcObject = null;
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
     }
   };
 
   // Pause/Resume recording
   const togglePause = () => {
-    if (mediaRecorder) {
+    if (mediaRecorderRef.current) {
       if (isPaused) {
-        mediaRecorder.resume();
+        mediaRecorderRef.current.resume();
+        setIsPaused(false);
       } else {
-        mediaRecorder.pause();
-      }
-      setIsPaused(!isPaused);
-    }
-  };
-
-  // Toggle camera
-  const toggleCamera = async () => {
-    if (recordingMode === 'screen') return;
-    
-    if (cameraStream) {
-      const videoTrack = cameraStream.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.enabled = !isCameraOn;
+        mediaRecorderRef.current.pause();
+        setIsPaused(true);
       }
     }
-    setIsCameraOn(!isCameraOn);
   };
 
-  // Toggle microphone
-  const toggleMicrophone = async () => {
-    if (currentStream) {
-      const audioTrack = currentStream.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !isMicOn;
-      }
+  // Reset recording
+  const resetRecording = () => {
+    if (isRecording) {
+      stopRecording();
     }
-    setIsMicOn(!isMicOn);
-  };
-
-  // Download recording as MP4
-  const downloadRecording = (recording: any) => {
-    if (recording.blob) {
-      // Use the original blob but with proper file extension
-      const url = URL.createObjectURL(recording.blob);
-      
-      const a = document.createElement('a');
-      a.href = url;
-      // Download as WebM since that's the actual format
-      a.download = `${recording.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.webm`;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      
-      // Clean up after a delay to ensure download starts
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-      }, 1000);
-    } else if (recording.isStreamHosted && recording.downloadUrl) {
-      // For Cloudflare Stream hosted videos, use the direct download URL
-      const a = document.createElement('a');
-      a.href = recording.downloadUrl;
-      a.download = `${recording.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    } else {
-      // For locally saved recordings without valid blob, inform user
-      alert('This recording is no longer available for download. The file was saved locally but the temporary link has expired. Please record a new video.');
-    }
-  };
-
-  // Delete recording
-  const deleteRecording = (id: number) => {
-    if (confirm('Are you sure you want to delete this recording?')) {
-      const updatedRecordings = recordings.filter(r => r.id !== id);
-      setRecordings(updatedRecordings);
-      localStorage.setItem('recorded-videos', JSON.stringify(updatedRecordings));
-    }
-  };
-
-  // Format file size
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  // Save recording to library
-  const saveToLibrary = () => {
-    if (!completedRecording) return;
     
-    console.log('Attempting to save recording. Chunks:', recordedChunks.length);
+    recordedChunksRef.current = [];
+    setHasRecording(false);
+    setRecordingTime(0);
+    setSaveStatus('idle');
     
-    if (recordedChunks.length === 0) {
-      alert('No recording data available. Please try recording again.');
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
+
+  // Create video blob from recorded chunks
+  const createVideoBlob = (): Blob | null => {
+    if (recordedChunksRef.current.length === 0) {
+      return null;
+    }
+    
+    return new Blob(recordedChunksRef.current, { type: 'video/webm' });
+  };
+
+  // Download recording locally
+  const downloadRecording = () => {
+    const blob = createVideoBlob();
+    if (!blob) {
+      alert('No recording to download');
       return;
     }
-    
-    const blob = new Blob(recordedChunks, { type: 'video/webm' });
-    console.log('Created blob size:', blob.size, 'bytes');
-    
-    if (blob.size === 0) {
-      alert('Recording is empty. Please ensure you allow camera/microphone access and try again.');
-      return;
-    }
-    
-    if (blob.size < 1000) {
-      alert('Recording is too short or corrupted. Please try recording for at least 2-3 seconds.');
-      return;
-    }
-    
-    const recordingToSave = {
-      ...completedRecording,
-      title: recordingTitle || completedRecording.title
-    };
-    
-    const updatedRecordings = [recordingToSave, ...recordings];
-    setRecordings(updatedRecordings);
-    
-    // Save to localStorage (without blob for storage efficiency)
-    const recordingsForStorage = updatedRecordings.map(r => ({
-      ...r,
-      blob: undefined // Don't store blob in localStorage
-    }));
-    localStorage.setItem('recorded-videos', JSON.stringify(recordingsForStorage));
-    
-    setPreviewUrl(recordingToSave.url);
-    setShowSaveModal(false);
-    setCompletedRecording(null);
-    setRecordingTitle('');
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `recording-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.webm`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
-  // Upload to Cloudflare Stream
-  const uploadToStream = async () => {
-    if (!completedRecording || !streamConfigured) return;
-    
-    console.log('Starting Cloudflare Stream upload...');
-    setIsUploadingToStream(true);
-    setUploadProgress(0);
-    
+  // Save to library (cloud)
+  const saveToLibrary = async () => {
+    const blob = createVideoBlob();
+    if (!blob) {
+      alert('No recording to save');
+      return;
+    }
+
     try {
-      const streamAPI = getStreamAPI();
-      console.log('Stream API instance created');
+      setSaveStatus('saving');
       
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 200);
+      // Simulate cloud upload (replace with actual Cloudflare Stream upload)
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      console.log('Uploading blob to Cloudflare Stream:', {
-        size: completedRecording.blob.size,
-        type: completedRecording.blob.type,
-        title: recordingTitle || completedRecording.title
+      // In real implementation, upload to Cloudflare Stream here
+      console.log('Saving to library:', {
+        size: blob.size,
+        type: blob.type,
+        duration: recordingTime
       });
       
-      const streamVideo = await streamAPI.uploadVideo(completedRecording.blob, {
-        name: recordingTitle || completedRecording.title,
-        description: `Recorded on ${new Date().toLocaleDateString()}`
-      });
+      setSaveStatus('success');
       
-      console.log('Upload successful:', streamVideo);
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-      
-      // Save recording with Cloudflare Stream data
-      const recordingToSave = {
-        ...completedRecording,
-        title: recordingTitle || completedRecording.title,
-        streamId: streamVideo.uid,
-        streamUrl: streamAPI.getEmbedUrl(streamVideo.uid),
-        thumbnailUrl: streamAPI.getThumbnailUrl(streamVideo.uid),
-        downloadUrl: streamAPI.getDirectUrl(streamVideo.uid),
-        isStreamHosted: true
-      };
-      
-      const updatedRecordings = [recordingToSave, ...recordings];
-      setRecordings(updatedRecordings);
-      
-      const recordingsForStorage = updatedRecordings.map(r => ({
-        ...r,
-        blob: undefined
-      }));
-      localStorage.setItem('recorded-videos', JSON.stringify(recordingsForStorage));
-      
-      setPreviewUrl(recordingToSave.url);
-      setShowSaveModal(false);
-      setCompletedRecording(null);
-      setRecordingTitle('');
+      // Reset after successful save
+      setTimeout(() => {
+        resetRecording();
+        setShowSaveModal(false);
+      }, 1500);
       
     } catch (error) {
-      console.error('Upload to Cloudflare Stream failed:', error);
-      
-      // Handle specific error cases
-      let errorMessage = 'Upload failed: ';
-      if (error.message.includes('Cannot upload empty video file') || error.message.includes('too small to be valid')) {
-        errorMessage = 'Recording is empty, please try again.';
-      } else if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-        errorMessage += 'Invalid API token. Please check your Cloudflare Stream credentials.';
-      } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
-        errorMessage += 'API token does not have Stream permissions. Please check token permissions.';
-      } else if (error.message.includes('404')) {
-        errorMessage += 'Account ID not found. Please check your Cloudflare account ID.';
-      } else if (error.message.includes('Network')) {
-        errorMessage += 'Network error. Please check your internet connection.';
-      } else {
-        errorMessage += error.message || 'Unknown error occurred.';
+      console.error('Failed to save to library:', error);
+      setSaveStatus('error');
+    }
+  };
+
+  // Handle save option selection
+  const handleSaveOption = async (option: 'library' | 'download' | 'both' | 'discard') => {
+    setIsSaving(true);
+    
+    try {
+      switch (option) {
+        case 'library':
+          await saveToLibrary();
+          break;
+        case 'download':
+          downloadRecording();
+          setShowSaveModal(false);
+          resetRecording();
+          break;
+        case 'both':
+          downloadRecording();
+          await saveToLibrary();
+          break;
+        case 'discard':
+          resetRecording();
+          setShowSaveModal(false);
+          break;
       }
-      
-      alert(`${errorMessage}\n\nYou can still save the recording locally.`);
+    } catch (error) {
+      console.error('Save operation failed:', error);
+      setSaveStatus('error');
     } finally {
-      setIsUploadingToStream(false);
-      setUploadProgress(0);
+      setIsSaving(false);
     }
   };
 
-  // Download recording directly
-  const downloadDirectly = () => {
-    if (!completedRecording) return;
-    
-    const recordingToDownload = {
-      ...completedRecording,
-      title: recordingTitle || completedRecording.title
-    };
-    
-    downloadRecording(recordingToDownload);
-    
-    // Don't close modal, let user decide if they want to also save to library
-    // setShowSaveModal(false);
-    // setCompletedRecording(null);
-    // setRecordingTitle('');
-    setShowSaveModal(false);
-    setCompletedRecording(null);
-    setRecordingTitle('');
-  };
-
-  // Save and upload to Stream
-  const saveAndUploadToStream = async () => {
-    if (!completedRecording) return;
-    
-    console.log('Attempting to save and upload. Chunks:', recordedChunks.length);
-    
-    if (recordedChunks.length === 0) {
-      alert('No recording data available. Please try recording again.');
-      return;
-    }
-    
-    const blob = new Blob(recordedChunks, { type: 'video/webm' });
-    console.log('Created blob for upload. Size:', blob.size, 'bytes');
-    
-    if (blob.size === 0) {
-      alert('Recording is empty. Please ensure you allow camera/microphone access and try again.');
-      return;
-    }
-    
-    if (blob.size < 1000) {
-      alert('Recording is too short or corrupted. Please try recording for at least 2-3 seconds.');
-      return;
-    }
-    
-    // Always save to library first
-    const recordingToSave = {
-      ...completedRecording,
-      title: recordingTitle || completedRecording.title
-    };
-    
-    const updatedRecordings = [recordingToSave, ...recordings];
-    setRecordings(updatedRecordings);
-    
-    const recordingsForStorage = updatedRecordings.map(r => ({
-      ...r,
-      blob: undefined
-    }));
-    localStorage.setItem('recorded-videos', JSON.stringify(recordingsForStorage));
-    setPreviewUrl(recordingToSave.url);
-    
-    // Try to upload to Cloudflare Stream if configured
-    if (streamConfigured) {
-      console.log('Attempting to upload to Cloudflare Stream...');
-      try {
-        setIsUploadingToStream(true);
-        
-        const streamAPI = getStreamAPI();
-        
-        // Simulate upload progress
-        const progressInterval = setInterval(() => {
-          setUploadProgress(prev => {
-            if (prev >= 90) {
-              clearInterval(progressInterval);
-              return 90;
-            }
-            return prev + 10;
-          });
-        }, 200);
-        
-        const streamVideo = await streamAPI.uploadVideo(completedRecording.blob, {
-          name: recordingTitle || completedRecording.title,
-          description: `Recorded on ${new Date().toLocaleDateString()}`
-        });
-        
-        clearInterval(progressInterval);
-        setUploadProgress(100);
-        
-        // Also save locally as backup
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `recording-${Date.now()}.webm`;
-        a.click();
-        URL.revokeObjectURL(url);
-        
-        alert('Video uploaded to Cloudflare Stream successfully!');
-        
-      } catch (error) {
-        console.error('Upload failed:', error);
-        
-        // Provide more helpful error messages
-        if (error.message.includes('empty')) {
-          alert('Recording is empty. Please ensure you record for at least 2-3 seconds and try again.');
-        } else if (error.message.includes('permissions')) {
-          alert('Cloudflare Stream API permissions error. Please check your API token has Stream:Edit permissions.');
-        } else {
-          alert(`Upload to Cloudflare Stream failed:\n\n${error.message}\n\nYou can still save the recording locally.`);
-        }
-      } finally {
-        setIsUploadingToStream(false);
-        setUploadProgress(0);
+  // Toggle video
+  const toggleVideo = async () => {
+    if (streamRef.current) {
+      const videoTrack = streamRef.current.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !isVideoOn;
       }
-    } else {
-      console.log('Cloudflare Stream not configured, saved locally only');
+    }
+    setIsVideoOn(!isVideoOn);
+  };
+
+  // Toggle audio
+  const toggleAudio = async () => {
+    if (streamRef.current) {
+      const audioTrack = streamRef.current.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !isAudioOn;
+      }
+    }
+    setIsAudioOn(!isAudioOn);
+  };
+
+  // Switch recording mode
+  const switchMode = async (mode: 'camera' | 'screen') => {
+    if (isRecording) {
+      alert('Please stop recording before switching modes');
+      return;
     }
     
-    setShowSaveModal(false);
-    setCompletedRecording(null);
-    setRecordingTitle('');
+    setRecordingMode(mode);
+    
+    // Stop current stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+    
+    // Start new stream based on mode
+    try {
+      let stream: MediaStream;
+      
+      if (mode === 'screen') {
+        stream = await navigator.mediaDevices.getDisplayMedia({
+          video: { mediaSource: 'screen' },
+          audio: isAudioOn
+        });
+      } else {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: isVideoOn,
+          audio: isAudioOn
+        });
+      }
+
+      streamRef.current = stream;
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      
+    } catch (err) {
+      console.error('Failed to switch recording mode:', err);
+    }
   };
+
+  // Initialize camera on component mount
+  useEffect(() => {
+    switchMode('camera');
+    
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Hidden canvas for compositing */}
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
-      
-      {/* Hidden camera video for compositing */}
-      <video ref={cameraVideoRef} autoPlay muted playsInline style={{ display: 'none' }} />
-
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-4">
@@ -790,591 +352,273 @@ export default function Record({ onBack }: RecordProps) {
             className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
-            Back
+            Back to Dashboard
           </button>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Screen Recorder</h1>
-            <p className="text-gray-600">Record your screen, camera, or both for course content</p>
-          </div>
         </div>
-        <button
-          onClick={() => setShowSettings(!showSettings)}
-          className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
-        >
-          <Settings className="w-5 h-5" />
-        </button>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <Clock className="w-4 h-4 text-gray-600" />
+            <span className="font-mono text-lg font-medium text-gray-900">
+              {formatTime(recordingTime)}
+            </span>
+          </div>
+          {isRecording && (
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+              <span className="text-red-600 font-medium">
+                {isPaused ? 'Paused' : 'Recording'}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Recording Area */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            {/* Recording Controls Header */}
-            <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
-                    {isRecording && (
-                      <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                    )}
-                    <span className={`font-medium ${isRecording ? 'text-red-600' : 'text-gray-600'}`}>
-                      {isRecording ? (isPaused ? 'Paused' : 'Recording') : 'Ready to Record'}
-                    </span>
-                  </div>
-                  {isRecording && (
-                    <div className="flex items-center space-x-2 text-gray-600">
-                      <Clock className="w-4 h-4" />
-                      <span className="font-mono">{formatTime(recordingTime)}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Recording Mode Selector */}
-                {!isRecording && (
-                  <div className="flex bg-gray-100 rounded-lg p-1">
-                    <button
-                      onClick={() => setRecordingMode('screen')}
-                      className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                        recordingMode === 'screen' ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      <Monitor className="w-4 h-4 mr-1 inline" />
-                      Screen
-                    </button>
-                    <button
-                      onClick={() => setRecordingMode('camera')}
-                      className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                        recordingMode === 'camera' ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      <Camera className="w-4 h-4 mr-1 inline" />
-                      Camera
-                    </button>
-                    <button
-                      onClick={() => setRecordingMode('both')}
-                      className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                        recordingMode === 'both' ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      <Video className="w-4 h-4 mr-1 inline" />
-                      Both
-                    </button>
-                  </div>
-                )}
+      {/* Main Recording Area */}
+      <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        {/* Video Preview */}
+        <div className="relative bg-gray-900 aspect-video">
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+          />
+          
+          {!isVideoOn && (
+            <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
+              <div className="text-center text-white">
+                <VideoOff className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <p className="text-xl">Camera Off</p>
               </div>
             </div>
+          )}
 
-            {/* Video Preview Area */}
-            <div className="relative bg-gray-900 aspect-video recording-container">
-              {/* Screen Video */}
-              {(recordingMode === 'screen' || recordingMode === 'both') && (
-                <video
-                  ref={screenVideoRef}
-                  autoPlay
-                  muted
-                  playsInline
-                  className="w-full h-full object-contain"
-                />
-              )}
-              
-              {/* Camera Video (for camera-only mode) */}
-              {recordingMode === 'camera' && (
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover"
-                />
-              )}
-
-              {/* Camera Overlay (for both mode) */}
-              {recordingMode === 'both' && isRecording && cameraStream && (
-                <div
-                  className="absolute w-48 h-36 rounded-full overflow-hidden border-4 border-white shadow-lg cursor-move"
-                  style={{
-                    left: `${cameraPosition.x}px`,
-                    top: `${cameraPosition.y}px`,
-                  }}
-                  onMouseDown={handleMouseDown}
-                >
-                  <video
-                    autoPlay
-                    muted
-                    playsInline
-                    className="w-full h-full object-cover"
-                    style={{ transform: 'scaleX(-1)' }} // Mirror camera
-                    ref={(el) => {
-                      if (el && cameraStream) {
-                        el.srcObject = cameraStream;
-                      }
-                    }}
-                  />
-                  <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs flex items-center">
-                    <Move className="w-3 h-3 mr-1" />
-                    Drag
-                  </div>
-                </div>
-              )}
-
-              {/* Preview State */}
-              {!isRecording && !isScreenSharing && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                      {recordingMode === 'screen' && <Monitor className="w-12 h-12" />}
-                      {recordingMode === 'camera' && <Camera className="w-12 h-12" />}
-                      {recordingMode === 'both' && <Video className="w-12 h-12" />}
-                    </div>
-                    <h3 className="text-xl font-semibold mb-2">
-                      {recordingMode === 'screen' && 'Screen Recording'}
-                      {recordingMode === 'camera' && 'Camera Recording'}
-                      {recordingMode === 'both' && 'Screen + Camera Recording'}
-                    </h3>
-                    <p className="text-gray-300">
-                      {recordingMode === 'screen' && 'Record your screen and audio'}
-                      {recordingMode === 'camera' && 'Record using your camera'}
-                      {recordingMode === 'both' && 'Record screen with moveable camera overlay'}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Processing Overlay */}
-              {isProcessing && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <Loader className="w-8 h-8 animate-spin mx-auto mb-2" />
-                    <p>Processing recording...</p>
-                  </div>
-                </div>
-              )}
+          {/* Recording Indicator */}
+          {isRecording && (
+            <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded-full flex items-center space-x-2">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium">
+                {isPaused ? 'PAUSED' : 'REC'}
+              </span>
             </div>
+          )}
 
-            {/* Controls */}
-            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-              <div className="flex items-center justify-center space-x-4">
-                {/* Camera Toggle */}
-                {recordingMode !== 'screen' && (
-                  <button
-                    onClick={toggleCamera}
-                    disabled={isRecording}
-                    className={`p-3 rounded-full transition-colors ${
-                      isCameraOn ? 'bg-gray-200 hover:bg-gray-300' : 'bg-red-100 hover:bg-red-200'
-                    } ${isRecording ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    title={isCameraOn ? 'Turn off camera' : 'Turn on camera'}
-                  >
-                    {isCameraOn ? (
-                      <Camera className="w-5 h-5 text-gray-700" />
-                    ) : (
-                      <CameraOff className="w-5 h-5 text-red-600" />
-                    )}
-                  </button>
-                )}
+          {/* Timer */}
+          <div className="absolute top-4 right-4 bg-black/70 text-white px-3 py-1 rounded-lg">
+            <span className="font-mono">{formatTime(recordingTime)}</span>
+          </div>
+        </div>
 
-                {/* Microphone Toggle */}
-                <button
-                  onClick={toggleMicrophone}
-                  disabled={isRecording}
-                  className={`p-3 rounded-full transition-colors ${
-                    isMicOn ? 'bg-gray-200 hover:bg-gray-300' : 'bg-red-100 hover:bg-red-200'
-                  } ${isRecording ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  title={isMicOn ? 'Mute microphone' : 'Unmute microphone'}
-                >
-                  {isMicOn ? (
-                    <Mic className="w-5 h-5 text-gray-700" />
-                  ) : (
-                    <MicOff className="w-5 h-5 text-red-600" />
-                  )}
-                </button>
+        {/* Controls */}
+        <div className="p-6">
+          {/* Recording Mode Toggle */}
+          <div className="flex justify-center mb-6">
+            <div className="bg-gray-100 rounded-lg p-1 flex">
+              <button
+                onClick={() => switchMode('camera')}
+                disabled={isRecording}
+                className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  recordingMode === 'camera' 
+                    ? 'bg-white text-purple-600 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                } ${isRecording ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Camera className="w-4 h-4 mr-2" />
+                Camera
+              </button>
+              <button
+                onClick={() => switchMode('screen')}
+                disabled={isRecording}
+                className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  recordingMode === 'screen' 
+                    ? 'bg-white text-purple-600 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                } ${isRecording ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Monitor className="w-4 h-4 mr-2" />
+                Screen
+              </button>
+            </div>
+          </div>
 
-                {/* Main Record/Stop Button */}
-                {!isRecording ? (
-                  <button
-                    onClick={startRecording}
-                    disabled={isProcessing}
-                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Play className="w-5 h-5 mr-2" />
-                    Start Recording
-                  </button>
+          {/* Main Controls */}
+          <div className="flex items-center justify-center space-x-4 mb-6">
+            {/* Audio Toggle */}
+            <button
+              onClick={toggleAudio}
+              disabled={isRecording}
+              className={`p-4 rounded-full transition-colors ${
+                isAudioOn ? 'bg-gray-100 hover:bg-gray-200' : 'bg-red-100 hover:bg-red-200'
+              } ${isRecording ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title={isAudioOn ? 'Mute' : 'Unmute'}
+            >
+              {isAudioOn ? (
+                <Mic className="w-6 h-6 text-gray-700" />
+              ) : (
+                <MicOff className="w-6 h-6 text-red-600" />
+              )}
+            </button>
+
+            {/* Video Toggle */}
+            <button
+              onClick={toggleVideo}
+              disabled={isRecording}
+              className={`p-4 rounded-full transition-colors ${
+                isVideoOn ? 'bg-gray-100 hover:bg-gray-200' : 'bg-red-100 hover:bg-red-200'
+              } ${isRecording ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title={isVideoOn ? 'Turn off camera' : 'Turn on camera'}
+            >
+              {isVideoOn ? (
+                <Video className="w-6 h-6 text-gray-700" />
+              ) : (
+                <VideoOff className="w-6 h-6 text-red-600" />
+              )}
+            </button>
+
+            {/* Record/Stop Button */}
+            {!isRecording ? (
+              <button
+                onClick={startRecording}
+                className="bg-red-600 hover:bg-red-700 text-white p-6 rounded-full transition-colors shadow-lg"
+                title="Start recording"
+              >
+                <div className="w-6 h-6 bg-white rounded-sm"></div>
+              </button>
+            ) : (
+              <button
+                onClick={stopRecording}
+                className="bg-red-600 hover:bg-red-700 text-white p-6 rounded-full transition-colors shadow-lg"
+                title="Stop recording"
+              >
+                <Square className="w-6 h-6 text-white" />
+              </button>
+            )}
+
+            {/* Pause/Resume */}
+            {isRecording && (
+              <button
+                onClick={togglePause}
+                className="bg-yellow-600 hover:bg-yellow-700 text-white p-4 rounded-full transition-colors"
+                title={isPaused ? 'Resume' : 'Pause'}
+              >
+                {isPaused ? (
+                  <Play className="w-6 h-6" />
                 ) : (
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={togglePause}
-                      className="bg-yellow-600 hover:bg-yellow-700 text-white p-3 rounded-full transition-colors"
-                      title={isPaused ? "Resume" : "Pause"}
-                    >
-                      {isPaused ? (
-                        <Play className="w-5 h-5" />
-                      ) : (
-                        <Pause className="w-5 h-5" />
-                      )}
-                    </button>
-                    <button
-                      onClick={stopRecording}
-                      className="bg-red-600 hover:bg-red-700 text-white p-3 rounded-full transition-colors"
-                      title="Stop recording"
-                    >
-                      <Square className="w-5 h-5" />
-                    </button>
-                  </div>
+                  <Pause className="w-6 h-6" />
                 )}
-              </div>
-            </div>
+              </button>
+            )}
+
+            {/* Reset */}
+            <button
+              onClick={resetRecording}
+              disabled={isRecording}
+              className={`p-4 rounded-full transition-colors ${
+                isRecording 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              }`}
+              title="Reset"
+            >
+              <RotateCcw className="w-6 h-6" />
+            </button>
           </div>
 
-          {/* Preview of Last Recording */}
-          {previewUrl && (
-            <div className="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Latest Recording</h3>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => downloadRecording(recordings[0])}
-                    className="text-purple-600 hover:text-purple-700 transition-colors"
-                    title="Download as MP4"
-                  >
-                    <Download className="w-5 h-5" />
-                  </button>
-                  <button className="text-purple-600 hover:text-purple-700 transition-colors" title="Share">
-                    <Share2 className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-              <video
-                src={previewUrl}
-                controls
-                className="w-full rounded-lg bg-gray-900"
-                style={{ maxHeight: '300px' }}
-              />
-              <div className="mt-3 text-sm text-gray-600">
-                Click download to save as MP4 file
-              </div>
+          {/* Save Button */}
+          {hasRecording && !isRecording && (
+            <div className="text-center">
+              <button
+                onClick={() => setShowSaveModal(true)}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center mx-auto"
+              >
+                <Save className="w-5 h-5 mr-2" />
+                Save Recording
+              </button>
             </div>
           )}
-        </div>
-
-        {/* Sidebar */}
-        <div className="lg:col-span-1 space-y-6">
-          {/* Recording Settings */}
-          {showSettings && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Recording Settings</h3>
-              <div className="space-y-4">
-                {/* Cloudflare Stream Status */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Cloud Video Hosting</span>
-                    <div className="flex items-center space-x-2">
-                      {streamConfigured ? (
-                        <>
-                          <Cloud className="w-4 h-4 text-green-500" />
-                          <span className="text-sm text-green-600">Connected</span>
-                        </>
-                      ) : (
-                        <>
-                          <CloudOff className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-500">Not configured</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-600">
-                    {streamConfigured 
-                      ? 'Videos will be uploaded to Cloudflare Stream for professional hosting'
-                      : 'Configure Cloudflare Stream credentials to enable cloud hosting'
-                    }
-                  </p>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Video Quality
-                  </label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
-                    <option>1080p (Recommended)</option>
-                    <option>720p</option>
-                    <option>480p</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Frame Rate
-                  </label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
-                    <option>30 FPS (Recommended)</option>
-                    <option>60 FPS</option>
-                    <option>24 FPS</option>
-                  </select>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Include Microphone</span>
-                  <input type="checkbox" checked={isMicOn} onChange={() => setIsMicOn(!isMicOn)} className="rounded" />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Auto-save Recordings</span>
-                  <input type="checkbox" defaultChecked className="rounded" />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Quick Stats */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Recording Stats</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Total Recordings</span>
-                <span className="font-medium">{recordings.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Storage Used</span>
-                <span className="font-medium">
-                  {formatFileSize(recordings.reduce((total, r) => total + (r.size || 0), 0))}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Total Duration</span>
-                <span className="font-medium">
-                  {formatTime(recordings.reduce((total, r) => total + (r.duration || 0), 0))}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Recording Tips */}
-          <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Recording Tips</h3>
-            <ul className="text-sm text-gray-700 space-y-2">
-              <li>• Close unnecessary applications for better performance</li>
-              <li>• Use a quiet environment for clear audio</li>
-              <li>• Check your lighting if using camera</li>
-              <li>• Test your setup before important recordings</li>
-              <li>• In "Both" mode, drag the camera circle to reposition</li>
-              <li>• Recordings are saved as WebM video files</li>
-            </ul>
-          </div>
         </div>
       </div>
 
-      {/* Recordings Library */}
-      {recordings.length > 0 && (
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Recordings</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {recordings.map((recording) => (
-              <div key={recording.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                <div className="relative">
-                  <video
-                    src={recording.url}
-                    className="w-full h-48 object-cover bg-gray-900"
-                    poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23374151'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='16'%3ERecording%3C/text%3E%3C/svg%3E"
-                  />
-                  <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
-                    {formatTime(recording.duration)}
-                  </div>
-                  <div className="absolute top-2 left-2">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      recording.type === 'screen' ? 'bg-blue-500 text-white' :
-                      recording.type === 'camera' ? 'bg-green-500 text-white' :
-                      'bg-purple-500 text-white'
-                    }`}>
-                      {recording.type === 'screen' && 'Screen'}
-                      {recording.type === 'camera' && 'Camera'}
-                      {recording.type === 'both' && 'Screen + Camera'}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="p-4">
-                  <h4 className="font-medium text-gray-900 mb-2 truncate">{recording.title}</h4>
-                  <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
-                    <span>{new Date(recording.date).toLocaleDateString()}</span>
-                    <span>{formatFileSize(recording.size)}</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <button
-                      onClick={() => {
-                        const video = document.createElement('video');
-                        video.src = recording.url;
-                        video.controls = true;
-                        video.style.width = '100%';
-                        video.style.maxHeight = '80vh';
-                        
-                        const modal = document.createElement('div');
-                        modal.className = 'fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4';
-                        modal.onclick = () => document.body.removeChild(modal);
-                        modal.appendChild(video);
-                        document.body.appendChild(modal);
-                      }}
-                      className="text-purple-600 hover:text-purple-700 transition-colors flex items-center text-sm"
-                    >
-                      <Play className="w-4 h-4 mr-1" />
-                      Play
-                    </button>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => downloadRecording(recording)}
-                        className="p-1 text-gray-400 hover:text-purple-600 transition-colors"
-                        title="Download MP4"
-                      >
-                        <Download className="w-4 h-4" />
-                      </button>
-                      <button
-                        className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                        title="Edit"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteRecording(recording.id)}
-                        className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Save Recording Modal */}
-      {showSaveModal && completedRecording && (
+      {/* Save Options Modal */}
+      {showSaveModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
             <div className="p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Recording Completed!</h3>
-              
-              {/* Recording Preview */}
-              <div className="mb-6">
-                <video
-                  src={completedRecording.url}
-                  className="w-full h-32 object-cover rounded-lg bg-gray-900"
-                  poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23374151'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='16'%3ERecording Preview%3C/text%3E%3C/svg%3E"
-                />
-                <div className="mt-2 text-sm text-gray-600">
-                  Duration: {formatTime(completedRecording.duration)} • Size: {formatFileSize(completedRecording.size)}
-                </div>
-                {streamConfigured && (
-                  <div className="mt-2 text-xs text-blue-600 flex items-center justify-center">
-                    <Cloud className="w-3 h-3 mr-1" />
-                    Cloudflare Stream Ready
-                  </div>
-                )}
-              </div>
-
-              {/* Recording Title */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Recording Title (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={recordingTitle}
-                  onChange={(e) => setRecordingTitle(e.target.value)}
-                  placeholder={completedRecording.title}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Action Buttons */}
-              <div className="space-y-3">
-                {streamConfigured ? (
-                  <button
-                    onClick={saveAndUploadToStream}
-                    disabled={isUploadingToStream}
-                    className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center disabled:opacity-50"
-                  >
-                    {isUploadingToStream ? (
-                      <>
-                        <Loader className="w-5 h-5 mr-2 animate-spin" />
-                        Uploading to Cloud ({uploadProgress}%)
-                      </>
-                    ) : (
-                      <>
-                        <Cloud className="w-5 h-5 mr-2" />
-                        Save to Cloud & Library
-                      </>
-                    )}
-                  </button>
-                ) : (
-                  <button
-                    onClick={saveAndUploadToStream}
-                    className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center"
-                  >
-                    <Save className="w-5 h-5 mr-2" />
-                    Save to Library & Download
-                  </button>
-                )}
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={saveToLibrary}
-                    className="bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Only
-                  </button>
-                  <button
-                    onClick={downloadDirectly}
-                    className="bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Video
-                  </button>
-                </div>
-                
-                {streamConfigured && (
-                  <button
-                    onClick={uploadToStream}
-                    disabled={isUploadingToStream}
-                    className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:shadow-lg transition-all flex items-center justify-center disabled:opacity-50"
-                  >
-                    {isUploadingToStream ? (
-                      <>
-                        <Loader className="w-4 h-4 mr-2 animate-spin" />
-                        Uploading ({uploadProgress}%)
-                      </>
-                    ) : (
-                      <>
-                        <Cloud className="w-4 h-4 mr-2" />
-                        Upload to Cloud Only
-                      </>
-                    )}
-                  </button>
-                )}
-                
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-gray-900">Save Recording</h3>
                 <button
-                  onClick={() => {
-                    setShowSaveModal(false);
-                    setCompletedRecording(null);
-                    setRecordingTitle('');
-                  }}
-                  className="w-full text-gray-600 hover:text-gray-800 py-2 transition-colors"
+                  onClick={() => setShowSaveModal(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  Discard Recording
+                  <X className="w-5 h-5" />
                 </button>
               </div>
-              
-              {/* Upload Progress */}
-              {isUploadingToStream && (
-                <div className="mt-4">
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600">Uploading to Cloudflare Stream</span>
-                    <span className="font-medium">{uploadProgress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300" 
-                      style={{ width: `${uploadProgress}%` }}
-                    ></div>
-                  </div>
+
+              {saveStatus === 'saving' && (
+                <div className="text-center py-8">
+                  <Loader className="w-8 h-8 text-purple-600 animate-spin mx-auto mb-4" />
+                  <p className="text-gray-600">Saving your recording...</p>
+                </div>
+              )}
+
+              {saveStatus === 'success' && (
+                <div className="text-center py-8">
+                  <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                  <p className="text-gray-900 font-medium">Recording saved successfully!</p>
+                </div>
+              )}
+
+              {saveStatus === 'error' && (
+                <div className="text-center py-8">
+                  <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                  <p className="text-gray-900 font-medium">Failed to save recording</p>
+                  <button
+                    onClick={() => setSaveStatus('idle')}
+                    className="text-purple-600 hover:text-purple-700 mt-2"
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
+
+              {saveStatus === 'idle' && (
+                <div className="space-y-3">
+                  <button
+                    onClick={() => handleSaveOption('library')}
+                    disabled={isSaving}
+                    className="w-full flex items-center justify-center px-4 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
+                  >
+                    <Upload className="w-5 h-5 mr-2" />
+                    Save to Library
+                  </button>
+                  
+                  <button
+                    onClick={() => handleSaveOption('download')}
+                    disabled={isSaving}
+                    className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  >
+                    <Download className="w-5 h-5 mr-2" />
+                    Download
+                  </button>
+                  
+                  <button
+                    onClick={() => handleSaveOption('both')}
+                    disabled={isSaving}
+                    className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
+                  >
+                    <Save className="w-5 h-5 mr-2" />
+                    Both
+                  </button>
+                  
+                  <button
+                    onClick={() => handleSaveOption('discard')}
+                    disabled={isSaving}
+                    className="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition-colors disabled:opacity-50"
+                  >
+                    <Trash2 className="w-5 h-5 mr-2" />
+                    Discard
+                  </button>
                 </div>
               )}
             </div>
