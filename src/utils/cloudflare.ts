@@ -32,7 +32,11 @@ export class CloudflareStreamAPI {
   constructor(config: CloudflareStreamConfig) {
     this.accountId = config.accountId;
     this.apiToken = config.apiToken;
-    this.baseUrl = `https://api.cloudflare.com/client/v4/accounts/${this.accountId}/stream`;
+    // Use proxy in development, direct API in production
+    const isDevelopment = import.meta.env.DEV;
+    this.baseUrl = isDevelopment 
+      ? `/cloudflare-stream-api/client/v4/accounts/${this.accountId}/stream`
+      : `https://api.cloudflare.com/client/v4/accounts/${this.accountId}/stream`;
   }
 
   private async makeRequest(endpoint: string, options: RequestInit = {}) {
