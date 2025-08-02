@@ -305,8 +305,11 @@ export default function Record({ onBack }: RecordProps) {
 
       setCurrentStream(finalStream);
 
+      // Clear any previous chunks
+      setRecordedChunks([]);
+
       // Set up MediaRecorder with better codec support
-      let mimeType = 'video/webm;codecs=vp9';
+      let mimeType = 'video/webm;codecs=vp9,opus';
       if (!MediaRecorder.isTypeSupported(mimeType)) {
         mimeType = 'video/webm;codecs=vp8';
         if (!MediaRecorder.isTypeSupported(mimeType)) {
@@ -323,12 +326,14 @@ export default function Record({ onBack }: RecordProps) {
       const chunks: Blob[] = [];
       
       recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data && event.data.size > 0) {
           chunks.push(event.data);
+          console.log('Chunk recorded:', event.data.size, 'bytes');
         }
       };
 
       recorder.onstop = () => {
+        console.log('Recording stopped. Total chunks:', chunks.length);
         // Create blob with the recorded chunks
         const recordedBlob = new Blob(chunks, { type: mimeType });
         const url = URL.createObjectURL(recordedBlob);
@@ -353,9 +358,15 @@ export default function Record({ onBack }: RecordProps) {
         setIsProcessing(false);
       };
 
+      recorder.onerror = (event) => {
+        console.error('MediaRecorder error:', event);
+        setIsRecording(false);
+      };
+
       setMediaRecorder(recorder);
       
-      recorder.start(1000); // Collect data every second
+      // Start recording with time slice to ensure data is captured
+      recorder.start(1000); // Capture data every 1 second
       setIsRecording(true);
       setRecordingTime(0);
       setIsProcessing(false);
@@ -379,6 +390,14 @@ export default function Record({ onBack }: RecordProps) {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
       setIsProcessing(true);
       mediaRecorder.stop();
+      
+      // Wait a moment for final data to be captured
+      setTimeout(() => {
+        console.log('Final chunks count:', recordedChunks.length);
+        if (recordedChunks.length === 0) {
+          console.warn('No video data was recorded');
+        }
+      }, 100);
     }
 
     // Stop all streams
@@ -503,6 +522,26 @@ export default function Record({ onBack }: RecordProps) {
   // Save recording to library
   const saveToLibrary = () => {
     if (!completedRecording) return;
+    
+    console.log('Attempting to save recording. Chunks:', recordedChunks.length);
+    
+    if (recordedChunks.length === 0) {
+      alert('No recording data available. Please try recording again.');
+      return;
+    }
+    
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    console.log('Created blob size:', blob.size, 'bytes');
+    
+    if (blob.size === 0) {
+      alert('Recording is empty. Please ensure you allow camera/microphone access and try again.');
+      return;
+    }
+    
+    if (blob.size < 1000) {
+      alert('Recording is too short or corrupted. Please try recording for at least 2-3 seconds.');
+      return;
+    }
     
     const recordingToSave = {
       ...completedRecording,
@@ -638,6 +677,26 @@ export default function Record({ onBack }: RecordProps) {
   const saveAndUploadToStream = async () => {
     if (!completedRecording) return;
     
+    console.log('Attempting to save and upload. Chunks:', recordedChunks.length);
+    
+    if (recordedChunks.length === 0) {
+      alert('No recording data available. Please try recording again.');
+      return;
+    }
+    
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    console.log('Created blob for upload. Size:', blob.size, 'bytes');
+    
+    if (blob.size === 0) {
+      alert('Recording is empty. Please ensure you allow camera/microphone access and try again.');
+      return;
+    }
+    
+    if (blob.size < 1000) {
+      alert('Recording is too short or corrupted. Please try recording for at least 2-3 seconds.');
+      return;
+    }
+    
     // Always save to library first
     const recordingToSave = {
       ...completedRecording,
@@ -658,10 +717,53 @@ export default function Record({ onBack }: RecordProps) {
     if (streamConfigured) {
       console.log('Attempting to upload to Cloudflare Stream...');
       try {
-        await uploadToStream();
+        setIsUploadingToStream(true);
+        
+        const streamAPI = getStreamAPI();
+        
+        // Simulate upload progress
+        const progressInterval = setInterval(() => {
+          setUploadProgress(prev => {
+            if (prev >= 90) {
+              clearInterval(progressInterval);
+              return 90;
+            }
+            return prev + 10;
+          });
+        }, 200);
+        
+        const streamVideo = await streamAPI.uploadVideo(completedRecording.blob, {
+          name: recordingTitle || completedRecording.title,
+          description: `Recorded on ${new Date().toLocaleDateString()}`
+        });
+        
+        clearInterval(progressInterval);
+        setUploadProgress(100);
+        
+        // Also save locally as backup
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `recording-${Date.now()}.webm`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        alert('Video uploaded to Cloudflare Stream successfully!');
+        
       } catch (error) {
-        console.error('Cloudflare upload failed, but recording saved locally:', error);
-        // Don't show error to user since local save succeeded
+        console.error('Upload failed:', error);
+        
+        // Provide more helpful error messages
+        if (error.message.includes('empty')) {
+          alert('Recording is empty. Please ensure you record for at least 2-3 seconds and try again.');
+        } else if (error.message.includes('permissions')) {
+          alert('Cloudflare Stream API permissions error. Please check your API token has Stream:Edit permissions.');
+        } else {
+          alert(`Upload to Cloudflare Stream failed:\n\n${error.message}\n\nYou can still save the recording locally.`);
+        }
+      } finally {
+        setIsUploadingToStream(false);
+        setUploadProgress(0);
       }
     } else {
       console.log('Cloudflare Stream not configured, saved locally only');
