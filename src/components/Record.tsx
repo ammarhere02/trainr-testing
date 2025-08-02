@@ -371,20 +371,6 @@ export default function Record({ onBack }: RecordProps) {
       console.error('Failed to start recording:', error);
       setIsProcessing(false);
       
-      // More specific error messages
-      if (error instanceof Error) {
-        if (error.name === 'NotAllowedError') {
-          alert('Permission denied. Please allow access to your screen/camera and try again.');
-        } else if (error.name === 'NotFoundError') {
-          alert('No recording devices found. Please check your camera/microphone.');
-        } else if (error.name === 'NotSupportedError') {
-          alert('Screen recording is not supported in this browser.');
-        } else {
-          alert(`Recording failed: ${error.message}`);
-        }
-      } else {
-        alert('Failed to start recording. Please try again.');
-      }
     }
   };
 
