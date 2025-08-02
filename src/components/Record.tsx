@@ -31,8 +31,11 @@ import {
   CheckCircle,
   AlertCircle,
   Loader,
-  Move
+  Move,
+  Cloud,
+  CloudOff
 } from 'lucide-react';
+import { getStreamAPI, isStreamConfigured } from '../utils/cloudflare';
 
 interface RecordProps {
   onBack: () => void;
@@ -61,6 +64,9 @@ export default function Record({ onBack }: RecordProps) {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [completedRecording, setCompletedRecording] = useState<any>(null);
   const [recordingTitle, setRecordingTitle] = useState('');
+  const [isUploadingToStream, setIsUploadingToStream] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [streamConfigured, setStreamConfigured] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const screenVideoRef = useRef<HTMLVideoElement>(null);
@@ -74,6 +80,9 @@ export default function Record({ onBack }: RecordProps) {
     if (saved) {
       setRecordings(JSON.parse(saved));
     }
+    
+    // Check if Cloudflare Stream is configured
+    setStreamConfigured(isStreamConfigured());
   }, []);
 
   // Timer effect
@@ -541,6 +550,68 @@ export default function Record({ onBack }: RecordProps) {
     setRecordingTitle('');
   };
 
+  // Upload to Cloudflare Stream
+  const uploadToStream = async () => {
+    if (!completedRecording || !streamConfigured) return;
+    
+    setIsUploadingToStream(true);
+    setUploadProgress(0);
+    
+    try {
+      const streamAPI = getStreamAPI();
+      
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200);
+      
+      const streamVideo = await streamAPI.uploadVideo(completedRecording.blob, {
+        name: recordingTitle || completedRecording.title,
+        description: `Recorded on ${new Date().toLocaleDateString()}`
+      });
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      
+      // Save recording with Cloudflare Stream data
+      const recordingToSave = {
+        ...completedRecording,
+        title: recordingTitle || completedRecording.title,
+        streamId: streamVideo.uid,
+        streamUrl: streamAPI.getEmbedUrl(streamVideo.uid),
+        thumbnailUrl: streamAPI.getThumbnailUrl(streamVideo.uid),
+        downloadUrl: streamAPI.getDirectUrl(streamVideo.uid),
+        isStreamHosted: true
+      };
+      
+      const updatedRecordings = [recordingToSave, ...recordings];
+      setRecordings(updatedRecordings);
+      
+      const recordingsForStorage = updatedRecordings.map(r => ({
+        ...r,
+        blob: undefined
+      }));
+      localStorage.setItem('recorded-videos', JSON.stringify(recordingsForStorage));
+      
+      setShowSaveModal(false);
+      setCompletedRecording(null);
+      setRecordingTitle('');
+      
+    } catch (error) {
+      console.error('Upload to Cloudflare Stream failed:', error);
+      alert('Upload failed. Please try again or save locally.');
+    } finally {
+      setIsUploadingToStream(false);
+      setUploadProgress(0);
+    }
+  };
+
   // Download recording directly
   const downloadDirectly = () => {
     if (!completedRecording) return;
@@ -556,31 +627,34 @@ export default function Record({ onBack }: RecordProps) {
     setRecordingTitle('');
   };
 
-  // Save and download
-  const saveAndDownload = () => {
+  // Save and upload to Stream
+  const saveAndUploadToStream = async () => {
     if (!completedRecording) return;
     
-    const recordingToSave = {
-      ...completedRecording,
-      title: recordingTitle || completedRecording.title
-    };
-    
-    // Save to library
-    const updatedRecordings = [recordingToSave, ...recordings];
-    setRecordings(updatedRecordings);
-    
-    const recordingsForStorage = updatedRecordings.map(r => ({
-      ...r,
-      blob: undefined
-    }));
-    localStorage.setItem('recorded-videos', JSON.stringify(recordingsForStorage));
-    
-    // Download
-    downloadRecording(recordingToSave);
-    
-    setShowSaveModal(false);
-    setCompletedRecording(null);
-    setRecordingTitle('');
+    if (streamConfigured) {
+      await uploadToStream();
+    } else {
+      // Fallback to local save + download
+      const recordingToSave = {
+        ...completedRecording,
+        title: recordingTitle || completedRecording.title
+      };
+      
+      const updatedRecordings = [recordingToSave, ...recordings];
+      setRecordings(updatedRecordings);
+      
+      const recordingsForStorage = updatedRecordings.map(r => ({
+        ...r,
+        blob: undefined
+      }));
+      localStorage.setItem('recorded-videos', JSON.stringify(recordingsForStorage));
+      
+      downloadRecording(recordingToSave);
+      
+      setShowSaveModal(false);
+      setCompletedRecording(null);
+      setRecordingTitle('');
+    }
   };
 
   return (
@@ -812,7 +886,7 @@ export default function Record({ onBack }: RecordProps) {
                     <button
                       onClick={togglePause}
                       className="bg-yellow-600 hover:bg-yellow-700 text-white p-3 rounded-full transition-colors"
-                      title={isPaused ? 'Resume' : 'Pause'}
+                      title={recording.isStreamHosted ? "Download from Cloud" : "Download Video"}
                     >
                       {isPaused ? (
                         <Play className="w-5 h-5" />
@@ -820,6 +894,15 @@ export default function Record({ onBack }: RecordProps) {
                         <Pause className="w-5 h-5" />
                       )}
                     </button>
+                    {recording.isStreamHosted && (
+                      <button
+                        onClick={() => window.open(recording.streamUrl, '_blank')}
+                        className="p-1 text-gray-400 hover:text-green-600 transition-colors"
+                        title="View in Cloud Player"
+                      >
+                        <Cloud className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
                       onClick={stopRecording}
                       className="bg-red-600 hover:bg-red-700 text-white p-3 rounded-full transition-colors"
@@ -871,6 +954,32 @@ export default function Record({ onBack }: RecordProps) {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="font-semibold text-gray-900 mb-4">Recording Settings</h3>
               <div className="space-y-4">
+                {/* Cloudflare Stream Status */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700">Cloud Video Hosting</span>
+                    <div className="flex items-center space-x-2">
+                      {streamConfigured ? (
+                        <>
+                          <Cloud className="w-4 h-4 text-green-500" />
+                          <span className="text-sm text-green-600">Connected</span>
+                        </>
+                      ) : (
+                        <>
+                          <CloudOff className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm text-gray-500">Not configured</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    {streamConfigured 
+                      ? 'Videos will be uploaded to Cloudflare Stream for professional hosting'
+                      : 'Configure Cloudflare Stream credentials to enable cloud hosting'
+                    }
+                  </p>
+                </div>
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Video Quality
@@ -1044,6 +1153,12 @@ export default function Record({ onBack }: RecordProps) {
                 <div className="mt-2 text-sm text-gray-600">
                   Duration: {formatTime(completedRecording.duration)} • Size: {formatFileSize(completedRecording.size)}
                 </div>
+                {streamConfigured && (
+                  <div className="mt-2 text-xs text-blue-600 flex items-center justify-center">
+                    <Cloud className="w-3 h-3 mr-1" />
+                    Cloudflare Stream Ready
+                  </div>
+                )}
               </div>
 
               {/* Recording Title */}
@@ -1062,13 +1177,33 @@ export default function Record({ onBack }: RecordProps) {
 
               {/* Action Buttons */}
               <div className="space-y-3">
-                <button
-                  onClick={saveAndDownload}
-                  className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center"
-                >
-                  <Save className="w-5 h-5 mr-2" />
-                  Save to Library & Download MP4
-                </button>
+                {streamConfigured ? (
+                  <button
+                    onClick={saveAndUploadToStream}
+                    disabled={isUploadingToStream}
+                    className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center disabled:opacity-50"
+                  >
+                    {isUploadingToStream ? (
+                      <>
+                        <Loader className="w-5 h-5 mr-2 animate-spin" />
+                        Uploading to Cloud ({uploadProgress}%)
+                      </>
+                    ) : (
+                      <>
+                        <Cloud className="w-5 h-5 mr-2" />
+                        Save to Cloud & Library
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    onClick={saveAndUploadToStream}
+                    className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center"
+                  >
+                    <Save className="w-5 h-5 mr-2" />
+                    Save to Library & Download
+                  </button>
+                )}
                 
                 <div className="grid grid-cols-2 gap-3">
                   <button
@@ -1083,9 +1218,29 @@ export default function Record({ onBack }: RecordProps) {
                     className="bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center"
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Download MP4
+                    Download Video
                   </button>
                 </div>
+                
+                {streamConfigured && (
+                  <button
+                    onClick={uploadToStream}
+                    disabled={isUploadingToStream}
+                    className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:shadow-lg transition-all flex items-center justify-center disabled:opacity-50"
+                  >
+                    {isUploadingToStream ? (
+                      <>
+                        <Loader className="w-4 h-4 mr-2 animate-spin" />
+                        Uploading ({uploadProgress}%)
+                      </>
+                    ) : (
+                      <>
+                        <Cloud className="w-4 h-4 mr-2" />
+                        Upload to Cloud Only
+                      </>
+                    )}
+                  </button>
+                )}
                 
                 <button
                   onClick={() => {
@@ -1098,6 +1253,22 @@ export default function Record({ onBack }: RecordProps) {
                   Discard Recording
                 </button>
               </div>
+              
+              {/* Upload Progress */}
+              {isUploadingToStream && (
+                <div className="mt-4">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-600">Uploading to Cloudflare Stream</span>
+                    <span className="font-medium">{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300" 
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
