@@ -529,11 +529,13 @@ export default function Record({ onBack }: RecordProps) {
   const uploadToStream = async () => {
     if (!completedRecording || !streamConfigured) return;
     
+    console.log('Starting Cloudflare Stream upload...');
     setIsUploadingToStream(true);
     setUploadProgress(0);
     
     try {
       const streamAPI = getStreamAPI();
+      console.log('Stream API instance created');
       
       // Simulate upload progress
       const progressInterval = setInterval(() => {
@@ -546,11 +548,18 @@ export default function Record({ onBack }: RecordProps) {
         });
       }, 200);
       
+      console.log('Uploading blob to Cloudflare Stream:', {
+        size: completedRecording.blob.size,
+        type: completedRecording.blob.type,
+        title: recordingTitle || completedRecording.title
+      });
+      
       const streamVideo = await streamAPI.uploadVideo(completedRecording.blob, {
         name: recordingTitle || completedRecording.title,
         description: `Recorded on ${new Date().toLocaleDateString()}`
       });
       
+      console.log('Upload successful:', streamVideo);
       clearInterval(progressInterval);
       setUploadProgress(100);
       
@@ -581,7 +590,22 @@ export default function Record({ onBack }: RecordProps) {
       
     } catch (error) {
       console.error('Upload to Cloudflare Stream failed:', error);
-      alert(`Upload failed: ${error.message}. Please try again or save locally.`);
+      
+      // More specific error handling
+      let errorMessage = 'Upload failed: ';
+      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+        errorMessage += 'Invalid API token. Please check your Cloudflare Stream credentials.';
+      } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
+        errorMessage += 'API token does not have Stream permissions. Please check token permissions.';
+      } else if (error.message.includes('404')) {
+        errorMessage += 'Account ID not found. Please check your Cloudflare account ID.';
+      } else if (error.message.includes('Network')) {
+        errorMessage += 'Network error. Please check your internet connection.';
+      } else {
+        errorMessage += error.message || 'Unknown error occurred.';
+      }
+      
+      alert(`${errorMessage}\n\nYou can still save the recording locally.`);
     } finally {
       setIsUploadingToStream(false);
       setUploadProgress(0);
@@ -613,8 +637,10 @@ export default function Record({ onBack }: RecordProps) {
     if (!completedRecording) return;
     
     if (streamConfigured) {
+      console.log('Attempting to upload to Cloudflare Stream...');
       await uploadToStream();
     } else {
+      console.log('Cloudflare Stream not configured, saving locally and downloading...');
       // Fallback to local save + download
       const recordingToSave = {
         ...completedRecording,
