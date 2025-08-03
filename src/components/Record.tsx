@@ -21,7 +21,7 @@ import {
   Save,
   X
 } from 'lucide-react';
-import { videoStorage, StoredVideo } from '../utils/videoStorage';
+import { videoStorage, StoredVideo, generateVideoThumbnail } from '../utils/videoStorage';
 import { getStreamAPI, isStreamConfigured } from '../utils/cloudflare';
 
 interface RecordProps {
