@@ -3,6 +3,7 @@ export interface StoredVideo {
   id: number;
   title: string;
   arrayBuffer: ArrayBuffer; // Store as ArrayBuffer instead of Blob
+  base64Data?: string; // Alternative storage format
   mimeType: string; // Store MIME type separately
   duration: number;
   size: number;
@@ -92,12 +93,16 @@ class VideoStorageManager {
   async saveVideo(videoBlob: Blob, metadata: { id: number; title: string; duration: number; mode: string; thumbnail?: string }): Promise<void> {
     if (!this.db) await this.init();
     
+    // Store as base64 string for better compatibility
     const arrayBuffer = await videoBlob.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    const base64String = btoa(String.fromCharCode(...uint8Array));
     
     const videoData: StoredVideo = {
       id: metadata.id,
       title: metadata.title,
-      arrayBuffer: arrayBuffer,
+      arrayBuffer: arrayBuffer, // Keep for compatibility
+      base64Data: base64String,
       mimeType: videoBlob.type,
       duration: metadata.duration,
       size: videoBlob.size,
@@ -146,28 +151,27 @@ class VideoStorageManager {
       
       request.onsuccess = () => {
         const result = request.result;
-        if (result && result.arrayBuffer) {
-          console.log('Retrieved video from IndexedDB:', {
-            id: result.id,
-            title: result.title,
-            arrayBufferSize: result.arrayBuffer.byteLength,
-            mimeType: result.mimeType
-          });
+        if (result && (result.base64Data || result.arrayBuffer)) {
+          let blob: Blob;
           
-          // Convert ArrayBuffer back to Blob
-          const blob = new Blob([result.arrayBuffer], { type: result.mimeType });
-          
-          console.log('Converted ArrayBuffer to Blob:', {
-            blobSize: blob.size,
-            blobType: blob.type
-          });
-          
+          if (result.base64Data) {
+            // Convert base64 back to blob
+            const binaryString = atob(result.base64Data);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            blob = new Blob([bytes], { type: result.mimeType });
+          } else {
+            // Fallback to ArrayBuffer
+            blob = new Blob([result.arrayBuffer], { type: result.mimeType });
+          }
+
           resolve({
             blob: blob,
             metadata: result
           });
         } else {
-          console.log('Video not found or has no data:', id);
           resolve(null);
         }
       };
@@ -194,7 +198,6 @@ class VideoStorageManager {
       
       request.onsuccess = () => {
         const videos = request.result || [];
-        console.log('Retrieved all videos from IndexedDB:', videos.length);
         resolve(videos);
       };
     });

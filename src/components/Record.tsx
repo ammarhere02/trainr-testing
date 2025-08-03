@@ -336,54 +336,31 @@ export default function Record({ onBack }: RecordProps) {
 
       // Handle recording stop
       mediaRecorder.onstop = () => {
-        if (chunksRef.current.length > 0) {
-          const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-          if (blob.size > 0) {
-            setRecordedBlob(blob);
-            setHasRecording(true);
-            setShowSaveOptions(true);
-            
-            const url = URL.createObjectURL(blob);
-            setPreviewUrl(url);
-            
-            if (videoRef.current) {
-              videoRef.current.srcObject = null;
-              videoRef.current.src = url;
-              videoRef.current.muted = false;
-            }
-          }
+        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        setRecordedBlob(blob);
+        setHasRecording(true);
+        setShowSaveOptions(true);
+        
+        const url = URL.createObjectURL(blob);
+        setPreviewUrl(url);
+        
+        if (videoRef.current) {
+          videoRef.current.srcObject = null;
+          videoRef.current.src = url;
+          videoRef.current.muted = false;
         }
         cleanupStreams();
       };
 
-      // Handle errors
-      mediaRecorder.onerror = (event) => {
-        console.error('MediaRecorder error:', event);
-        alert('Recording error occurred. Please try again.');
-      };
 
-      // Start recording with time slice for regular data capture
-      mediaRecorder.start(1000);
+      // Start recording
+      mediaRecorder.start();
       setIsRecording(true);
       setRecordingTime(0);
 
-      console.log('Recording started with MIME type:', mediaRecorder.mimeType);
 
     } catch (error) {
-      console.error('Failed to start recording:', error);
-      if (error instanceof Error) {
-        if (error.name === 'NotAllowedError') {
-          alert('Permission denied. Please allow camera/microphone access:\n\n1. Click "Allow" when your browser asks for permissions\n2. If you previously denied access, click the lock/camera icon in your browser\'s address bar\n3. Set Camera and Microphone to "Allow" for this site\n4. Refresh the page and try again\n\nFor Chrome: Click the lock icon → Site settings → Camera/Microphone → Allow\nFor Firefox: Click the shield icon → Permissions → Camera/Microphone → Allow');
-        } else if (error.name === 'NotFoundError') {
-          alert('No camera or microphone found. Please check your devices.');
-        } else {
-          alert(`Failed to start recording: ${error.message}\n\nIf this is a permission issue, please:\n1. Check your browser permissions for this site\n2. Make sure your camera/microphone are not being used by other applications\n3. Try refreshing the page`);
-        }
-      } else {
-        alert('Failed to start recording. Please check:\n\n1. Allow camera/microphone access when prompted\n2. Check browser permissions (click lock icon in address bar)\n3. Ensure no other apps are using your camera/microphone\n4. Try refreshing the page');
-      }
-      
-      // Clean up on error
+      alert('Failed to start recording. Please check permissions.');
       cleanupStreams();
     }
   };
@@ -424,7 +401,6 @@ export default function Record({ onBack }: RecordProps) {
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      console.log('Stopping MediaRecorder, current state:', mediaRecorderRef.current.state);
       mediaRecorderRef.current.stop();
     }
     
@@ -437,7 +413,6 @@ export default function Record({ onBack }: RecordProps) {
   };
 
   const discardRecording = () => {
-    // Clean up
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
@@ -446,57 +421,36 @@ export default function Record({ onBack }: RecordProps) {
     setRecordedBlob(null);
     setHasRecording(false);
     setShowSaveOptions(false);
-    setRecordingTime(0);
-    chunksRef.current = [];
 
-    // Reset video element
     if (videoRef.current) {
       videoRef.current.src = '';
       videoRef.current.srcObject = null;
     }
-
-    // Reset camera preview
-    if (cameraVideoRef.current) {
-      cameraVideoRef.current.srcObject = null;
-    }
-    setShowCameraPreview(false);
   };
 
-  // Save to library (local storage)
+  // Save to library
   const saveToLibrary = async () => {
     if (!recordedBlob) {
-      alert('No recording data available. Please try recording again.');
+      alert('No recording available');
       return;
     }
 
-    console.log('Saving recording to library:', {
-      blobSize: recordedBlob.size,
-      blobType: recordedBlob.type,
-      duration: recordingTime
-    });
     setIsSavingToLibrary(true);
 
     try {
-      // Generate thumbnail from video
-      const thumbnail = await generateVideoThumbnail(recordedBlob);
-      
       const metadata = {
         id: Date.now(),
         title: `Recording ${new Date().toLocaleString()}`,
         duration: recordingTime,
-        mode: recordingMode,
-        thumbnail: thumbnail
+        mode: recordingMode
       };
 
-      console.log('Saving video with metadata:', metadata);
       await videoStorage.saveVideo(recordedBlob, metadata);
-      console.log('Video saved successfully to IndexedDB');
       alert('Recording saved to library successfully!');
       setShowSaveOptions(false);
       discardRecording();
 
     } catch (error) {
-      console.error('Failed to save to library:', error);
       alert('Failed to save recording to library. Please try again.');
     } finally {
       setIsSavingToLibrary(false);
