@@ -153,7 +153,7 @@ export default function VideoLibrary() {
   // Copy video link
   const copyVideoLink = (recording: any) => {
     if (recording.cloudflareId) {
-      const link = `https://trainr.app/video/${recording.cloudflareId}`;
+      const link = `https://embed.cloudflarestream.com/${recording.cloudflareId}`;
       navigator.clipboard.writeText(link);
       alert('Video link copied to clipboard!');
     } else {
