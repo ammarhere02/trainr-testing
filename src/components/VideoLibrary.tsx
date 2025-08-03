@@ -393,10 +393,21 @@ export default function VideoLibrary() {
                   <div className="relative">
                     {/* Video Thumbnail */}
                     <div className="aspect-video bg-gray-900 flex items-center justify-center">
-                      <div className="text-center text-white">
-                        <FileVideo className="w-12 h-12 mx-auto mb-2 opacity-60" />
-                        <p className="text-sm opacity-80">Video Recording</p>
-                      </div>
+                      {recording.cloudflareId ? (
+                        <iframe
+                          src={`https://embed.cloudflarestream.com/${recording.cloudflareId}`}
+                          className="w-full h-full"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          title={recording.title}
+                        />
+                      ) : (
+                        <div className="text-center text-white">
+                          <FileVideo className="w-12 h-12 mx-auto mb-2 opacity-60" />
+                          <p className="text-sm opacity-80">Local Recording</p>
+                        </div>
+                      )}
                     </div>
                     
                     {/* Play Button Overlay */}
