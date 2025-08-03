@@ -147,6 +147,24 @@ export default function VideoLibrary() {
   // Play video function
   const playVideo = (recording: any) => {
     console.log('Playing video:', recording.title, 'Blob size:', recording.blob?.size);
+    
+    // Ensure we have a valid blob
+    if (!recording.blob || recording.blob.size === 0) {
+      alert('Video data is not available or corrupted.');
+      return;
+    }
+    
+    // Create a fresh blob URL for playback
+    const videoUrl = URL.createObjectURL(recording.blob);
+    console.log('Created video URL:', videoUrl);
+    
+    // Add the video URL to the recording object for the modal
+    const recordingWithUrl = {
+      ...recording,
+      playbackUrl: videoUrl
+    };
+    
+    setSelectedVideo(recordingWithUrl);
     setSelectedVideo(recording);
     setShowVideoModal(true);
   };
@@ -735,6 +753,10 @@ export default function VideoLibrary() {
               </div>
               <button
                 onClick={() => {
+                  // Clean up the video URL when closing modal
+                  if (selectedVideo?.playbackUrl) {
+                    URL.revokeObjectURL(selectedVideo.playbackUrl);
+                  }
                   setSelectedVideo(null);
                   setShowVideoModal(false);
                 }}
@@ -746,18 +768,19 @@ export default function VideoLibrary() {
 
             {/* Video Player */}
             <div className="aspect-video bg-gray-900">
-              {selectedVideo && selectedVideo.blob ? (
+              {selectedVideo && selectedVideo.playbackUrl ? (
                 <video
                   key={selectedVideo.id}
-                  src={URL.createObjectURL(selectedVideo.blob)}
+                  src={selectedVideo.playbackUrl}
                   controls
                   autoPlay
                   className="w-full h-full"
                   onError={(e) => {
-                    console.error('Video playback error:', e);
+                    console.error('Video playback error:', e, 'Video URL:', selectedVideo.playbackUrl);
                     alert('Failed to play video. The video file may be corrupted.');
                   }}
-                  onLoadedData={() => console.log('Video loaded successfully')}
+                  onLoadedData={() => console.log('Video loaded successfully:', selectedVideo.title)}
+                  onCanPlay={() => console.log('Video can play:', selectedVideo.title)}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white">
