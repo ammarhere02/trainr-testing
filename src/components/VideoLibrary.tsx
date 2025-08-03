@@ -151,25 +151,19 @@ export default function VideoLibrary() {
 
   // Download recording (for cloud-stored videos)
   const downloadRecording = (recording: any) => {
-    // For cloud videos, we'd need to fetch the video URL
-    // For now, show a message about cloud download
-    if (recording.cloudflareId) {
-      alert('Cloud video download feature coming soon!');
+    if (recording.localUrl) {
+      // Create download link for local video
+      const a = document.createElement('a');
+      a.href = recording.localUrl;
+      a.download = `${recording.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.webm`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     } else {
-      alert('Local video file not available for download.');
+      alert('Video file not available for download.');
     }
   };
 
-  // Copy video link
-  const copyVideoLink = (recording: any) => {
-    if (recording.cloudflareId) {
-      const link = `Video ID: ${recording.cloudflareId} (Cloudflare Stream not configured)`;
-      navigator.clipboard.writeText(link);
-      alert('Video ID copied to clipboard!');
-    } else {
-      alert('No shareable link available for this recording.');
-    }
-  };
 
   // Select/deselect video
   const toggleVideoSelection = (id: number) => {
@@ -275,16 +269,7 @@ export default function VideoLibrary() {
               <TrendingUp className="w-6 h-6 text-yellow-600" />
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Search and Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
+            {selectedVideo.localUrl ? (
                 type="text"
                 placeholder="Search videos..."
                 value={searchTerm}
@@ -500,13 +485,6 @@ export default function VideoLibrary() {
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
@@ -580,13 +558,6 @@ export default function VideoLibrary() {
                               title="Download"
                             >
                               <Download className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => copyVideoLink(recording)}
-                              className="p-1 text-gray-400 hover:text-purple-600 transition-colors"
-                              title="Copy Link"
-                            >
-                              <Copy className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => deleteRecording(recording.id)}
@@ -713,13 +684,6 @@ export default function VideoLibrary() {
                   >
                     <Download className="w-4 h-4" />
                     <span>Download</span>
-                  </button>
-                  <button
-                    onClick={() => copyVideoLink(selectedVideo)}
-                    className="flex items-center space-x-2 text-gray-600 hover:text-purple-600 transition-colors"
-                  >
-                    <Copy className="w-4 h-4" />
-                    <span>Copy Link</span>
                   </button>
                   <button className="flex items-center space-x-2 text-gray-600 hover:text-green-600 transition-colors">
                     <Share2 className="w-4 h-4" />
