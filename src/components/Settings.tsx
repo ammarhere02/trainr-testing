@@ -31,8 +31,11 @@ import {
   Lock,
   Eye,
   UserPlus,
-  Trash2
+  Trash2,
+  RefreshCw,
+  Loader
 } from 'lucide-react';
+import { domainChecker, DomainStatus } from '../utils/domainChecker';
 
 interface SettingsProps {
   userRole?: 'educator' | 'student';
@@ -49,6 +52,8 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
   });
   const [currentDomain, setCurrentDomain] = useState('webdevacademy.trainr.app');
   const [domainStatus, setDomainStatus] = useState<'active' | 'pending' | 'none'>('active');
+  const [domainConnectionStatus, setDomainConnectionStatus] = useState<DomainStatus | null>(null);
+  const [isCheckingDomain, setIsCheckingDomain] = useState(false);
 
   const tabs = [
     { id: 'payment', label: 'Payment settings', icon: CreditCard },
@@ -83,6 +88,33 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
     ((selectedDomain === 'subdomain' && isSubdomainValid) || 
      (selectedDomain === 'custom' && isCustomDomainValid));
 
+  const checkDomainConnection = async () => {
+    if (!currentDomain) return;
+    
+    setIsCheckingDomain(true);
+    try {
+      const isCustom = !currentDomain.includes('.trainr.app');
+      const status = await domainChecker.simulateDomainCheck(currentDomain, isCustom);
+      setDomainConnectionStatus(status);
+    } catch (error) {
+      console.error('Domain check failed:', error);
+      setDomainConnectionStatus({
+        isConnected: false,
+        hasSSL: false,
+        dnsConfigured: false,
+        cnameValid: false,
+        error: 'Failed to check domain status',
+        lastChecked: new Date().toISOString()
+      });
+    } finally {
+      setIsCheckingDomain(false);
+    }
+  };
+
+  // Check domain status on component mount
+  React.useEffect(() => {
+    checkDomainConnection();
+  }, [currentDomain]);
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     // Show success message (in real app, use toast)
@@ -418,13 +450,27 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-semibold text-gray-900">Your Domain</h2>
-                  <button
-                    onClick={() => setShowDomainModal(true)}
-                    className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center"
-                  >
-                    <Edit3 className="w-4 h-4 mr-2" />
-                    Change Domain
-                  </button>
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={checkDomainConnection}
+                      disabled={isCheckingDomain}
+                      className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center disabled:opacity-50"
+                    >
+                      {isCheckingDomain ? (
+                        <Loader className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                      )}
+                      Check Status
+                    </button>
+                    <button
+                      onClick={() => setShowDomainModal(true)}
+                      className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center"
+                    >
+                      <Edit3 className="w-4 h-4 mr-2" />
+                      Change Domain
+                    </button>
+                  </div>
                 </div>
 
                 <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6">
@@ -436,16 +482,24 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
                       <div>
                         <h3 className="font-semibold text-gray-900">{currentDomain}</h3>
                         <div className="flex items-center space-x-2">
-                          {domainStatus === 'active' && (
+                          {domainConnectionStatus?.isConnected && (
                             <>
                               <CheckCircle className="w-4 h-4 text-green-500" />
-                              <span className="text-sm text-green-600">Active & Secure</span>
+                              <span className="text-sm text-green-600">
+                                {domainConnectionStatus.hasSSL ? 'Active & Secure' : 'Active (No SSL)'}
+                              </span>
                             </>
                           )}
-                          {domainStatus === 'pending' && (
+                          {domainConnectionStatus && !domainConnectionStatus.isConnected && (
                             <>
                               <AlertCircle className="w-4 h-4 text-yellow-500" />
-                              <span className="text-sm text-yellow-600">Setup Pending</span>
+                              <span className="text-sm text-red-600">Not Connected</span>
+                            </>
+                          )}
+                          {isCheckingDomain && (
+                            <>
+                              <Loader className="w-4 h-4 text-blue-500 animate-spin" />
+                              <span className="text-sm text-blue-600">Checking...</span>
                             </>
                           )}
                         </div>
@@ -471,20 +525,64 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
                     </div>
                   </div>
 
-                  {domainStatus === 'pending' && (
+                  {/* Domain Status Details */}
+                  {domainConnectionStatus && (
+                    <div className="mt-4">
+                      {domainConnectionStatus.isConnected ? (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <h4 className="font-medium text-green-800 mb-2 flex items-center">
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Domain Connected Successfully
+                          </h4>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="flex items-center space-x-2">
+                              <div className={`w-2 h-2 rounded-full ${domainConnectionStatus.hasSSL ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                              <span className="text-green-700">
+                                SSL: {domainConnectionStatus.hasSSL ? 'Active' : 'Pending'}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <div className={`w-2 h-2 rounded-full ${domainConnectionStatus.dnsConfigured ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                              <span className="text-green-700">
+                                DNS: {domainConnectionStatus.dnsConfigured ? 'Configured' : 'Not Configured'}
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-green-600 mt-2">
+                            Last checked: {new Date(domainConnectionStatus.lastChecked).toLocaleString()}
+                          </p>
+                        </div>
+                      ) : (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                      <h4 className="font-medium text-yellow-800 mb-2">Domain Setup in Progress</h4>
+                          <h4 className="font-medium text-red-800 mb-2 flex items-center">
+                            <AlertCircle className="w-4 h-4 mr-2" />
+                            Domain Connection Issues
+                          </h4>
+                          {domainConnectionStatus.error && (
+                            <p className="text-sm text-red-700 mb-3">{domainConnectionStatus.error}</p>
+                          )}
                       <p className="text-sm text-yellow-700 mb-3">
-                        We're setting up your custom domain. This usually takes 24-48 hours.
+                            Your domain is not properly connected. Please check the following:
                       </p>
-                      <div className="text-sm text-yellow-700">
+                          <div className="text-sm text-red-700">
                         <p className="font-medium mb-1">Next steps:</p>
                         <ol className="list-decimal list-inside space-y-1">
-                          <li>Add a CNAME record pointing to trainr.app</li>
-                          <li>Wait for DNS propagation (24-48 hours)</li>
-                          <li>We'll automatically set up SSL</li>
+                              <li className={domainConnectionStatus.cnameValid ? 'line-through text-green-600' : ''}>
+                                Add a CNAME record pointing to trainr.app
+                              </li>
+                              <li className={domainConnectionStatus.dnsConfigured ? 'line-through text-green-600' : ''}>
+                                Wait for DNS propagation (up to 48 hours)
+                              </li>
+                              <li className={domainConnectionStatus.hasSSL ? 'line-through text-green-600' : ''}>
+                                SSL certificate will be automatically provisioned
+                              </li>
                         </ol>
                       </div>
+                          <p className="text-xs text-red-600 mt-2">
+                            Last checked: {new Date(domainConnectionStatus.lastChecked).toLocaleString()}
+                          </p>
+                    </div>
+                      )}
                     </div>
                   )}
                 </div>
