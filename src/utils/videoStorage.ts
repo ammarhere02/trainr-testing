@@ -62,7 +62,7 @@ export const generateVideoThumbnail = (videoBlob: Blob): Promise<string> => {
 
 class VideoStorageManager {
   private dbName = 'TrainrVideoLibrary';
-  private dbVersion = 1;
+  private dbVersion = 2; // Increment version to force upgrade
   private storeName = 'videos';
   private db: IDBDatabase | null = null;
 
@@ -70,19 +70,30 @@ class VideoStorageManager {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(this.dbName, this.dbVersion);
 
-      request.onerror = () => reject(request.error);
+      request.onerror = () => {
+        console.error('IndexedDB error:', request.error);
+        reject(request.error);
+      };
+      
       request.onsuccess = () => {
         this.db = request.result;
+        console.log('IndexedDB initialized successfully');
         resolve();
       };
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        if (!db.objectStoreNames.contains(this.storeName)) {
-          const store = db.createObjectStore(this.storeName, { keyPath: 'id' });
-          store.createIndex('date', 'date', { unique: false });
-          store.createIndex('title', 'title', { unique: false });
+        
+        // Delete old store if it exists
+        if (db.objectStoreNames.contains(this.storeName)) {
+          db.deleteObjectStore(this.storeName);
         }
+        
+        // Create new store
+        const store = db.createObjectStore(this.storeName, { keyPath: 'id' });
+        store.createIndex('date', 'date', { unique: false });
+        store.createIndex('title', 'title', { unique: false });
+        console.log('IndexedDB store created/upgraded');
       };
     });
   }
@@ -99,15 +110,39 @@ class VideoStorageManager {
       id: video.id,
       title: video.title,
       blobSize: video.blob.size,
-      blobType: video.blob.type
+      blobType: video.blob.type,
+      duration: video.duration
     });
     
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([this.storeName], 'readwrite');
-      const store = transaction.objectStore(this.storeName);
-      const request = store.put(video);
+      if (!this.db) {
+        reject(new Error('Database not initialized'));
+        return;
+      }
 
-      request.onerror = () => reject(request.error);
+      const transaction = this.db.transaction([this.storeName], 'readwrite');
+      const store = transaction.objectStore(this.storeName);
+      
+      // Create a copy of the video object to ensure it's serializable
+      const videoToStore = {
+        id: video.id,
+        title: video.title,
+        blob: video.blob,
+        duration: video.duration,
+        size: video.size,
+        type: video.type,
+        mode: video.mode,
+        date: video.date,
+        thumbnail: video.thumbnail
+      };
+      
+      const request = store.put(videoToStore);
+
+      request.onerror = () => {
+        console.error('Failed to save video:', request.error);
+        reject(request.error);
+      };
+      
       request.onsuccess = () => {
         console.log('Video saved successfully to IndexedDB');
         resolve();
@@ -119,11 +154,20 @@ class VideoStorageManager {
     if (!this.db) await this.init();
     
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([this.storeName], 'readonly');
+      if (!this.db) {
+        reject(new Error('Database not initialized'));
+        return;
+      }
+
+      const transaction = this.db.transaction([this.storeName], 'readonly');
       const store = transaction.objectStore(this.storeName);
       const request = store.get(id);
 
-      request.onerror = () => reject(request.error);
+      request.onerror = () => {
+        console.error('Failed to get video:', request.error);
+        reject(request.error);
+      };
+      
       request.onsuccess = () => {
         const result = request.result;
         if (result) {
@@ -131,8 +175,11 @@ class VideoStorageManager {
             id: result.id,
             title: result.title,
             blobSize: result.blob?.size,
-            blobType: result.blob?.type
+            blobType: result.blob?.type,
+            hasBlobData: !!(result.blob && result.blob.size > 0)
           });
+        } else {
+          console.log('Video not found in IndexedDB:', id);
         }
         resolve(result || null);
       };
@@ -143,12 +190,34 @@ class VideoStorageManager {
     if (!this.db) await this.init();
     
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([this.storeName], 'readonly');
+      if (!this.db) {
+        reject(new Error('Database not initialized'));
+        return;
+      }
+
+      const transaction = this.db.transaction([this.storeName], 'readonly');
       const store = transaction.objectStore(this.storeName);
       const request = store.getAll();
 
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => {
+        console.error('Failed to get all videos:', request.error);
+        reject(request.error);
+      };
+      
+      request.onsuccess = () => {
+        const videos = request.result || [];
+        console.log('Retrieved all videos from IndexedDB:', videos.length);
+        videos.forEach((video, index) => {
+          console.log(`Video ${index + 1}:`, {
+            id: video.id,
+            title: video.title,
+            blobSize: video.blob?.size,
+            blobType: video.blob?.type,
+            hasBlobData: !!(video.blob && video.blob.size > 0)
+          });
+        });
+        resolve(videos);
+      };
     });
   }
 
@@ -156,7 +225,12 @@ class VideoStorageManager {
     if (!this.db) await this.init();
     
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([this.storeName], 'readwrite');
+      if (!this.db) {
+        reject(new Error('Database not initialized'));
+        return;
+      }
+
+      const transaction = this.db.transaction([this.storeName], 'readwrite');
       const store = transaction.objectStore(this.storeName);
       const request = store.delete(id);
 
@@ -169,7 +243,12 @@ class VideoStorageManager {
     if (!this.db) await this.init();
     
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([this.storeName], 'readwrite');
+      if (!this.db) {
+        reject(new Error('Database not initialized'));
+        return;
+      }
+
+      const transaction = this.db.transaction([this.storeName], 'readwrite');
       const store = transaction.objectStore(this.storeName);
       
       let completed = 0;
@@ -206,6 +285,33 @@ class VideoStorageManager {
       totalSize: videos.reduce((total, video) => total + video.size, 0),
       totalDuration: videos.reduce((total, video) => total + video.duration, 0)
     };
+  }
+
+  // Test if a blob is valid and playable
+  async testBlobPlayback(blob: Blob): Promise<boolean> {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      const url = URL.createObjectURL(blob);
+      
+      video.addEventListener('loadedmetadata', () => {
+        URL.revokeObjectURL(url);
+        resolve(true);
+      });
+      
+      video.addEventListener('error', () => {
+        URL.revokeObjectURL(url);
+        resolve(false);
+      });
+      
+      video.src = url;
+      video.load();
+      
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        resolve(false);
+      }, 5000);
+    });
   }
 }
 
