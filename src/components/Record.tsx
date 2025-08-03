@@ -45,6 +45,7 @@ export default function Record({ onBack }: RecordProps) {
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const cameraVideoRef = useRef<HTMLVideoElement>(null);
+  const [showCameraPreview, setShowCameraPreview] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -110,6 +111,7 @@ export default function Record({ onBack }: RecordProps) {
           },
           audio: isAudioEnabled
         });
+        setShowCameraPreview(false);
       } else if (recordingMode === 'camera') {
         // Camera recording
         stream = await navigator.mediaDevices.getUserMedia({
@@ -120,6 +122,8 @@ export default function Record({ onBack }: RecordProps) {
           } : false,
           audio: isAudioEnabled
         });
+        setShowCameraPreview(true);
+        setCameraStream(stream);
       } else {
         // Both screen and camera
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
@@ -143,6 +147,7 @@ export default function Record({ onBack }: RecordProps) {
 
         setScreenStream(screenStream);
         setCameraStream(cameraStream);
+        setShowCameraPreview(true);
 
         // Create a canvas to combine both streams
         const canvas = document.createElement('canvas');
@@ -209,6 +214,14 @@ export default function Record({ onBack }: RecordProps) {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.muted = true; // Prevent feedback
+      }
+
+      // Display camera stream in camera preview element
+      if (cameraVideoRef.current && (recordingMode === 'camera' || recordingMode === 'both')) {
+        const cameraStreamToShow = recordingMode === 'camera' ? stream : cameraStream;
+        if (cameraStreamToShow) {
+          cameraVideoRef.current.srcObject = cameraStreamToShow;
+        }
       }
 
       // Set up MediaRecorder with better options
@@ -364,6 +377,7 @@ export default function Record({ onBack }: RecordProps) {
       cameraStream.getTracks().forEach(track => track.stop());
       setCameraStream(null);
     }
+    setShowCameraPreview(false);
     setIsRecording(false);
     setIsPaused(false);
     
@@ -390,6 +404,12 @@ export default function Record({ onBack }: RecordProps) {
       videoRef.current.src = '';
       videoRef.current.srcObject = null;
     }
+
+    // Reset camera preview
+    if (cameraVideoRef.current) {
+      cameraVideoRef.current.srcObject = null;
+    }
+    setShowCameraPreview(false);
   };
 
   // Save to library (local storage)
@@ -587,6 +607,22 @@ export default function Record({ onBack }: RecordProps) {
                     </div>
                   </div>
                 )}
+
+                {/* Camera Preview for Both mode */}
+                {showCameraPreview && recordingMode === 'both' && (
+                  <div className="absolute bottom-4 right-4 w-48 h-36 bg-gray-900 rounded-lg overflow-hidden border-2 border-white shadow-lg">
+                    <video
+                      ref={cameraVideoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                      Camera Preview
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Controls */}
@@ -613,6 +649,19 @@ export default function Record({ onBack }: RecordProps) {
                             isVideoEnabled ? 'bg-gray-200 text-gray-700' : 'bg-red-100 text-red-600'
                           }`}
                           title={isVideoEnabled ? 'Disable video' : 'Enable video'}
+                        >
+                          {isVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+                        </button>
+                      )}
+
+                      {/* Video Toggle (for both mode) */}
+                      {recordingMode === 'both' && (
+                        <button
+                          onClick={() => setIsVideoEnabled(!isVideoEnabled)}
+                          className={`p-3 rounded-full transition-colors ${
+                            isVideoEnabled ? 'bg-gray-200 text-gray-700' : 'bg-red-100 text-red-600'
+                          }`}
+                          title={isVideoEnabled ? 'Disable camera' : 'Enable camera'}
                         >
                           {isVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
                         </button>
