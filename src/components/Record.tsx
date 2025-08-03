@@ -338,86 +338,40 @@ export default function Record({ onBack }: RecordProps) {
       mediaRecorder.onstop = () => {
         console.log('Recording stopped. Total chunks:', chunksRef.current.length);
         
-        // Wait a moment for any final chunks
-        setTimeout(() => {
-          console.log('Processing recording chunks:', chunksRef.current.length);
-          
-          if (chunksRef.current.length === 0) {
-            alert('No recording data captured. Please try recording for at least 1 second.');
-            return;
-          }
+        if (chunksRef.current.length === 0) {
+          alert('No recording data captured. Please try recording for at least 1 second.');
+          return;
+        }
 
-          // Filter out empty chunks
-          const validChunks = chunksRef.current.filter(chunk => chunk.size > 0);
-          console.log('Valid chunks:', validChunks.length, 'out of', chunksRef.current.length);
+        // Create blob immediately without filtering
+        const mimeType = mediaRecorder.mimeType || 'video/webm';
+        const blob = new Blob(chunksRef.current, { type: mimeType });
+        
+        console.log('Created blob:', blob.size, 'bytes, type:', blob.type);
+        
+        if (blob.size === 0) {
+          alert('Failed to create recording. Please try again.');
+          return;
+        }
 
-          if (validChunks.length === 0) {
-            alert('No valid recording data captured. Please try again.');
-            return;
-          }
+        // Set the blob immediately for preview
+        setRecordedBlob(blob);
+        setHasRecording(true);
+        setShowSaveOptions(true);
 
-          // Calculate total size
-          const totalSize = validChunks.reduce((total, chunk) => total + chunk.size, 0);
-          console.log('Total recording size:', totalSize, 'bytes');
+        // Create preview URL
+        const url = URL.createObjectURL(blob);
+        setPreviewUrl(url);
 
-          if (totalSize < 1000) { // Less than 1KB is likely invalid
-            alert('Recording is too small to be valid. Please record for at least 1 second.');
-            return;
-          }
+        // Update video element to show recording
+        if (videoRef.current) {
+          videoRef.current.srcObject = null;
+          videoRef.current.src = url;
+          videoRef.current.muted = false;
+        }
 
-          // Create blob from valid chunks only
-          const mimeType = mediaRecorder.mimeType || 'video/webm';
-          const blob = new Blob(validChunks, { type: mimeType });
-          
-          console.log('Created blob:', blob.size, 'bytes, type:', blob.type);
-          
-          if (blob.size === 0) {
-            alert('Failed to create recording. Please try again.');
-            return;
-          }
-
-          // Test the blob immediately
-          const testVideo = document.createElement('video');
-          const testUrl = URL.createObjectURL(blob);
-          
-          testVideo.addEventListener('loadedmetadata', () => {
-            console.log('Blob test successful - duration:', testVideo.duration, 'seconds');
-            URL.revokeObjectURL(testUrl);
-            
-            if (testVideo.duration === 0) {
-              alert('Recording appears to be empty. Please try recording again.');
-              return;
-            }
-            
-            // Blob is valid, proceed with saving
-            setRecordedBlob(blob);
-            setHasRecording(true);
-            setShowSaveOptions(true);
-
-            // Create preview URL
-            const url = URL.createObjectURL(blob);
-            setPreviewUrl(url);
-
-            // Update video element to show recording
-            if (videoRef.current) {
-              videoRef.current.srcObject = null;
-              videoRef.current.src = url;
-              videoRef.current.muted = false;
-            }
-
-            // Clean up streams
-            cleanupStreams();
-          });
-
-          testVideo.addEventListener('error', (e) => {
-            console.error('Blob test failed:', e);
-            URL.revokeObjectURL(testUrl);
-            alert('Recording is corrupted. Please try recording again.');
-          });
-
-          testVideo.src = testUrl;
-          testVideo.load();
-        }, 100); // Small delay to ensure all chunks are processed
+        // Clean up streams
+        cleanupStreams();
       };
 
       // Handle errors
@@ -427,7 +381,7 @@ export default function Record({ onBack }: RecordProps) {
       };
 
       // Start recording with time slice for regular data capture
-      mediaRecorder.start(100); // Capture data every 100ms for better chunk collection
+      mediaRecorder.start(); // Start without time slice for simpler recording
       setIsRecording(true);
       setRecordingTime(0);
 
@@ -488,6 +442,7 @@ export default function Record({ onBack }: RecordProps) {
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      console.log('Stopping MediaRecorder, current state:', mediaRecorderRef.current.state);
       mediaRecorderRef.current.stop();
     }
     

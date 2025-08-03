@@ -144,46 +144,17 @@ export default function VideoLibrary() {
   // Play video function
   const playVideo = async (recording: any) => {
     try {
-      console.log('Playing video:', recording.id);
-      
-      // Check if we already have the blob in memory
-      let videoBlob = videoBlobs[recording.id];
-      
-      if (!videoBlob) {
-        console.log('Fetching video data from IndexedDB...');
-        const videoData = await videoStorage.getVideo(recording.id);
-        if (!videoData) {
-          alert('Video data not found. The recording may have been deleted.');
-          return;
-        }
-        
-        videoBlob = videoData.blob;
-        // Cache the blob for future use
-        setVideoBlobs(prev => ({ ...prev, [recording.id]: videoBlob }));
-      }
-      
-      // Test the blob before playing  
-      const isPlayable = await videoStorage.testBlobPlayback(videoBlob);
-      if (!isPlayable) {
-        alert('This video cannot be played. The file may be corrupted.');
+      const videoData = await videoStorage.getVideo(recording.id);
+      if (!videoData) {
+        alert('Video not found');
         return;
       }
       
-      // Clean up any existing playback URL
-      if (videoPlaybackUrl) {
-        URL.revokeObjectURL(videoPlaybackUrl);
-        setVideoPlaybackUrl(null);
-      }
-
-      // Set the selected video first
-      setSelectedVideo({ ...recording, blob: videoBlob });
+      setSelectedVideo({ ...recording, blob: videoData.blob });
       setShowVideoModal(true);
       
-      // Create playback URL from the validated blob
-      const playbackUrl = URL.createObjectURL(videoBlob);
+      const playbackUrl = URL.createObjectURL(videoData.blob);
       setVideoPlaybackUrl(playbackUrl);
-      
-      console.log('Video playback URL created successfully');
     } catch (error) {
       console.error('Error preparing video for playback:', error);
       alert('Failed to play video. Please try again.');
