@@ -93,16 +93,18 @@ class VideoStorageManager {
   async saveVideo(videoBlob: Blob, metadata: { id: number; title: string; duration: number; mode: string; thumbnail?: string }): Promise<void> {
     if (!this.db) await this.init();
     
-    // Store as base64 string for better compatibility
+    // Validate blob before saving
+    if (videoBlob.size === 0) {
+      throw new Error('Cannot save empty video blob');
+    }
+    
+    // Convert to ArrayBuffer for storage
     const arrayBuffer = await videoBlob.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    const base64String = btoa(String.fromCharCode(...uint8Array));
     
     const videoData: StoredVideo = {
       id: metadata.id,
       title: metadata.title,
-      arrayBuffer: arrayBuffer, // Keep for compatibility
-      base64Data: base64String,
+      arrayBuffer: arrayBuffer,
       mimeType: videoBlob.type,
       duration: metadata.duration,
       size: videoBlob.size,
@@ -145,28 +147,13 @@ class VideoStorageManager {
       const request = store.get(id);
 
       request.onerror = () => {
-        console.error('Failed to get video:', request.error);
         reject(request.error);
       };
       
       request.onsuccess = () => {
         const result = request.result;
-        if (result && (result.base64Data || result.arrayBuffer)) {
-          let blob: Blob;
-          
-          if (result.base64Data) {
-            // Convert base64 back to blob
-            const binaryString = atob(result.base64Data);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-              bytes[i] = binaryString.charCodeAt(i);
-            }
-            blob = new Blob([bytes], { type: result.mimeType });
-          } else {
-            // Fallback to ArrayBuffer
-            blob = new Blob([result.arrayBuffer], { type: result.mimeType });
-          }
-
+        if (result && result.arrayBuffer) {
+          const blob = new Blob([result.arrayBuffer], { type: result.mimeType || 'video/webm' });
           resolve({
             blob: blob,
             metadata: result

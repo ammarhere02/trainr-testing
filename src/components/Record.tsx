@@ -149,9 +149,9 @@ export default function Record({ onBack }: RecordProps) {
         // Screen recording
         stream = await navigator.mediaDevices.getDisplayMedia({
           video: {
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            frameRate: { ideal: 30 }
+            width: 1280,
+            height: 720,
+            frameRate: 30
           },
           audio: isAudioEnabled
         });
@@ -167,9 +167,9 @@ export default function Record({ onBack }: RecordProps) {
         // Camera recording
         stream = await navigator.mediaDevices.getUserMedia({
           video: isVideoEnabled ? {
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            frameRate: { ideal: 30 }
+            width: 1280,
+            height: 720,
+            frameRate: 30
           } : false,
           audio: isAudioEnabled
         });
@@ -190,9 +190,9 @@ export default function Record({ onBack }: RecordProps) {
         // Both screen and camera
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
           video: {
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            frameRate: { ideal: 30 }
+            width: 1280,
+            height: 720,
+            frameRate: 30
           },
           audio: isAudioEnabled
         });
@@ -305,38 +305,41 @@ export default function Record({ onBack }: RecordProps) {
 
       streamRef.current = stream;
 
-      // Set up MediaRecorder with better options
-      const options: MediaRecorderOptions = {
-        mimeType: 'video/webm;codecs=vp9,opus'
-      };
-
-      // Fallback to other formats if vp9 not supported
-      if (!MediaRecorder.isTypeSupported(options.mimeType!)) {
-        if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')) {
-          options.mimeType = 'video/webm;codecs=vp8,opus';
-        } else if (MediaRecorder.isTypeSupported('video/webm')) {
-          options.mimeType = 'video/webm';
-        } else if (MediaRecorder.isTypeSupported('video/mp4')) {
-          options.mimeType = 'video/mp4';
-        } else {
-          delete options.mimeType; // Use default
-        }
+      // Use the simplest MediaRecorder setup
+      let mimeType = 'video/webm';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/mp4';
       }
 
-      const mediaRecorder = new MediaRecorder(stream, options);
+      const mediaRecorder = new MediaRecorder(stream, { 
+        mimeType,
+        videoBitsPerSecond: 2500000 // 2.5 Mbps
+      });
       mediaRecorderRef.current = mediaRecorder;
 
       // Handle data available event
       mediaRecorder.ondataavailable = (event) => {
-        console.log('Data available:', event.data.size, 'bytes');
-        if (event.data && event.data.size > 0) {
+        if (event.data.size > 0) {
           chunksRef.current.push(event.data);
         }
       };
 
       // Handle recording stop
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        if (chunksRef.current.length === 0) {
+          alert('No video data was recorded. Please try again.');
+          cleanupStreams();
+          return;
+        }
+        
+        const blob = new Blob(chunksRef.current, { type: mimeType });
+        
+        if (blob.size === 0) {
+          alert('Recording failed - no data captured. Please try again.');
+          cleanupStreams();
+          return;
+        }
+        
         setRecordedBlob(blob);
         setHasRecording(true);
         setShowSaveOptions(true);
@@ -352,14 +355,12 @@ export default function Record({ onBack }: RecordProps) {
         cleanupStreams();
       };
 
-
       // Start recording
-      mediaRecorder.start();
+      mediaRecorder.start(1000); // Collect data every second
       setIsRecording(true);
       setRecordingTime(0);
-
-
     } catch (error) {
+      console.error('Recording error:', error);
       alert('Failed to start recording. Please check permissions.');
       cleanupStreams();
     }

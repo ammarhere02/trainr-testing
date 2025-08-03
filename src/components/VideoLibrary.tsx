@@ -146,7 +146,13 @@ export default function VideoLibrary() {
     try {
       const videoData = await videoStorage.getVideo(recording.id);
       if (!videoData) {
-        alert('Video not found');
+        console.error('Video not found in storage');
+        return;
+      }
+      
+      // Test if the blob is valid
+      if (videoData.blob.size === 0) {
+        console.error('Video blob is empty');
         return;
       }
       
@@ -157,7 +163,6 @@ export default function VideoLibrary() {
       setVideoPlaybackUrl(playbackUrl);
     } catch (error) {
       console.error('Error preparing video for playback:', error);
-      alert('Failed to play video. Please try again.');
     }
   };
 
