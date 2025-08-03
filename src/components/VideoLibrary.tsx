@@ -798,11 +798,6 @@ export default function VideoLibrary() {
                 </div>
                 <button
                   onClick={() => deleteRecording(selectedVideo.id)}
-                    // Clean up the video URL when closing modal
-                    if (selectedVideo.videoUrl) {
-                      URL.revokeObjectURL(selectedVideo.videoUrl);
-                    }
-                    setSelectedVideo(null);
                   className="flex items-center space-x-2 text-gray-600 hover:text-red-600 transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
