@@ -131,14 +131,19 @@ export default function Record({ onBack }: RecordProps) {
         // Screen recording
         stream = await navigator.mediaDevices.getDisplayMedia({
           video: {
-            mediaSource: 'screen',
             width: { ideal: 1920 },
             height: { ideal: 1080 },
             frameRate: { ideal: 30 }
           },
           audio: isAudioEnabled
         });
-        setShowCameraPreview(false);
+        
+        // Display screen stream in video element
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.muted = true;
+        }
+        
       } else if (recordingMode === 'camera') {
         // Camera recording
         stream = await navigator.mediaDevices.getUserMedia({
@@ -150,16 +155,16 @@ export default function Record({ onBack }: RecordProps) {
           audio: isAudioEnabled
         });
         
-        // Set up camera preview
+        // Display camera stream in video element
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.muted = true;
         }
+        
       } else {
         // Both screen and camera
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
           video: {
-            mediaSource: 'screen',
             width: { ideal: 1920 },
             height: { ideal: 1080 },
             frameRate: { ideal: 30 }
@@ -179,6 +184,17 @@ export default function Record({ onBack }: RecordProps) {
         setScreenStream(screenStream);
         setCameraStream(cameraStream);
         setShowCameraPreview(true);
+        
+        // Display screen stream in main video element
+        if (videoRef.current) {
+          videoRef.current.srcObject = screenStream;
+          videoRef.current.muted = true;
+        }
+        
+        // Display camera stream in preview element
+        if (cameraVideoRef.current) {
+          cameraVideoRef.current.srcObject = cameraStream;
+        }
 
         // Create a canvas to combine both streams
         const canvas = document.createElement('canvas');
@@ -192,21 +208,26 @@ export default function Record({ onBack }: RecordProps) {
         
         screenVideo.srcObject = screenStream;
         cameraVideo.srcObject = cameraStream;
+        screenVideo.muted = true;
+        cameraVideo.muted = true;
         
-        // Wait for videos to be ready before starting
-        await new Promise((resolve) => {
-          let loadedCount = 0;
-          const checkLoaded = () => {
-            loadedCount++;
-            if (loadedCount === 2) resolve(undefined);
-          };
-          
-          screenVideo.addEventListener('loadedmetadata', checkLoaded);
-          cameraVideo.addEventListener('loadedmetadata', checkLoaded);
-          
-          screenVideo.play();
-          cameraVideo.play();
-        });
+        // Wait for both videos to load
+        await Promise.all([
+          new Promise(resolve => {
+            screenVideo.addEventListener('loadedmetadata', resolve, { once: true });
+            screenVideo.load();
+          }),
+          new Promise(resolve => {
+            cameraVideo.addEventListener('loadedmetadata', resolve, { once: true });
+            cameraVideo.load();
+          })
+        ]);
+        
+        // Start playing both videos
+        await Promise.all([
+          screenVideo.play(),
+          cameraVideo.play()
+        ]);
 
         // Create a new stream from the canvas
         const combinedStream = canvas.captureStream(30);
@@ -217,45 +238,40 @@ export default function Record({ onBack }: RecordProps) {
 
         // Function to draw both videos on canvas
         const drawFrame = () => {
-          if (ctx && !screenVideo.paused && !cameraVideo.paused && 
-              screenVideo.readyState >= 2 && cameraVideo.readyState >= 2) {
+          if (ctx && screenVideo.readyState >= 2) {
             // Draw screen video (full size)
             ctx.drawImage(screenVideo, 0, 0, canvas.width, canvas.height);
             
-            // Draw camera video (picture-in-picture, bottom-right corner)
-            const pipWidth = 320;
-            const pipHeight = 240;
-            const pipX = canvas.width - pipWidth - 20;
-            const pipY = canvas.height - pipHeight - 20;
-            
-            // Add border around camera feed
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(pipX - 2, pipY - 2, pipWidth + 4, pipHeight + 4);
-            
-            // Draw camera video
-            ctx.drawImage(cameraVideo, pipX, pipY, pipWidth, pipHeight);
+            // Draw camera video if enabled and ready
+            if (isVideoEnabled && cameraVideo.readyState >= 2 && !cameraVideo.paused) {
+              const pipWidth = 320;
+              const pipHeight = 240;
+              const pipX = canvas.width - pipWidth - 20;
+              const pipY = canvas.height - pipHeight - 20;
+              
+              // Add border around camera feed
+              ctx.strokeStyle = '#ffffff';
+              ctx.lineWidth = 3;
+              ctx.strokeRect(pipX - 2, pipY - 2, pipWidth + 4, pipHeight + 4);
+              
+              // Draw camera video
+              ctx.drawImage(cameraVideo, pipX, pipY, pipWidth, pipHeight);
+            }
           }
           
           // Continue drawing frames while recording
-          if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          if (isRecording) {
             requestAnimationFrame(drawFrame);
           }
         };
 
         // Start the drawing loop
-        drawFrame();
+        requestAnimationFrame(drawFrame);
 
         stream = combinedStream;
       }
 
       streamRef.current = stream;
-
-      // Display the stream in video element (for screen mode)
-      if (recordingMode === 'screen' && videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.muted = true;
-      }
 
       // Set up MediaRecorder with better options
       const options: MediaRecorderOptions = {
@@ -330,22 +346,8 @@ export default function Record({ onBack }: RecordProps) {
           videoRef.current.muted = false;
         }
 
-        // Stop all tracks
-        stream.getTracks().forEach(track => {
-          track.stop();
-        });
-        
-        // Clean up additional streams for 'both' mode
-        if (screenStream) {
-          screenStream.getTracks().forEach(track => track.stop());
-          setScreenStream(null);
-        }
-        if (cameraStream) {
-          cameraStream.getTracks().forEach(track => track.stop());
-          setCameraStream(null);
-        }
-        
-        streamRef.current = null;
+        // Clean up streams
+        cleanupStreams();
       };
 
       // Handle errors
@@ -374,7 +376,30 @@ export default function Record({ onBack }: RecordProps) {
       } else {
         alert('Failed to start recording. Please check:\n\n1. Allow camera/microphone access when prompted\n2. Check browser permissions (click lock icon in address bar)\n3. Ensure no other apps are using your camera/microphone\n4. Try refreshing the page');
       }
+      
+      // Clean up on error
+      cleanupStreams();
     }
+  };
+  
+  const cleanupStreams = () => {
+    // Stop main stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    
+    // Stop additional streams for 'both' mode
+    if (screenStream) {
+      screenStream.getTracks().forEach(track => track.stop());
+      setScreenStream(null);
+    }
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    
+    setShowCameraPreview(false);
   };
 
   const pauseRecording = () => {
@@ -396,21 +421,6 @@ export default function Record({ onBack }: RecordProps) {
       mediaRecorderRef.current.stop();
     }
     
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-
-    // Clean up additional streams for 'both' mode
-    if (screenStream) {
-      screenStream.getTracks().forEach(track => track.stop());
-      setScreenStream(null);
-    }
-    if (cameraStream) {
-      cameraStream.getTracks().forEach(track => track.stop());
-      setCameraStream(null);
-    }
-    setShowCameraPreview(false);
     setIsRecording(false);
     setIsPaused(false);
     
