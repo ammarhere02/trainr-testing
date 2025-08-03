@@ -254,11 +254,12 @@ export default function Record({ onBack }: RecordProps) {
       }
 
       // Display camera stream in camera preview element
-      if (cameraVideoRef.current && (recordingMode === 'camera' || recordingMode === 'both')) {
-        const cameraStreamToShow = recordingMode === 'camera' ? stream : cameraStream;
-        if (cameraStreamToShow) {
-          cameraVideoRef.current.srcObject = cameraStreamToShow;
-        }
+      if (cameraVideoRef.current && recordingMode === 'camera') {
+        cameraVideoRef.current.srcObject = stream;
+        cameraVideoRef.current.muted = true;
+      } else if (cameraVideoRef.current && recordingMode === 'both' && cameraStream) {
+        cameraVideoRef.current.srcObject = cameraStream;
+        cameraVideoRef.current.muted = true;
       }
 
       // Set up MediaRecorder with better options
