@@ -1,11 +1,11 @@
-// Video storage utility using IndexedDB for persistent video storage
+// Video storage utility using IndexedDB with ArrayBuffer for reliable blob storage
 export interface StoredVideo {
   id: number;
   title: string;
-  blob: Blob;
+  arrayBuffer: ArrayBuffer; // Store as ArrayBuffer instead of Blob
+  mimeType: string; // Store MIME type separately
   duration: number;
   size: number;
-  type: string;
   mode: string;
   date: string;
   thumbnail?: string;
@@ -24,26 +24,18 @@ export const generateVideoThumbnail = (videoBlob: Blob): Promise<string> => {
     }
 
     video.addEventListener('loadedmetadata', () => {
-      // Set canvas dimensions to video dimensions
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      canvas.width = Math.min(video.videoWidth, 320);
+      canvas.height = Math.min(video.videoHeight, 240);
       
-      // Seek to 1 second or 10% of video duration, whichever is smaller
       const seekTime = Math.min(1, video.duration * 0.1);
       video.currentTime = seekTime;
     });
 
     video.addEventListener('seeked', () => {
       try {
-        // Draw the current frame to canvas
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        // Convert canvas to data URL (thumbnail)
         const thumbnail = canvas.toDataURL('image/jpeg', 0.8);
-        
-        // Clean up
         URL.revokeObjectURL(video.src);
-        
         resolve(thumbnail);
       } catch (error) {
         reject(error);
@@ -54,7 +46,6 @@ export const generateVideoThumbnail = (videoBlob: Blob): Promise<string> => {
       reject(new Error('Failed to load video for thumbnail generation'));
     });
 
-    // Load the video
     video.src = URL.createObjectURL(videoBlob);
     video.load();
   });
@@ -62,7 +53,7 @@ export const generateVideoThumbnail = (videoBlob: Blob): Promise<string> => {
 
 class VideoStorageManager {
   private dbName = 'TrainrVideoLibrary';
-  private dbVersion = 2; // Increment version to force upgrade
+  private dbVersion = 3; // Increment to force upgrade
   private storeName = 'videos';
   private db: IDBDatabase | null = null;
 
@@ -89,51 +80,44 @@ class VideoStorageManager {
           db.deleteObjectStore(this.storeName);
         }
         
-        // Create new store
+        // Create new store with ArrayBuffer support
         const store = db.createObjectStore(this.storeName, { keyPath: 'id' });
         store.createIndex('date', 'date', { unique: false });
         store.createIndex('title', 'title', { unique: false });
-        console.log('IndexedDB store created/upgraded');
+        console.log('IndexedDB store created/upgraded for ArrayBuffer storage');
       };
     });
   }
 
-  async saveVideo(video: StoredVideo): Promise<void> {
+  async saveVideo(videoBlob: Blob, metadata: { id: number; title: string; duration: number; mode: string; thumbnail?: string }): Promise<void> {
     if (!this.db) await this.init();
     
-    console.log('Attempting to save video:', {
-      id: video.id,
-      title: video.title,
-      blobSize: video.blob?.size,
-      blobType: video.blob?.type,
-      duration: video.duration
+    console.log('Converting blob to ArrayBuffer for storage:', {
+      blobSize: videoBlob.size,
+      blobType: videoBlob.type
     });
     
-    // Enhanced validation
-    if (!video.blob) {
-      throw new Error('Cannot save video: blob is missing');
-    }
+    // Convert blob to ArrayBuffer for reliable storage
+    const arrayBuffer = await videoBlob.arrayBuffer();
     
-    if (video.blob.size === 0) {
-      throw new Error('Cannot save video: blob is empty (0 bytes)');
-    }
+    const videoData: StoredVideo = {
+      id: metadata.id,
+      title: metadata.title,
+      arrayBuffer: arrayBuffer,
+      mimeType: videoBlob.type,
+      duration: metadata.duration,
+      size: videoBlob.size,
+      mode: metadata.mode,
+      date: new Date().toISOString(),
+      thumbnail: metadata.thumbnail
+    };
     
-    if (video.blob.size < 1000) {
-      throw new Error('Cannot save video: blob is too small to be valid');
-    }
-    
-    // Test blob validity before saving
-    const isValid = await this.testBlobPlayback(video.blob);
-    if (!isValid) {
-      throw new Error('Cannot save video: blob data is corrupted or unplayable - failed playback test');
-    }
-    
-    console.log('Saving video to IndexedDB:', {
-      id: video.id,
-      title: video.title,
-      blobSize: video.blob.size,
-      blobType: video.blob.type,
-      duration: video.duration
+    console.log('Saving video data to IndexedDB:', {
+      id: videoData.id,
+      title: videoData.title,
+      arrayBufferSize: arrayBuffer.byteLength,
+      mimeType: videoData.mimeType,
+      duration: videoData.duration
     });
     
     return new Promise((resolve, reject) => {
@@ -144,21 +128,7 @@ class VideoStorageManager {
 
       const transaction = this.db.transaction([this.storeName], 'readwrite');
       const store = transaction.objectStore(this.storeName);
-      
-      // Create a copy of the video object to ensure it's serializable
-      const videoToStore = {
-        id: video.id,
-        title: video.title,
-        blob: video.blob,
-        duration: video.duration,
-        size: video.size,
-        type: video.type,
-        mode: video.mode,
-        date: video.date,
-        thumbnail: video.thumbnail
-      };
-      
-      const request = store.put(videoToStore);
+      const request = store.put(videoData);
 
       request.onerror = () => {
         console.error('Failed to save video:', request.error);
@@ -172,7 +142,7 @@ class VideoStorageManager {
     });
   }
 
-  async getVideo(id: number): Promise<StoredVideo | null> {
+  async getVideo(id: number): Promise<{ blob: Blob; metadata: StoredVideo } | null> {
     if (!this.db) await this.init();
     
     return new Promise((resolve, reject) => {
@@ -192,18 +162,30 @@ class VideoStorageManager {
       
       request.onsuccess = () => {
         const result = request.result;
-        if (result) {
+        if (result && result.arrayBuffer) {
           console.log('Retrieved video from IndexedDB:', {
             id: result.id,
             title: result.title,
-            blobSize: result.blob?.size,
-            blobType: result.blob?.type,
-            hasBlobData: !!(result.blob && result.blob.size > 0)
+            arrayBufferSize: result.arrayBuffer.byteLength,
+            mimeType: result.mimeType
+          });
+          
+          // Convert ArrayBuffer back to Blob
+          const blob = new Blob([result.arrayBuffer], { type: result.mimeType });
+          
+          console.log('Converted ArrayBuffer to Blob:', {
+            blobSize: blob.size,
+            blobType: blob.type
+          });
+          
+          resolve({
+            blob: blob,
+            metadata: result
           });
         } else {
-          console.log('Video not found in IndexedDB:', id);
+          console.log('Video not found or has no data:', id);
+          resolve(null);
         }
-        resolve(result || null);
       };
     });
   }
@@ -229,15 +211,6 @@ class VideoStorageManager {
       request.onsuccess = () => {
         const videos = request.result || [];
         console.log('Retrieved all videos from IndexedDB:', videos.length);
-        videos.forEach((video, index) => {
-          console.log(`Video ${index + 1}:`, {
-            id: video.id,
-            title: video.title,
-            blobSize: video.blob?.size,
-            blobType: video.blob?.type,
-            hasBlobData: !!(video.blob && video.blob.size > 0)
-          });
-        });
         resolve(videos);
       };
     });
@@ -292,12 +265,45 @@ class VideoStorageManager {
     });
   }
 
-  createVideoURL(blob: Blob): string {
-    return URL.createObjectURL(blob);
-  }
-
-  revokeVideoURL(url: string): void {
-    URL.revokeObjectURL(url);
+  // Test if a blob is valid and playable
+  async testBlobPlayback(blob: Blob): Promise<boolean> {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      const url = URL.createObjectURL(blob);
+      
+      let resolved = false;
+      
+      video.addEventListener('loadedmetadata', () => {
+        if (!resolved) {
+          resolved = true;
+          URL.revokeObjectURL(url);
+          console.log('Blob test successful - duration:', video.duration);
+          resolve(video.duration > 0);
+        }
+      });
+      
+      video.addEventListener('error', (e) => {
+        if (!resolved) {
+          resolved = true;
+          URL.revokeObjectURL(url);
+          console.error('Blob test failed:', e);
+          resolve(false);
+        }
+      });
+      
+      video.src = url;
+      video.load();
+      
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          URL.revokeObjectURL(url);
+          console.log('Blob test timed out');
+          resolve(false);
+        }
+      }, 5000);
+    });
   }
 
   async getVideoMetadata(): Promise<{ totalVideos: number; totalSize: number; totalDuration: number }> {
@@ -307,33 +313,6 @@ class VideoStorageManager {
       totalSize: videos.reduce((total, video) => total + video.size, 0),
       totalDuration: videos.reduce((total, video) => total + video.duration, 0)
     };
-  }
-
-  // Test if a blob is valid and playable
-  async testBlobPlayback(blob: Blob): Promise<boolean> {
-    return new Promise((resolve) => {
-      const video = document.createElement('video');
-      const url = URL.createObjectURL(blob);
-      
-      video.addEventListener('loadedmetadata', () => {
-        URL.revokeObjectURL(url);
-        resolve(true);
-      });
-      
-      video.addEventListener('error', () => {
-        URL.revokeObjectURL(url);
-        resolve(false);
-      });
-      
-      video.src = url;
-      video.load();
-      
-      // Timeout after 5 seconds
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-        resolve(false);
-      }, 5000);
-    });
   }
 }
 

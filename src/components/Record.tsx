@@ -543,26 +543,16 @@ export default function Record({ onBack }: RecordProps) {
       // Generate thumbnail from video
       const thumbnail = await generateVideoThumbnail(recordedBlob);
       
-      const videoData: StoredVideo = {
+      const metadata = {
         id: Date.now(),
         title: `Recording ${new Date().toLocaleString()}`,
-        blob: recordedBlob,
         duration: recordingTime,
-        size: recordedBlob.size,
-        type: recordedBlob.type,
         mode: recordingMode,
-        date: new Date().toISOString(),
         thumbnail: thumbnail
       };
 
-      console.log('Video data to save:', {
-        id: videoData.id,
-        title: videoData.title,
-        blobSize: videoData.blob.size,
-        blobType: videoData.blob.type,
-        duration: videoData.duration
-      });
-      await videoStorage.saveVideo(videoData);
+      console.log('Saving video with metadata:', metadata);
+      await videoStorage.saveVideo(recordedBlob, metadata);
       console.log('Video saved successfully to IndexedDB');
       alert('Recording saved to library successfully!');
       setShowSaveOptions(false);

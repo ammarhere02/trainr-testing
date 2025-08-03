@@ -36,7 +36,7 @@ import { videoStorage, StoredVideo } from '../utils/videoStorage';
 
 export default function VideoLibrary() {
   const [recordings, setRecordings] = useState<StoredVideo[]>([]);
-  const [videoUrls, setVideoUrls] = useState<{ [key: number]: string }>({});
+  const [videoBlobs, setVideoBlobs] = useState<{ [key: number]: Blob }>({});
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('date');
@@ -58,26 +58,7 @@ export default function VideoLibrary() {
         await videoStorage.init();
         const videos = await videoStorage.getAllVideos();
         console.log('Loaded videos from IndexedDB:', videos.length);
-        videos.forEach((video, index) => {
-          console.log(`Video ${index + 1}:`, {
-            id: video.id,
-            title: video.title,
-            blobSize: video.blob?.size,
-            blobType: video.blob?.type,
-            duration: video.duration
-          });
-        });
         setRecordings(videos);
-        
-        // Create blob URLs for thumbnails only (not for playback)
-        const urls: { [key: number]: string } = {};
-        videos.forEach(video => {
-          if (video.blob && video.blob.size > 0) {
-            // Only create URL for thumbnail display, not for video playback
-            urls[video.id] = videoStorage.createVideoURL(video.blob);
-          }
-        });
-        setVideoUrls(urls);
       } catch (error) {
         console.error('Error loading recordings:', error);
         setRecordings([]);
@@ -92,11 +73,13 @@ export default function VideoLibrary() {
   // Cleanup blob URLs on unmount
   useEffect(() => {
     return () => {
-      Object.values(videoUrls).forEach(url => {
-        videoStorage.revokeVideoURL(url);
+      Object.values(videoBlobs).forEach(blob => {
+        // Cleanup any blob URLs that might have been created
+        const url = URL.createObjectURL(blob);
+        URL.revokeObjectURL(url);
       });
     };
-  }, [videoUrls]);
+  }, [videoBlobs]);
 
   // Filter and sort recordings
   const filteredRecordings = recordings
@@ -161,21 +144,26 @@ export default function VideoLibrary() {
   // Play video function
   const playVideo = async (recording: any) => {
     try {
-      console.log('Playing video:', recording.id, 'Blob size:', recording.blob?.size);
+      console.log('Playing video:', recording.id);
       
-      // First check if we have blob data
-      if (!recording.blob || recording.blob.size === 0) {
-        console.log('No blob data, fetching from IndexedDB...');
-        const freshData = await videoStorage.getVideo(recording.id);
-        if (!freshData || !freshData.blob || freshData.blob.size === 0) {
-          alert('Video data is not available. The recording may be corrupted.');
+      // Check if we already have the blob in memory
+      let videoBlob = videoBlobs[recording.id];
+      
+      if (!videoBlob) {
+        console.log('Fetching video data from IndexedDB...');
+        const videoData = await videoStorage.getVideo(recording.id);
+        if (!videoData) {
+          alert('Video data not found. The recording may have been deleted.');
           return;
         }
-        recording = freshData;
+        
+        videoBlob = videoData.blob;
+        // Cache the blob for future use
+        setVideoBlobs(prev => ({ ...prev, [recording.id]: videoBlob }));
       }
       
-      // Test the blob before playing
-      const isPlayable = await videoStorage.testBlobPlayback(recording.blob);
+      // Test the blob before playing  
+      const isPlayable = await videoStorage.testBlobPlayback(videoBlob);
       if (!isPlayable) {
         alert('This video cannot be played. The file may be corrupted.');
         return;
@@ -188,11 +176,11 @@ export default function VideoLibrary() {
       }
 
       // Set the selected video first
-      setSelectedVideo(recording);
+      setSelectedVideo({ ...recording, blob: videoBlob });
       setShowVideoModal(true);
       
       // Create playback URL from the validated blob
-      const playbackUrl = URL.createObjectURL(recording.blob);
+      const playbackUrl = URL.createObjectURL(videoBlob);
       setVideoPlaybackUrl(playbackUrl);
       
       console.log('Video playback URL created successfully');
@@ -206,13 +194,12 @@ export default function VideoLibrary() {
   const deleteRecording = async (id: number) => {
     if (confirm('Are you sure you want to delete this recording?')) {
       try {
-        // Revoke blob URL
-        if (videoUrls[id]) {
-          videoStorage.revokeVideoURL(videoUrls[id]);
-          setVideoUrls(prev => {
-            const newUrls = { ...prev };
-            delete newUrls[id];
-            return newUrls;
+        // Clean up cached blob
+        if (videoBlobs[id]) {
+          setVideoBlobs(prev => {
+            const newBlobs = { ...prev };
+            delete newBlobs[id];
+            return newBlobs;
           });
         }
         
@@ -232,8 +219,9 @@ export default function VideoLibrary() {
 
   // Download recording (for cloud-stored videos)
   const downloadRecording = (recording: any) => {
-    if (recording.blob) {
-      const videoUrl = URL.createObjectURL(recording.blob);
+    const videoBlob = videoBlobs[recording.id] || recording.blob;
+    if (videoBlob) {
+      const videoUrl = URL.createObjectURL(videoBlob);
       const a = document.createElement('a');
       a.href = videoUrl;
       a.download = `${recording.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.webm`;
@@ -248,10 +236,13 @@ export default function VideoLibrary() {
 
   // Copy video link
   const copyVideoLink = (recording: any) => {
-    const videoUrl = videoUrls[recording.id];
-    if (videoUrl) {
+    const videoBlob = videoBlobs[recording.id];
+    if (videoBlob) {
+      const videoUrl = URL.createObjectURL(videoBlob);
       navigator.clipboard.writeText(videoUrl);
       alert('Video link copied to clipboard!');
+      // Clean up the temporary URL after a delay
+      setTimeout(() => URL.revokeObjectURL(videoUrl), 1000);
     } else {
       alert('No video link available.');
     }
@@ -281,20 +272,15 @@ export default function VideoLibrary() {
     
     if (confirm(`Are you sure you want to delete ${selectedVideos.length} recording(s)?`)) {
       try {
-        // Revoke blob URLs for selected videos
-        selectedVideos.forEach(id => {
-          if (videoUrls[id]) {
-            videoStorage.revokeVideoURL(videoUrls[id]);
-          }
+        // Clean up cached blobs for selected videos
+        setVideoBlobs(prev => {
+          const newBlobs = { ...prev };
+          selectedVideos.forEach(id => delete newBlobs[id]);
+          return newBlobs;
         });
         
         await videoStorage.deleteMultipleVideos(selectedVideos);
         setRecordings(prev => prev.filter(r => !selectedVideos.includes(r.id)));
-        setVideoUrls(prev => {
-          const newUrls = { ...prev };
-          selectedVideos.forEach(id => delete newUrls[id]);
-          return newUrls;
-        });
         setSelectedVideos([]);
       } catch (error) {
         console.error('Error deleting recordings:', error);
