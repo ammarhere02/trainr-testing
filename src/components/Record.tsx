@@ -222,7 +222,29 @@ export default function Record({ onBack }: RecordProps) {
 
     } catch (error) {
       console.error('Recording error:', error);
-      alert('Failed to start recording. Please check permissions.');
+      
+      // Provide specific feedback based on the error
+      let errorMessage = 'Failed to start recording. ';
+      
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError' || error.message.includes('Permission denied')) {
+          errorMessage += 'Permission denied. Please:\n\n' +
+            '1. Click the camera/microphone icon in your browser\'s address bar\n' +
+            '2. Allow access to camera, microphone, and screen sharing\n' +
+            '3. Refresh the page and try again\n\n' +
+            'If the issue persists, check your browser and system privacy settings.';
+        } else if (error.name === 'NotFoundError') {
+          errorMessage += 'No camera or microphone found. Please connect a recording device and try again.';
+        } else if (error.name === 'NotSupportedError') {
+          errorMessage += 'Recording is not supported in this browser. Please try using Chrome, Firefox, or Edge.';
+        } else {
+          errorMessage += `${error.message}\n\nPlease check your browser permissions and try again.`;
+        }
+      } else {
+        errorMessage += 'Please check your browser permissions and try again.';
+      }
+      
+      alert(errorMessage);
       cleanupStreams();
     }
   };
