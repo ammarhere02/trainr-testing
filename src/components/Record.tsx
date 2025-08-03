@@ -93,6 +93,13 @@ export default function Record({ onBack }: RecordProps) {
           video: true,
           audio: isAudioEnabled
         });
+        
+        // Show screen stream in preview
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.muted = true;
+          await videoRef.current.play();
+        }
       } else if (recordingMode === 'camera') {
         stream = await navigator.mediaDevices.getUserMedia({
           video: isVideoEnabled,
@@ -133,6 +140,14 @@ export default function Record({ onBack }: RecordProps) {
         await screenVideo.play();
         await cameraVideo.play();
         
+        // Show the canvas stream in preview immediately
+        const canvasStream = canvas.captureStream(30);
+        if (videoRef.current) {
+          videoRef.current.srcObject = canvasStream;
+          videoRef.current.muted = true;
+          await videoRef.current.play();
+        }
+        
         // Function to draw both videos on canvas
         const drawFrame = () => {
           // Draw screen video (full canvas)
@@ -150,16 +165,20 @@ export default function Record({ onBack }: RecordProps) {
           
           ctx.drawImage(cameraVideo, pipX, pipY, pipWidth, pipHeight);
           
-          if (isRecording) {
+          // Keep drawing frames while streams are active
+          if (screenVideo.readyState === 4 && cameraVideo.readyState === 4) {
             requestAnimationFrame(drawFrame);
           }
         };
         
         // Start drawing frames
-        drawFrame();
+        // Wait a bit for videos to be ready, then start drawing
+        setTimeout(() => {
+          drawFrame();
+        }, 100);
         
-        // Get stream from canvas
-        stream = canvas.captureStream(30); // 30 FPS
+        // Use the canvas stream for recording
+        stream = canvasStream;
         
         // Add audio from screen stream if enabled
         if (isAudioEnabled && screenStream.getAudioTracks().length > 0) {
@@ -173,18 +192,14 @@ export default function Record({ onBack }: RecordProps) {
         // Store additional streams for cleanup
         (stream as any)._screenStream = screenStream;
         (stream as any)._cameraStream = cameraStream;
+        (stream as any)._screenVideo = screenVideo;
+        (stream as any)._cameraVideo = cameraVideo;
+        (stream as any)._canvas = canvas;
       }
 
       streamRef.current = stream;
 
       // Display stream
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.muted = true;
-        await videoRef.current.play();
-      }
-
-      // Create MediaRecorder with the most compatible settings
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'video/webm;codecs=vp8'
       });
@@ -264,6 +279,12 @@ export default function Record({ onBack }: RecordProps) {
       }
       if ((streamRef.current as any)._cameraStream) {
         (streamRef.current as any)._cameraStream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
+      }
+      if ((streamRef.current as any)._screenVideo) {
+        (streamRef.current as any)._screenVideo.srcObject = null;
+      }
+      if ((streamRef.current as any)._cameraVideo) {
+        (streamRef.current as any)._cameraVideo.srcObject = null;
       }
       
       streamRef.current.getTracks().forEach(track => track.stop());
