@@ -151,10 +151,16 @@ export default function VideoLibrary() {
 
   // Download recording (for cloud-stored videos)
   const downloadRecording = (recording: any) => {
-    // For cloud videos, we'd need to fetch the video URL
-    // For now, show a message about cloud download
     if (recording.cloudflareId) {
-      alert('Cloud video download feature coming soon!');
+      alert('Configure Cloudflare Stream credentials to enable cloud video downloads.');
+    } else if (recording.localUrl) {
+      // Create download link for local video
+      const a = document.createElement('a');
+      a.href = recording.localUrl;
+      a.download = `${recording.title}.webm`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     } else {
       alert('Local video file not available for download.');
     }
@@ -163,9 +169,9 @@ export default function VideoLibrary() {
   // Copy video link
   const copyVideoLink = (recording: any) => {
     if (recording.cloudflareId) {
-      const link = `https://embed.cloudflarestream.com/${recording.cloudflareId}`;
+      const link = `Video ID: ${recording.cloudflareId} (Cloudflare Stream not configured)`;
       navigator.clipboard.writeText(link);
-      alert('Video link copied to clipboard!');
+      alert('Video ID copied to clipboard!');
     } else {
       alert('No shareable link available for this recording.');
     }
@@ -403,15 +409,25 @@ export default function VideoLibrary() {
                   <div className="relative">
                     {/* Video Thumbnail */}
                     <div className="aspect-video bg-gray-900 flex items-center justify-center">
-                      <div className="relative w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
-                        <div className="text-center text-white">
-                          <Video className="w-12 h-12 mx-auto mb-2" />
-                          <p className="text-sm font-medium">
-                            {recording.cloudflareId ? 'Cloud Video' : 'Local Recording'}
-                          </p>
-                          <p className="text-xs opacity-80">Click to play</p>
+                      {recording.cloudflareId ? (
+                        <div className="relative w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+                          <div className="text-center text-white">
+                            <Video className="w-12 h-12 mx-auto mb-2" />
+                            <p className="text-sm font-medium">Cloud Video</p>
+                            <p className="text-xs opacity-80">Click to play</p>
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="relative w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+                          <div className="text-center text-white">
+                            <Video className="w-12 h-12 mx-auto mb-2" />
+                            <p className="text-sm font-medium">
+                              {recording.cloudflareId ? 'Cloud Video' : 'Local Recording'}
+                            </p>
+                            <p className="text-xs opacity-80">Click to play</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     
                     {/* Play Button Overlay */}
