@@ -28,7 +28,9 @@ import {
   Settings,
   BarChart3,
   Users,
-  TrendingUp
+  TrendingUp,
+  X,
+  AlertCircle
 } from 'lucide-react';
 
 export default function VideoLibrary() {
@@ -41,6 +43,8 @@ export default function VideoLibrary() {
   const [selectedVideos, setSelectedVideos] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [videosPerPage] = useState(12);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<any>(null);
 
   // Load recordings from localStorage
   useEffect(() => {
@@ -128,6 +132,12 @@ export default function VideoLibrary() {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Play video function
+  const playVideo = (recording: any) => {
+    setSelectedVideo(recording);
+    setShowVideoModal(true);
   };
 
   // Delete recording
@@ -394,14 +404,13 @@ export default function VideoLibrary() {
                     {/* Video Thumbnail */}
                     <div className="aspect-video bg-gray-900 flex items-center justify-center">
                       {recording.cloudflareId ? (
-                        <iframe
-                          src={`https://embed.cloudflarestream.com/${recording.cloudflareId}`}
-                          className="w-full h-full"
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                          title={recording.title}
-                        />
+                        <div className="relative w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+                          <div className="text-center text-white">
+                            <Video className="w-12 h-12 mx-auto mb-2" />
+                            <p className="text-sm font-medium">Cloud Video</p>
+                            <p className="text-xs opacity-80">Click to play</p>
+                          </div>
+                        </div>
                       ) : (
                         <div className="text-center text-white">
                           <FileVideo className="w-12 h-12 mx-auto mb-2 opacity-60" />
@@ -412,7 +421,10 @@ export default function VideoLibrary() {
                     
                     {/* Play Button Overlay */}
                     <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                      <button className="bg-white/90 p-3 rounded-full hover:bg-white transition-colors">
+                      <button 
+                        onClick={() => playVideo(recording)}
+                        className="bg-white/90 p-3 rounded-full hover:bg-white transition-colors"
+                      >
                         <Play className="w-6 h-6 text-purple-600" />
                       </button>
                     </div>
@@ -629,6 +641,98 @@ export default function VideoLibrary() {
             </div>
           )}
         </>
+      )}
+
+      {/* Video Player Modal */}
+      {showVideoModal && selectedVideo && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">{selectedVideo.title}</h3>
+                <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                  <span>{formatDuration(selectedVideo.duration)}</span>
+                  <span>{formatFileSize(selectedVideo.size)}</span>
+                  <span>{new Date(selectedVideo.date).toLocaleDateString()}</span>
+                  {selectedVideo.cloudflareId && (
+                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
+                      Cloud
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setShowVideoModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Video Player */}
+            <div className="aspect-video bg-gray-900">
+              {selectedVideo.cloudflareId ? (
+                <iframe
+                  src={`https://embed.cloudflarestream.com/${selectedVideo.cloudflareId}`}
+                  className="w-full h-full"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title={selectedVideo.title}
+                />
+              ) : selectedVideo.localUrl ? (
+                <video
+                  src={selectedVideo.localUrl}
+                  controls
+                  className="w-full h-full"
+                  title={selectedVideo.title}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white">
+                  <div className="text-center">
+                    <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-60" />
+                    <p className="text-lg font-medium">Video not available</p>
+                    <p className="text-sm opacity-80">The video file could not be loaded</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <button
+                    onClick={() => downloadRecording(selectedVideo)}
+                    className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download</span>
+                  </button>
+                  <button
+                    onClick={() => copyVideoLink(selectedVideo)}
+                    className="flex items-center space-x-2 text-gray-600 hover:text-purple-600 transition-colors"
+                  >
+                    <Copy className="w-4 h-4" />
+                    <span>Copy Link</span>
+                  </button>
+                  <button className="flex items-center space-x-2 text-gray-600 hover:text-green-600 transition-colors">
+                    <Share2 className="w-4 h-4" />
+                    <span>Share</span>
+                  </button>
+                </div>
+                <button
+                  onClick={() => deleteRecording(selectedVideo.id)}
+                  className="flex items-center space-x-2 text-gray-600 hover:text-red-600 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
