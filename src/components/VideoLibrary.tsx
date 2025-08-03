@@ -756,6 +756,8 @@ export default function VideoLibrary() {
                           console.error('Video playback error:', e);
                           alert('Failed to play video. The video file may be corrupted.');
                         }}
+                  onLoadStart={() => console.log('Video loading started')}
+                  onCanPlay={() => console.log('Video can play')}
                   autoPlay
                   className="w-full h-full"
                   title={selectedVideo.title}
@@ -796,6 +798,11 @@ export default function VideoLibrary() {
                 </div>
                 <button
                   onClick={() => deleteRecording(selectedVideo.id)}
+                    // Clean up the video URL when closing modal
+                    if (selectedVideo.videoUrl) {
+                      URL.revokeObjectURL(selectedVideo.videoUrl);
+                    }
+                    setSelectedVideo(null);
                   className="flex items-center space-x-2 text-gray-600 hover:text-red-600 transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
