@@ -101,15 +101,31 @@ class VideoStorageManager {
   async saveVideo(video: StoredVideo): Promise<void> {
     if (!this.db) await this.init();
     
-    // Validate video data before saving
-    if (!video.blob || video.blob.size === 0) {
-      throw new Error('Cannot save video: blob is empty or missing');
+    console.log('Attempting to save video:', {
+      id: video.id,
+      title: video.title,
+      blobSize: video.blob?.size,
+      blobType: video.blob?.type,
+      duration: video.duration
+    });
+    
+    // Enhanced validation
+    if (!video.blob) {
+      throw new Error('Cannot save video: blob is missing');
+    }
+    
+    if (video.blob.size === 0) {
+      throw new Error('Cannot save video: blob is empty (0 bytes)');
+    }
+    
+    if (video.blob.size < 1000) {
+      throw new Error('Cannot save video: blob is too small to be valid');
     }
     
     // Test blob validity before saving
     const isValid = await this.testBlobPlayback(video.blob);
     if (!isValid) {
-      throw new Error('Cannot save video: blob data is corrupted or unplayable');
+      throw new Error('Cannot save video: blob data is corrupted or unplayable - failed playback test');
     }
     
     console.log('Saving video to IndexedDB:', {
