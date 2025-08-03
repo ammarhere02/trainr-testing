@@ -48,6 +48,7 @@ export default function VideoLibrary() {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [videoPlaybackUrl, setVideoPlaybackUrl] = useState<string | null>(null);
 
   // Load recordings from localStorage
   useEffect(() => {
@@ -145,12 +146,23 @@ export default function VideoLibrary() {
   };
 
   // Play video function
-  const playVideo = (recording: any) => {
+  const playVideo = async (recording: any) => {
     console.log('Playing video:', recording.title, 'Blob size:', recording.blob?.size);
     
     // Ensure we have a valid blob
     if (!recording.blob || recording.blob.size === 0) {
       alert('Video data is not available or corrupted.');
+      return;
+    }
+    
+    try {
+      // Create a fresh blob URL for playback
+      const playbackUrl = URL.createObjectURL(recording.blob);
+      setVideoPlaybackUrl(playbackUrl);
+      console.log('Created playback URL:', playbackUrl);
+    } catch (error) {
+      console.error('Error creating video URL:', error);
+      alert('Failed to prepare video for playback.');
       return;
     }
     
@@ -742,6 +754,11 @@ export default function VideoLibrary() {
               </div>
               <button
                 onClick={() => {
+                  // Clean up video URL before closing
+                  if (videoPlaybackUrl) {
+                    URL.revokeObjectURL(videoPlaybackUrl);
+                    setVideoPlaybackUrl(null);
+                  }
                   setSelectedVideo(null);
                   setShowVideoModal(false);
                 }}
@@ -753,28 +770,33 @@ export default function VideoLibrary() {
 
             {/* Video Player */}
             <div className="aspect-video bg-gray-900">
-              {selectedVideo && selectedVideo.blob ? (
+              {selectedVideo && videoPlaybackUrl ? (
                 <video
                   key={selectedVideo.id}
-                  src={URL.createObjectURL(selectedVideo.blob)}
+                  src={videoPlaybackUrl}
                   controls
                   autoPlay
                   className="w-full h-full"
                   onError={(e) => {
-                    console.error('Video playback error:', e);
-                    alert('Failed to play video. The video file may be corrupted.');
+                    console.error('Video playback error:', e, 'Video URL:', videoPlaybackUrl);
+                    console.error('Selected video blob size:', selectedVideo?.blob?.size);
                   }}
                   onLoadedData={() => console.log('Video loaded successfully:', selectedVideo.title)}
                   onCanPlay={() => console.log('Video can play:', selectedVideo.title)}
                   onLoadStart={() => console.log('Video load started:', selectedVideo.title)}
                   onLoadedMetadata={() => console.log('Video metadata loaded:', selectedVideo.title)}
+                  onCanPlayThrough={() => console.log('Video can play through:', selectedVideo.title)}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white">
                   <div className="text-center">
                     <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-60" />
-                    <p className="text-lg font-medium">Video not available</p>
-                    <p className="text-sm opacity-80">The video file could not be loaded</p>
+                    <p className="text-lg font-medium">
+                      {selectedVideo ? 'Loading video...' : 'Video not available'}
+                    </p>
+                    <p className="text-sm opacity-80">
+                      {selectedVideo ? 'Please wait while the video loads' : 'The video file could not be loaded'}
+                    </p>
                   </div>
                 </div>
               )}
