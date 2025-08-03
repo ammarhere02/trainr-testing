@@ -265,31 +265,6 @@ function App() {
         case 'member-record':
           return <Record onBack={() => setCurrentView('dashboard')} />;
         case 'library':
-          return (
-            <div className="p-8">
-              <div className="max-w-2xl mx-auto text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <Video className="w-8 h-8 text-blue-600" />
-                </div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">Video Library</h1>
-                <p className="text-xl text-gray-600 mb-6">All your recorded videos are stored here</p>
-                <p className="text-gray-500 leading-relaxed">
-                  Access all your recorded lessons, live sessions, and uploaded content in one organized library.
-                </p>
-                <div className="mt-8 bg-blue-50 rounded-lg p-6">
-                  <h3 className="font-semibold text-blue-900 mb-2">Library Features:</h3>
-                  <ul className="text-sm text-blue-800 space-y-1 text-left">
-                    <li>• Organized video storage</li>
-                    <li>• Search and filter videos</li>
-                    <li>• Video analytics</li>
-                    <li>• Bulk operations</li>
-                    <li>• Cloud backup</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          );
-        case 'library':
           return <VideoLibrary />;
         case 'meet':
           return <Meet />;
