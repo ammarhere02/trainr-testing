@@ -224,14 +224,14 @@ export default function Record({ onBack }: RecordProps) {
       console.error('Failed to start recording:', error);
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
-          alert('Permission denied. Please allow camera/microphone access and try again.');
+          alert('Permission denied. Please click "Allow" when your browser asks for camera/microphone access, then try again. If you previously denied access, click the camera/lock icon in your browser\'s address bar to change permissions.');
         } else if (error.name === 'NotFoundError') {
           alert('No camera or microphone found. Please check your devices.');
         } else {
           alert(`Failed to start recording: ${error.message}`);
         }
       } else {
-        alert('Failed to start recording. Please check your permissions and try again.');
+        alert('Failed to start recording. Please allow camera/microphone access when prompted by your browser and try again.');
       }
     }
   };
