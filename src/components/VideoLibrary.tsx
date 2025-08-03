@@ -163,9 +163,9 @@ export default function VideoLibrary() {
   // Copy video link
   const copyVideoLink = (recording: any) => {
     if (recording.cloudflareId) {
-      const link = `https://embed.cloudflarestream.com/${recording.cloudflareId}`;
+      const link = `Video ID: ${recording.cloudflareId} (Cloudflare Stream not configured)`;
       navigator.clipboard.writeText(link);
-      alert('Video link copied to clipboard!');
+      alert('Video ID copied to clipboard!');
     } else {
       alert('No shareable link available for this recording.');
     }
@@ -412,9 +412,14 @@ export default function VideoLibrary() {
                           </div>
                         </div>
                       ) : (
-                        <div className="text-center text-white">
-                          <FileVideo className="w-12 h-12 mx-auto mb-2 opacity-60" />
-                          <p className="text-sm opacity-80">Local Recording</p>
+                        <div className="relative w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+                          <div className="text-center text-white">
+                            <Video className="w-12 h-12 mx-auto mb-2" />
+                            <p className="text-sm font-medium">
+                              {recording.cloudflareId ? 'Cloud Video' : 'Local Recording'}
+                            </p>
+                            <p className="text-xs opacity-80">Click to play</p>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -446,8 +451,7 @@ export default function VideoLibrary() {
 
                     {/* Cloud Badge */}
                     {recording.cloudflareId && (
-                      <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs flex items-center">
-                        <span className="w-2 h-2 bg-white rounded-full mr-1"></span>
+                      <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
                         Cloud
                       </div>
                     )}
