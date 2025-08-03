@@ -161,8 +161,21 @@ export default function Record({ onBack }: RecordProps) {
         
         screenVideo.srcObject = screenStream;
         cameraVideo.srcObject = cameraStream;
-        screenVideo.play();
-        cameraVideo.play();
+        
+        // Wait for videos to be ready before starting
+        await new Promise((resolve) => {
+          let loadedCount = 0;
+          const checkLoaded = () => {
+            loadedCount++;
+            if (loadedCount === 2) resolve(undefined);
+          };
+          
+          screenVideo.addEventListener('loadedmetadata', checkLoaded);
+          cameraVideo.addEventListener('loadedmetadata', checkLoaded);
+          
+          screenVideo.play();
+          cameraVideo.play();
+        });
 
         // Create a new stream from the canvas
         const combinedStream = canvas.captureStream(30);
@@ -173,7 +186,8 @@ export default function Record({ onBack }: RecordProps) {
 
         // Function to draw both videos on canvas
         const drawFrame = () => {
-          if (ctx && screenVideo.readyState >= 2 && cameraVideo.readyState >= 2) {
+          if (ctx && !screenVideo.paused && !cameraVideo.paused && 
+              screenVideo.readyState >= 2 && cameraVideo.readyState >= 2) {
             // Draw screen video (full size)
             ctx.drawImage(screenVideo, 0, 0, canvas.width, canvas.height);
             
@@ -192,18 +206,14 @@ export default function Record({ onBack }: RecordProps) {
             ctx.drawImage(cameraVideo, pipX, pipY, pipWidth, pipHeight);
           }
           
-          if (isRecording && !isPaused) {
+          // Continue drawing frames while recording
+          if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
             requestAnimationFrame(drawFrame);
           }
         };
 
-        // Start drawing when both videos are ready
-        Promise.all([
-          new Promise(resolve => screenVideo.addEventListener('loadeddata', resolve)),
-          new Promise(resolve => cameraVideo.addEventListener('loadeddata', resolve))
-        ]).then(() => {
-          drawFrame();
-        });
+        // Start the drawing loop
+        drawFrame();
 
         stream = combinedStream;
       }
