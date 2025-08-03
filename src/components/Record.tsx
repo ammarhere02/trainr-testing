@@ -35,7 +35,6 @@ export default function Record({ onBack }: RecordProps) {
   const [hasRecording, setHasRecording] = useState(false);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
-  const [recordingMode, setRecordingMode] = useState<'camera' | 'screen'>('screen');
   const [recordingMode, setRecordingMode] = useState<'camera' | 'screen' | 'both'>('screen');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
