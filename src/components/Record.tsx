@@ -88,7 +88,34 @@ export default function Record({ onBack }: RecordProps) {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const checkAndRequestPermissions = async () => {
+    try {
+      // Check current permissions
+      const cameraPermission = await navigator.permissions.query({ name: 'camera' as PermissionName });
+      const microphonePermission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+      
+      console.log('Camera permission:', cameraPermission.state);
+      console.log('Microphone permission:', microphonePermission.state);
+      
+      // If permissions are denied, show helpful message
+      if (cameraPermission.state === 'denied' || microphonePermission.state === 'denied') {
+        alert('Camera or microphone access is blocked. Please:\n\n1. Click the lock/camera icon in your browser\'s address bar\n2. Set Camera and Microphone to "Allow"\n3. Refresh the page and try again\n\nFor Chrome: Click lock icon → Site settings → Camera/Microphone → Allow\nFor Firefox: Click shield icon → Permissions → Camera/Microphone → Allow');
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.log('Permission API not supported, will try direct access');
+      return true;
+    }
+  };
   const startRecording = async () => {
+    // Check permissions first
+    const hasPermissions = await checkAndRequestPermissions();
+    if (!hasPermissions) {
+      return;
+    }
+
     try {
       // Reset previous recording data
       chunksRef.current = [];
