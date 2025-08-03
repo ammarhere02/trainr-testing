@@ -149,8 +149,12 @@ export default function Record({ onBack }: RecordProps) {
           } : false,
           audio: isAudioEnabled
         });
-        setShowCameraPreview(true);
-        setCameraStream(stream);
+        
+        // Set up camera preview
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.muted = true;
+        }
       } else {
         // Both screen and camera
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
@@ -247,19 +251,10 @@ export default function Record({ onBack }: RecordProps) {
 
       streamRef.current = stream;
 
-      // Display the stream in video element
-      if (videoRef.current) {
+      // Display the stream in video element (for screen mode)
+      if (recordingMode === 'screen' && videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.muted = true; // Prevent feedback
-      }
-
-      // Display camera stream in camera preview element
-      if (cameraVideoRef.current && recordingMode === 'camera') {
-        cameraVideoRef.current.srcObject = stream;
-        cameraVideoRef.current.muted = true;
-      } else if (cameraVideoRef.current && recordingMode === 'both' && cameraStream) {
-        cameraVideoRef.current.srcObject = cameraStream;
-        cameraVideoRef.current.muted = true;
+        videoRef.current.muted = true;
       }
 
       // Set up MediaRecorder with better options
