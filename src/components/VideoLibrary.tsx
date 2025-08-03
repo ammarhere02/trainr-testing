@@ -154,17 +154,6 @@ export default function VideoLibrary() {
       return;
     }
     
-    // Create a fresh blob URL for playback
-    const videoUrl = URL.createObjectURL(recording.blob);
-    console.log('Created video URL:', videoUrl);
-    
-    // Add the video URL to the recording object for the modal
-    const recordingWithUrl = {
-      ...recording,
-      playbackUrl: videoUrl
-    };
-    
-    setSelectedVideo(recordingWithUrl);
     setSelectedVideo(recording);
     setShowVideoModal(true);
   };
@@ -753,10 +742,6 @@ export default function VideoLibrary() {
               </div>
               <button
                 onClick={() => {
-                  // Clean up the video URL when closing modal
-                  if (selectedVideo?.playbackUrl) {
-                    URL.revokeObjectURL(selectedVideo.playbackUrl);
-                  }
                   setSelectedVideo(null);
                   setShowVideoModal(false);
                 }}
@@ -768,19 +753,21 @@ export default function VideoLibrary() {
 
             {/* Video Player */}
             <div className="aspect-video bg-gray-900">
-              {selectedVideo && selectedVideo.playbackUrl ? (
+              {selectedVideo && selectedVideo.blob ? (
                 <video
                   key={selectedVideo.id}
-                  src={selectedVideo.playbackUrl}
+                  src={URL.createObjectURL(selectedVideo.blob)}
                   controls
                   autoPlay
                   className="w-full h-full"
                   onError={(e) => {
-                    console.error('Video playback error:', e, 'Video URL:', selectedVideo.playbackUrl);
+                    console.error('Video playback error:', e);
                     alert('Failed to play video. The video file may be corrupted.');
                   }}
                   onLoadedData={() => console.log('Video loaded successfully:', selectedVideo.title)}
                   onCanPlay={() => console.log('Video can play:', selectedVideo.title)}
+                  onLoadStart={() => console.log('Video load started:', selectedVideo.title)}
+                  onLoadedMetadata={() => console.log('Video metadata loaded:', selectedVideo.title)}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white">
