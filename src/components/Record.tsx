@@ -332,14 +332,14 @@ export default function Record({ onBack }: RecordProps) {
       console.error('Failed to start recording:', error);
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
-          alert('Permission denied. Please click "Allow" when your browser asks for camera/microphone access, then try again. If you previously denied access, click the camera/lock icon in your browser\'s address bar to change permissions.');
+          alert('Permission denied. Please allow camera/microphone access:\n\n1. Click "Allow" when your browser asks for permissions\n2. If you previously denied access, click the lock/camera icon in your browser\'s address bar\n3. Set Camera and Microphone to "Allow" for this site\n4. Refresh the page and try again\n\nFor Chrome: Click the lock icon → Site settings → Camera/Microphone → Allow\nFor Firefox: Click the shield icon → Permissions → Camera/Microphone → Allow');
         } else if (error.name === 'NotFoundError') {
           alert('No camera or microphone found. Please check your devices.');
         } else {
-          alert(`Failed to start recording: ${error.message}`);
+          alert(`Failed to start recording: ${error.message}\n\nIf this is a permission issue, please:\n1. Check your browser permissions for this site\n2. Make sure your camera/microphone are not being used by other applications\n3. Try refreshing the page`);
         }
       } else {
-        alert('Failed to start recording. Please allow camera/microphone access when prompted by your browser and try again.');
+        alert('Failed to start recording. Please check:\n\n1. Allow camera/microphone access when prompted\n2. Check browser permissions (click lock icon in address bar)\n3. Ensure no other apps are using your camera/microphone\n4. Try refreshing the page');
       }
     }
   };
