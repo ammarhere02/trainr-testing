@@ -146,13 +146,13 @@ export default function VideoLibrary() {
 
   // Play video function
   const playVideo = (recording: any) => {
-    // Create a fresh blob URL for the selected video
-    const videoUrl = videoUrls[recording.id];
-    if (videoUrl) {
+    // Create a fresh blob URL for playback
+    if (recording.blob) {
+      const videoUrl = URL.createObjectURL(recording.blob);
       setSelectedVideo({ ...recording, videoUrl });
       setShowVideoModal(true);
     } else {
-      alert('Video not available for playback.');
+      alert('Video file not available for playback.');
     }
   };
 
@@ -186,14 +186,15 @@ export default function VideoLibrary() {
 
   // Download recording (for cloud-stored videos)
   const downloadRecording = (recording: any) => {
-    const videoUrl = videoUrls[recording.id];
-    if (videoUrl && recording.blob) {
+    if (recording.blob) {
+      const videoUrl = URL.createObjectURL(recording.blob);
       const a = document.createElement('a');
       a.href = videoUrl;
       a.download = `${recording.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.webm`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      URL.revokeObjectURL(videoUrl);
     } else {
       alert('Video file not available for download.');
     }
@@ -477,7 +478,10 @@ export default function VideoLibrary() {
                           onClick={() => playVideo(recording)}
                         />
                       ) : (
-                        <div className="relative w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+                        <div 
+                          className="relative w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center cursor-pointer"
+                          onClick={() => playVideo(recording)}
+                        >
                           <div className="text-center text-white">
                             <Video className="w-12 h-12 mx-auto mb-2" />
                             <p className="text-sm font-medium">
@@ -696,7 +700,14 @@ export default function VideoLibrary() {
                       className={`px-3 py-2 text-sm font-medium rounded ${
                         currentPage === pageNum
                           ? 'bg-purple-600 text-white'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      onClick={() => {
+                        // Clean up the video URL when closing modal
+                        if (selectedVideo.videoUrl) {
+                          URL.revokeObjectURL(selectedVideo.videoUrl);
+                        }
+                        setShowVideoModal(false);
+                        setSelectedVideo(null);
+                      }}
                       }`}
                     >
                       {pageNum}
@@ -748,6 +759,10 @@ export default function VideoLibrary() {
                 <video
                   src={selectedVideo.videoUrl}
                   controls
+                        onError={(e) => {
+                          console.error('Video playback error:', e);
+                          alert('Failed to play video. The video file may be corrupted.');
+                        }}
                   autoPlay
                   className="w-full h-full"
                   title={selectedVideo.title}
