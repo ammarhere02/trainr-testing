@@ -730,7 +730,7 @@ export default function Record({ onBack }: RecordProps) {
               
               <div className="space-y-3">
                 <button
-                  onClick={() => handleSaveOption('library')}
+                  onClick={() => handleSaveOption('library-only')}
                   disabled={isUploading}
                   className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -740,7 +740,7 @@ export default function Record({ onBack }: RecordProps) {
                     </div>
                     <div className="text-left">
                       <div className="font-medium text-gray-900">Save to Library</div>
-                      <div className="text-sm text-gray-600">Upload to cloud storage</div>
+                      <div className="text-sm text-gray-600">Save for later viewing</div>
                     </div>
                   </div>
                   {isUploading && (
