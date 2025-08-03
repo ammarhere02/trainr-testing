@@ -700,14 +700,7 @@ export default function VideoLibrary() {
                       className={`px-3 py-2 text-sm font-medium rounded ${
                         currentPage === pageNum
                           ? 'bg-purple-600 text-white'
-                      onClick={() => {
-                        // Clean up the video URL when closing modal
-                        if (selectedVideo.videoUrl) {
-                          URL.revokeObjectURL(selectedVideo.videoUrl);
-                        }
-                        setShowVideoModal(false);
-                        setSelectedVideo(null);
-                      }}
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                       }`}
                     >
                       {pageNum}
