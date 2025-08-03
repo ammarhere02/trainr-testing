@@ -146,14 +146,9 @@ export default function VideoLibrary() {
 
   // Play video function
   const playVideo = (recording: any) => {
-    // Create a fresh blob URL for playback
-    if (recording.blob) {
-      const videoUrl = URL.createObjectURL(recording.blob);
-      setSelectedVideo({ ...recording, videoUrl });
-      setShowVideoModal(true);
-    } else {
-      alert('Video file not available for playback.');
-    }
+    console.log('Playing video:', recording.title, 'Blob size:', recording.blob?.size);
+    setSelectedVideo(recording);
+    setShowVideoModal(true);
   };
 
   // Delete recording
