@@ -151,10 +151,16 @@ export default function VideoLibrary() {
 
   // Download recording (for cloud-stored videos)
   const downloadRecording = (recording: any) => {
-    // For cloud videos, we'd need to fetch the video URL
-    // For now, show a message about cloud download
     if (recording.cloudflareId) {
-      alert('Cloud video download feature coming soon!');
+      alert('Configure Cloudflare Stream credentials to enable cloud video downloads.');
+    } else if (recording.localUrl) {
+      // Create download link for local video
+      const a = document.createElement('a');
+      a.href = recording.localUrl;
+      a.download = `${recording.title}.webm`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     } else {
       alert('Local video file not available for download.');
     }
@@ -163,9 +169,9 @@ export default function VideoLibrary() {
   // Copy video link
   const copyVideoLink = (recording: any) => {
     if (recording.cloudflareId) {
-      const link = `https://embed.cloudflarestream.com/${recording.cloudflareId}`;
+      const link = `Video ID: ${recording.cloudflareId} (Cloudflare Stream not configured)`;
       navigator.clipboard.writeText(link);
-      alert('Video link copied to clipboard!');
+      alert('Video ID copied to clipboard!');
     } else {
       alert('No shareable link available for this recording.');
     }
@@ -275,22 +281,24 @@ export default function VideoLibrary() {
               <TrendingUp className="w-6 h-6 text-yellow-600" />
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Filters and Controls */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-          <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
+            {selectedVideo.localUrl ? (
                 type="text"
                 placeholder="Search videos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent w-64"
               />
+            ) : selectedVideo.cloudflareId ? (
+              <div className="w-full h-full flex items-center justify-center text-white">
+                <div className="text-center">
+                  <Video className="w-16 h-16 mx-auto mb-4 opacity-60" />
+                  <p className="text-lg font-medium mb-2">Cloud Video</p>
+                  <p className="text-sm opacity-80 mb-4">Video ID: {selectedVideo.cloudflareId}</p>
+                  <div className="bg-blue-600 text-white px-4 py-2 rounded-lg inline-block">
+                    <p className="text-sm">Configure Cloudflare Stream to play videos</p>
+                  </div>
+                </div>
+              </div>
             </div>
             
             <select
@@ -410,13 +418,13 @@ export default function VideoLibrary() {
                             <p className="text-sm font-medium">Cloud Video</p>
                             <p className="text-xs opacity-80">Click to play</p>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="text-center text-white">
-                          <FileVideo className="w-12 h-12 mx-auto mb-2 opacity-60" />
-                          <p className="text-sm opacity-80">Local Recording</p>
-                        </div>
-                      )}
+                    <div className="relative w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+                      <div className="text-center text-white">
+                        <Video className="w-12 h-12 mx-auto mb-2" />
+                        <p className="text-sm font-medium">
+                          {recording.cloudflareId ? 'Cloud Video' : 'Local Recording'}
+                        </p>
+                        <p className="text-xs opacity-80">Click to play</p>
                     </div>
                     
                     {/* Play Button Overlay */}
@@ -445,12 +453,7 @@ export default function VideoLibrary() {
                     </div>
 
                     {/* Cloud Badge */}
-                    {recording.cloudflareId && (
-                      <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs flex items-center">
-                        <span className="w-2 h-2 bg-white rounded-full mr-1"></span>
-                        Cloud
-                      </div>
-                    )}
+                    </div>
                   </div>
 
                   <div className="p-4">
