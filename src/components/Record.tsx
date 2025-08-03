@@ -98,12 +98,74 @@ export default function Record({ onBack }: RecordProps) {
           video: isVideoEnabled,
           audio: isAudioEnabled
         });
-      } else {
-        // For 'both' mode, just use screen for now to keep it simple
-        stream = await navigator.mediaDevices.getDisplayMedia({
+      } else { // both mode
+        // Get both screen and camera streams
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({
           video: true,
           audio: isAudioEnabled
         });
+        
+        const cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: isVideoEnabled,
+          audio: false // Avoid audio feedback
+        });
+        
+        // Create a canvas to combine both streams
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+        canvas.width = 1920;
+        canvas.height = 1080;
+        
+        // Create video elements for both streams
+        const screenVideo = document.createElement('video');
+        const cameraVideo = document.createElement('video');
+        
+        screenVideo.srcObject = screenStream;
+        cameraVideo.srcObject = cameraStream;
+        
+        await screenVideo.play();
+        await cameraVideo.play();
+        
+        // Function to draw both videos on canvas
+        const drawFrame = () => {
+          // Draw screen video (full canvas)
+          ctx.drawImage(screenVideo, 0, 0, canvas.width, canvas.height);
+          
+          // Draw camera video (picture-in-picture in bottom right)
+          const pipWidth = 320;
+          const pipHeight = 240;
+          const pipX = canvas.width - pipWidth - 20;
+          const pipY = canvas.height - pipHeight - 20;
+          
+          // Add border for camera feed
+          ctx.fillStyle = 'white';
+          ctx.fillRect(pipX - 4, pipY - 4, pipWidth + 8, pipHeight + 8);
+          
+          ctx.drawImage(cameraVideo, pipX, pipY, pipWidth, pipHeight);
+          
+          if (isRecording) {
+            requestAnimationFrame(drawFrame);
+          }
+        };
+        
+        // Start drawing frames
+        drawFrame();
+        
+        // Get stream from canvas
+        stream = canvas.captureStream(30); // 30 FPS
+        
+        // Add audio from screen stream if enabled
+        if (isAudioEnabled && screenStream.getAudioTracks().length > 0) {
+          screenStream.getAudioTracks().forEach(track => {
+            stream.addTrack(track);
+          });
+        }
+        
+        // Store references for cleanup
+        streamRef.current = stream;
+        // Store additional streams for cleanup
+        (stream as any)._screenStream = screenStream;
+        (stream as any)._cameraStream = cameraStream;
       }
 
       streamRef.current = stream;
@@ -167,6 +229,14 @@ export default function Record({ onBack }: RecordProps) {
 
   const cleanupStreams = () => {
     if (streamRef.current) {
+      // Clean up additional streams for 'both' mode
+      if ((streamRef.current as any)._screenStream) {
+        (streamRef.current as any)._screenStream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
+      }
+      if ((streamRef.current as any)._cameraStream) {
+        (streamRef.current as any)._cameraStream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
+      }
+      
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
