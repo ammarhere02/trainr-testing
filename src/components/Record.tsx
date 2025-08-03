@@ -142,6 +142,7 @@ export default function Record({ onBack }: RecordProps) {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.muted = true;
+          await videoRef.current.play();
         }
         
       } else if (recordingMode === 'camera') {
@@ -159,6 +160,12 @@ export default function Record({ onBack }: RecordProps) {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.muted = true;
+          // Force the video to play
+          try {
+            await videoRef.current.play();
+          } catch (playError) {
+            console.log('Video play failed, but continuing with recording');
+          }
         }
         
       } else {
@@ -189,11 +196,18 @@ export default function Record({ onBack }: RecordProps) {
         if (videoRef.current) {
           videoRef.current.srcObject = screenStream;
           videoRef.current.muted = true;
+          await videoRef.current.play();
         }
         
         // Display camera stream in preview element
         if (cameraVideoRef.current) {
           cameraVideoRef.current.srcObject = cameraStream;
+          cameraVideoRef.current.muted = true;
+          try {
+            await cameraVideoRef.current.play();
+          } catch (playError) {
+            console.log('Camera preview play failed, but continuing');
+          }
         }
 
         // Create a canvas to combine both streams
