@@ -161,6 +161,26 @@ export default function VideoLibrary() {
   // Play video function
   const playVideo = async (recording: any) => {
     try {
+      console.log('Playing video:', recording.id, 'Blob size:', recording.blob?.size);
+      
+      // First check if we have blob data
+      if (!recording.blob || recording.blob.size === 0) {
+        console.log('No blob data, fetching from IndexedDB...');
+        const freshData = await videoStorage.getVideo(recording.id);
+        if (!freshData || !freshData.blob || freshData.blob.size === 0) {
+          alert('Video data is not available. The recording may be corrupted.');
+          return;
+        }
+        recording = freshData;
+      }
+      
+      // Test the blob before playing
+      const isPlayable = await videoStorage.testBlobPlayback(recording.blob);
+      if (!isPlayable) {
+        alert('This video cannot be played. The file may be corrupted.');
+        return;
+      }
+      
       // Clean up any existing playback URL
       if (videoPlaybackUrl) {
         URL.revokeObjectURL(videoPlaybackUrl);
@@ -171,18 +191,14 @@ export default function VideoLibrary() {
       setSelectedVideo(recording);
       setShowVideoModal(true);
       
-      // Then fetch fresh data and create playback URL
-      const freshVideoData = await videoStorage.getVideo(recording.id);
+      // Create playback URL from the validated blob
+      const playbackUrl = URL.createObjectURL(recording.blob);
+      setVideoPlaybackUrl(playbackUrl);
       
-      if (freshVideoData && freshVideoData.blob && freshVideoData.blob.size > 0) {
-        const playbackUrl = URL.createObjectURL(freshVideoData.blob);
-        setVideoPlaybackUrl(playbackUrl);
-      } else {
-        console.error('Video data not available');
-      }
-      
+      console.log('Video playback URL created successfully');
     } catch (error) {
       console.error('Error preparing video for playback:', error);
+      alert('Failed to play video. Please try again.');
     }
   };
 

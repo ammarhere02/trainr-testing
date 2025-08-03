@@ -106,6 +106,12 @@ class VideoStorageManager {
       throw new Error('Cannot save video: blob is empty or missing');
     }
     
+    // Test blob validity before saving
+    const isValid = await this.testBlobPlayback(video.blob);
+    if (!isValid) {
+      throw new Error('Cannot save video: blob data is corrupted or unplayable');
+    }
+    
     console.log('Saving video to IndexedDB:', {
       id: video.id,
       title: video.title,

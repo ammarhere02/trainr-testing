@@ -389,7 +389,7 @@ export default function Record({ onBack }: RecordProps) {
       };
 
       // Start recording with time slice for regular data capture
-      mediaRecorder.start(100); // Capture data every 100ms
+      mediaRecorder.start(1000); // Capture data every 1000ms for more stable chunks
       setIsRecording(true);
       setRecordingTime(0);
 
