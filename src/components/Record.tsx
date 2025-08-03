@@ -98,6 +98,13 @@ export default function Record({ onBack }: RecordProps) {
           video: isVideoEnabled,
           audio: isAudioEnabled
         });
+        
+        // Ensure video preview shows the live camera feed
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.muted = true;
+          await videoRef.current.play();
+        }
       } else { // both mode
         // Get both screen and camera streams
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
