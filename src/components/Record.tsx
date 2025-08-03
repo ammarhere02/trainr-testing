@@ -86,6 +86,20 @@ export default function Record({ onBack }: RecordProps) {
         setPreviewUrl(null);
       }
 
+      // Clean up video element state before assigning new stream
+      if (videoRef.current) {
+        // Stop any existing tracks
+        if (videoRef.current.srcObject) {
+          const existingStream = videoRef.current.srcObject as MediaStream;
+          existingStream.getTracks().forEach(track => track.stop());
+        }
+        
+        // Clear existing sources
+        videoRef.current.srcObject = null;
+        videoRef.current.src = '';
+        videoRef.current.load(); // Reset the video element
+      }
+
       let stream: MediaStream;
 
       if (recordingMode === 'screen') {
@@ -98,6 +112,16 @@ export default function Record({ onBack }: RecordProps) {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.muted = true;
+          
+          // Wait for metadata to load before playing
+          await new Promise<void>((resolve) => {
+            const onLoadedMetadata = () => {
+              videoRef.current!.removeEventListener('loadedmetadata', onLoadedMetadata);
+              resolve();
+            };
+            videoRef.current!.addEventListener('loadedmetadata', onLoadedMetadata);
+          });
+          
           await videoRef.current.play();
         }
       } else if (recordingMode === 'camera') {
@@ -110,6 +134,16 @@ export default function Record({ onBack }: RecordProps) {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.muted = true;
+          
+          // Wait for metadata to load before playing
+          await new Promise<void>((resolve) => {
+            const onLoadedMetadata = () => {
+              videoRef.current!.removeEventListener('loadedmetadata', onLoadedMetadata);
+              resolve();
+            };
+            videoRef.current!.addEventListener('loadedmetadata', onLoadedMetadata);
+          });
+          
           await videoRef.current.play();
         }
       } else { // both mode
@@ -145,6 +179,16 @@ export default function Record({ onBack }: RecordProps) {
         if (videoRef.current) {
           videoRef.current.srcObject = canvasStream;
           videoRef.current.muted = true;
+          
+          // Wait for metadata to load before playing
+          await new Promise<void>((resolve) => {
+            const onLoadedMetadata = () => {
+              videoRef.current!.removeEventListener('loadedmetadata', onLoadedMetadata);
+              resolve();
+            };
+            videoRef.current!.addEventListener('loadedmetadata', onLoadedMetadata);
+          });
+          
           await videoRef.current.play();
         }
         
