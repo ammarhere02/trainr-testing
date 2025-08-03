@@ -734,7 +734,10 @@ export default function VideoLibrary() {
                 </div>
               </div>
               <button
-                onClick={() => setShowVideoModal(false)}
+                onClick={() => {
+                  setSelectedVideo(null);
+                  setShowVideoModal(false);
+                }}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
                 <X className="w-5 h-5 text-gray-500" />
@@ -743,19 +746,18 @@ export default function VideoLibrary() {
 
             {/* Video Player */}
             <div className="aspect-video bg-gray-900">
-              {selectedVideo.videoUrl ? (
+              {selectedVideo && selectedVideo.blob ? (
                 <video
-                  src={selectedVideo.videoUrl}
+                  key={selectedVideo.id}
+                  src={URL.createObjectURL(selectedVideo.blob)}
                   controls
-                        onError={(e) => {
-                          console.error('Video playback error:', e);
-                          alert('Failed to play video. The video file may be corrupted.');
-                        }}
-                  onLoadStart={() => console.log('Video loading started')}
-                  onCanPlay={() => console.log('Video can play')}
                   autoPlay
                   className="w-full h-full"
-                  title={selectedVideo.title}
+                  onError={(e) => {
+                    console.error('Video playback error:', e);
+                    alert('Failed to play video. The video file may be corrupted.');
+                  }}
+                  onLoadedData={() => console.log('Video loaded successfully')}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white">
