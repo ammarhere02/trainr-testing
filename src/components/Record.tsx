@@ -361,14 +361,20 @@ export default function Record({ onBack }: RecordProps) {
 
       // Save to local storage as well
       const recordings = JSON.parse(localStorage.getItem('recordings') || '[]');
+      
+      // Create a persistent blob URL for playback
+      const videoUrl = URL.createObjectURL(recordedBlob);
+      
       const newRecording = {
         id: Date.now(),
         title: `Recording ${new Date().toLocaleString()}`,
         date: new Date().toISOString(),
         duration: recordingTime,
         cloudflareId: videoId,
+        localUrl: videoUrl,
         size: recordedBlob.size,
-        type: recordedBlob.type
+        type: recordedBlob.type,
+        mode: recordingMode
       };
       recordings.unshift(newRecording);
       localStorage.setItem('recordings', JSON.stringify(recordings));
