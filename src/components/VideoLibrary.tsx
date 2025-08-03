@@ -151,16 +151,12 @@ export default function VideoLibrary() {
 
   // Download recording (for cloud-stored videos)
   const downloadRecording = (recording: any) => {
-    if (recording.localUrl) {
-      // Create download link for local video
-      const a = document.createElement('a');
-      a.href = recording.localUrl;
-      a.download = `${recording.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.webm`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+    // For cloud videos, we'd need to fetch the video URL
+    // For now, show a message about cloud download
+    if (recording.cloudflareId) {
+      alert('Cloud video download feature coming soon!');
     } else {
-      alert('Video file not available for download.');
+      alert('Local video file not available for download.');
     }
   };
 
@@ -717,6 +713,13 @@ export default function VideoLibrary() {
                   >
                     <Download className="w-4 h-4" />
                     <span>Download</span>
+                  </button>
+                  <button
+                    onClick={() => copyVideoLink(selectedVideo)}
+                    className="flex items-center space-x-2 text-gray-600 hover:text-purple-600 transition-colors"
+                  >
+                    <Copy className="w-4 h-4" />
+                    <span>Copy Link</span>
                   </button>
                   <button className="flex items-center space-x-2 text-gray-600 hover:text-green-600 transition-colors">
                     <Share2 className="w-4 h-4" />
