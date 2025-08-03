@@ -24,6 +24,7 @@ import Meet from './components/Meet';
 import Contacts from './components/Contacts';
 import Dashboard from './components/Dashboard';
 import Products from './components/Products';
+import VideoLibrary from './components/VideoLibrary';
 import { getSubdomain, isSubdomain, getEducatorBySubdomain } from './utils/subdomain';
 
 function App() {
@@ -288,6 +289,8 @@ function App() {
               </div>
             </div>
           );
+        case 'library':
+          return <VideoLibrary />;
         case 'meet':
           return <Meet />;
         case 'settings':
