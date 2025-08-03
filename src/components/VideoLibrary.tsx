@@ -32,9 +32,11 @@ import {
   X,
   AlertCircle
 } from 'lucide-react';
+import { videoStorage, StoredVideo } from '../utils/videoStorage';
 
 export default function VideoLibrary() {
-  const [recordings, setRecordings] = useState<any[]>([]);
+  const [recordings, setRecordings] = useState<StoredVideo[]>([]);
+  const [videoUrls, setVideoUrls] = useState<{ [key: number]: string }>({});
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('date');
@@ -45,34 +47,42 @@ export default function VideoLibrary() {
   const [videosPerPage] = useState(12);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Load recordings from localStorage
   useEffect(() => {
-    const loadRecordings = () => {
-      const saved = localStorage.getItem('recordings');
-      if (saved) {
-        try {
-          const parsedRecordings = JSON.parse(saved);
-          setRecordings(parsedRecordings);
-        } catch (error) {
-          console.error('Error loading recordings:', error);
-          setRecordings([]);
-        }
+    const loadRecordings = async () => {
+      setIsLoading(true);
+      try {
+        await videoStorage.init();
+        const videos = await videoStorage.getAllVideos();
+        setRecordings(videos);
+        
+        // Create blob URLs for all videos
+        const urls: { [key: number]: string } = {};
+        videos.forEach(video => {
+          urls[video.id] = videoStorage.createVideoURL(video.blob);
+        });
+        setVideoUrls(urls);
+      } catch (error) {
+        console.error('Error loading recordings:', error);
+        setRecordings([]);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadRecordings();
-    
-    // Listen for storage changes to update when new recordings are added
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'recordings') {
-        loadRecordings();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  // Cleanup blob URLs on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(videoUrls).forEach(url => {
+        videoStorage.revokeVideoURL(url);
+      });
+    };
+  }, [videoUrls]);
 
   // Filter and sort recordings
   const filteredRecordings = recordings
@@ -136,38 +146,67 @@ export default function VideoLibrary() {
 
   // Play video function
   const playVideo = (recording: any) => {
-    setSelectedVideo(recording);
-    setShowVideoModal(true);
+    // Create a fresh blob URL for the selected video
+    const videoUrl = videoUrls[recording.id];
+    if (videoUrl) {
+      setSelectedVideo({ ...recording, videoUrl });
+      setShowVideoModal(true);
+    } else {
+      alert('Video not available for playback.');
+    }
   };
 
   // Delete recording
-  const deleteRecording = (id: number) => {
+  const deleteRecording = async (id: number) => {
     if (confirm('Are you sure you want to delete this recording?')) {
-      const updatedRecordings = recordings.filter(r => r.id !== id);
-      setRecordings(updatedRecordings);
-      localStorage.setItem('recordings', JSON.stringify(updatedRecordings));
+      try {
+        // Revoke blob URL
+        if (videoUrls[id]) {
+          videoStorage.revokeVideoURL(videoUrls[id]);
+          setVideoUrls(prev => {
+            const newUrls = { ...prev };
+            delete newUrls[id];
+            return newUrls;
+          });
+        }
+        
+        await videoStorage.deleteVideo(id);
+        setRecordings(prev => prev.filter(r => r.id !== id));
+        
+        if (selectedVideo && selectedVideo.id === id) {
+          setShowVideoModal(false);
+          setSelectedVideo(null);
+        }
+      } catch (error) {
+        console.error('Error deleting recording:', error);
+        alert('Failed to delete recording. Please try again.');
+      }
     }
   };
 
   // Download recording (for cloud-stored videos)
   const downloadRecording = (recording: any) => {
-    // For cloud videos, we'd need to fetch the video URL
-    // For now, show a message about cloud download
-    if (recording.cloudflareId) {
-      alert('Cloud video download feature coming soon!');
+    const videoUrl = videoUrls[recording.id];
+    if (videoUrl && recording.blob) {
+      const a = document.createElement('a');
+      a.href = videoUrl;
+      a.download = `${recording.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.webm`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     } else {
-      alert('Local video file not available for download.');
+      alert('Video file not available for download.');
     }
   };
 
   // Copy video link
   const copyVideoLink = (recording: any) => {
-    if (recording.cloudflareId) {
-      const link = `Video ID: ${recording.cloudflareId} (Cloudflare Stream not configured)`;
-      navigator.clipboard.writeText(link);
-      alert('Video ID copied to clipboard!');
+    const videoUrl = videoUrls[recording.id];
+    if (videoUrl) {
+      navigator.clipboard.writeText(videoUrl);
+      alert('Video link copied to clipboard!');
     } else {
-      alert('No shareable link available for this recording.');
+      alert('No video link available.');
     }
   };
 
@@ -190,14 +229,30 @@ export default function VideoLibrary() {
   };
 
   // Bulk delete
-  const bulkDelete = () => {
+  const bulkDelete = async () => {
     if (selectedVideos.length === 0) return;
     
     if (confirm(`Are you sure you want to delete ${selectedVideos.length} recording(s)?`)) {
-      const updatedRecordings = recordings.filter(r => !selectedVideos.includes(r.id));
-      setRecordings(updatedRecordings);
-      localStorage.setItem('recordings', JSON.stringify(updatedRecordings));
-      setSelectedVideos([]);
+      try {
+        // Revoke blob URLs for selected videos
+        selectedVideos.forEach(id => {
+          if (videoUrls[id]) {
+            videoStorage.revokeVideoURL(videoUrls[id]);
+          }
+        });
+        
+        await videoStorage.deleteMultipleVideos(selectedVideos);
+        setRecordings(prev => prev.filter(r => !selectedVideos.includes(r.id)));
+        setVideoUrls(prev => {
+          const newUrls = { ...prev };
+          selectedVideos.forEach(id => delete newUrls[id]);
+          return newUrls;
+        });
+        setSelectedVideos([]);
+      } catch (error) {
+        console.error('Error deleting recordings:', error);
+        alert('Failed to delete recordings. Please try again.');
+      }
     }
   };
 
@@ -359,7 +414,7 @@ export default function VideoLibrary() {
       </div>
 
       {/* Empty State */}
-      {recordings.length === 0 && (
+      {!isLoading && recordings.length === 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
           <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <Video className="w-10 h-10 text-gray-400" />
@@ -373,8 +428,19 @@ export default function VideoLibrary() {
         </div>
       )}
 
+      {/* Loading State */}
+      {isLoading && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+          <div className="w-20 h-20 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <Video className="w-10 h-10 text-purple-600 animate-pulse" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Loading videos...</h3>
+          <p className="text-gray-600">Please wait while we load your video library</p>
+        </div>
+      )}
+
       {/* Videos Grid/List */}
-      {recordings.length > 0 && (
+      {!isLoading && recordings.length > 0 && (
         <>
           {/* Bulk Actions */}
           {recordings.length > 0 && (
@@ -403,25 +469,15 @@ export default function VideoLibrary() {
                   <div className="relative">
                     {/* Video Thumbnail */}
                     <div className="aspect-video bg-gray-900 flex items-center justify-center">
-                      {recording.cloudflareId ? (
-                        <div className="relative w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
-                          <div className="text-center text-white">
-                            <Video className="w-12 h-12 mx-auto mb-2" />
-                            <p className="text-sm font-medium">Cloud Video</p>
-                            <p className="text-xs opacity-80">Click to play</p>
-                          </div>
+                      <div className="relative w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+                        <div className="text-center text-white">
+                          <Video className="w-12 h-12 mx-auto mb-2" />
+                          <p className="text-sm font-medium">
+                            {recording.mode === 'camera' ? 'Camera Recording' : 'Screen Recording'}
+                          </p>
+                          <p className="text-xs opacity-80">Click to play</p>
                         </div>
-                      ) : (
-                        <div className="relative w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
-                          <div className="text-center text-white">
-                            <Video className="w-12 h-12 mx-auto mb-2" />
-                            <p className="text-sm font-medium">
-                              {recording.cloudflareId ? 'Cloud Video' : 'Local Recording'}
-                            </p>
-                            <p className="text-xs opacity-80">Click to play</p>
-                          </div>
-                        </div>
-                      )}
+                      </div>
                     </div>
                     
                     {/* Play Button Overlay */}
@@ -449,12 +505,10 @@ export default function VideoLibrary() {
                       />
                     </div>
 
-                    {/* Cloud Badge */}
-                    {recording.cloudflareId && (
-                      <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                        Cloud
-                      </div>
-                    )}
+                    {/* Recording Type Badge */}
+                    <div className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-medium capitalize">
+                      {recording.mode || 'screen'}
+                    </div>
                   </div>
 
                   <div className="p-4">
@@ -467,7 +521,7 @@ export default function VideoLibrary() {
 
                     <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
                       <span className="capitalize">{recording.mode || 'screen'} recording</span>
-                      <span>{recording.type?.toUpperCase() || 'WEBM'}</span>
+                      <span>{recording.type?.split('/')[1]?.toUpperCase() || 'WEBM'}</span>
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -542,7 +596,12 @@ export default function VideoLibrary() {
                         <td className="py-3 px-4">
                           <div className="flex items-center space-x-3">
                             <div className="w-12 h-8 bg-gray-900 rounded flex items-center justify-center">
-                              <Play className="w-3 h-3 text-white" />
+                              <button 
+                                onClick={() => playVideo(recording)}
+                                className="text-white hover:text-purple-300 transition-colors"
+                              >
+                                <Play className="w-3 h-3" />
+                              </button>
                             </div>
                             <div>
                               <div className="font-medium text-gray-900">{recording.title}</div>
@@ -557,20 +616,13 @@ export default function VideoLibrary() {
                         </td>
                         <td className="py-3 px-4">
                           <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium">
-                            {recording.type?.toUpperCase() || 'WEBM'}
+                            {recording.type?.split('/')[1]?.toUpperCase() || 'WEBM'}
                           </span>
                         </td>
                         <td className="py-3 px-4">
-                          {recording.cloudflareId ? (
-                            <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium flex items-center w-fit">
-                              <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                              Cloud
-                            </span>
-                          ) : (
-                            <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium">
-                              Local
-                            </span>
-                          )}
+                          <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium capitalize">
+                            {recording.mode || 'screen'}
+                          </span>
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center space-x-2">
@@ -659,11 +711,9 @@ export default function VideoLibrary() {
                   <span>{formatDuration(selectedVideo.duration)}</span>
                   <span>{formatFileSize(selectedVideo.size)}</span>
                   <span>{new Date(selectedVideo.date).toLocaleDateString()}</span>
-                  {selectedVideo.cloudflareId && (
-                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
-                      Cloud
-                    </span>
-                  )}
+                  <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium capitalize">
+                    {selectedVideo.mode || 'screen'}
+                  </span>
                 </div>
               </div>
               <button
@@ -676,19 +726,11 @@ export default function VideoLibrary() {
 
             {/* Video Player */}
             <div className="aspect-video bg-gray-900">
-              {selectedVideo.cloudflareId ? (
-                <iframe
-                  src={`https://embed.cloudflarestream.com/${selectedVideo.cloudflareId}`}
-                  className="w-full h-full"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title={selectedVideo.title}
-                />
-              ) : selectedVideo.localUrl ? (
+              {selectedVideo.videoUrl ? (
                 <video
-                  src={selectedVideo.localUrl}
+                  src={selectedVideo.videoUrl}
                   controls
+                  autoPlay
                   className="w-full h-full"
                   title={selectedVideo.title}
                 />

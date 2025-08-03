@@ -21,6 +21,7 @@ import {
   Save,
   X
 } from 'lucide-react';
+import { videoStorage, StoredVideo } from '../utils/videoStorage';
 import { getStreamAPI, isStreamConfigured } from '../utils/cloudflare';
 
 interface RecordProps {
@@ -40,6 +41,7 @@ export default function Record({ onBack }: RecordProps) {
   const [showSaveOptions, setShowSaveOptions] = useState(false);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isSavingToLibrary, setIsSavingToLibrary] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -286,6 +288,40 @@ export default function Record({ onBack }: RecordProps) {
     }
   };
 
+  // Save to library (local storage)
+  const saveToLibrary = async () => {
+    if (!recordedBlob) {
+      alert('No recording data available. Please try recording again.');
+      return;
+    }
+
+    setIsSavingToLibrary(true);
+
+    try {
+      const videoData: StoredVideo = {
+        id: Date.now(),
+        title: `Recording ${new Date().toLocaleString()}`,
+        blob: recordedBlob,
+        duration: recordingTime,
+        size: recordedBlob.size,
+        type: recordedBlob.type,
+        mode: recordingMode,
+        date: new Date().toISOString()
+      };
+
+      await videoStorage.saveVideo(videoData);
+      alert('Recording saved to library successfully!');
+      setShowSaveOptions(false);
+      discardRecording();
+
+    } catch (error) {
+      console.error('Failed to save to library:', error);
+      alert('Failed to save recording to library. Please try again.');
+    } finally {
+      setIsSavingToLibrary(false);
+    }
+  };
+
   const downloadRecording = () => {
     if (!recordedBlob) {
       alert('No recording available to download.');
@@ -302,113 +338,10 @@ export default function Record({ onBack }: RecordProps) {
     URL.revokeObjectURL(url);
   };
 
-  const uploadToStream = async (blob: Blob): Promise<string> => {
-    if (!isStreamConfigured()) {
-      throw new Error('Cloudflare Stream not configured. Please check your environment variables.');
-    }
-
-    // Validate blob before upload
-    if (!blob || blob.size === 0) {
-      throw new Error('Cannot upload empty video file.');
-    }
-
-    if (blob.size < 1000) { // Less than 1KB is likely invalid
-      throw new Error('Video file is too small to be valid.');
-    }
-
-    console.log('Uploading blob:', blob.size, 'bytes, type:', blob.type);
-
-    const streamAPI = getStreamAPI();
-    const metadata = {
-      name: `Recording ${new Date().toLocaleString()}`,
-      description: 'Recorded with Trainr'
-    };
-
-    try {
-      const video = await streamAPI.uploadVideo(blob, metadata);
-      return video.uid;
-    } catch (error) {
-      console.error('Upload to Cloudflare Stream failed:', error);
-      throw error;
-    }
-  };
-
-  const saveAndUploadToStream = async () => {
-    if (!recordedBlob) {
-      alert('No recording data available. Please try recording again.');
-      return;
-    }
-
-    setIsUploading(true);
-    setUploadProgress(0);
-
-    try {
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return prev + 10;
-        });
-      }, 200);
-
-      const videoId = await uploadToStream(recordedBlob);
-      
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-
-      // Save to local storage as well
-      const recordings = JSON.parse(localStorage.getItem('recordings') || '[]');
-      
-      // Create a persistent blob URL for playback
-      const videoUrl = URL.createObjectURL(recordedBlob);
-      
-      const newRecording = {
-        id: Date.now(),
-        title: `Recording ${new Date().toLocaleString()}`,
-        date: new Date().toISOString(),
-        duration: recordingTime,
-        cloudflareId: videoId,
-        localUrl: videoUrl,
-        size: recordedBlob.size,
-        type: recordedBlob.type,
-        mode: recordingMode
-      };
-      recordings.unshift(newRecording);
-      localStorage.setItem('recordings', JSON.stringify(recordings));
-
-      alert('Recording saved to library successfully!');
-      setShowSaveOptions(false);
-      discardRecording();
-
-    } catch (error) {
-      console.error('Upload failed:', error);
-      alert(`Upload to Cloudflare Stream failed:\n\n${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-    }
-  };
-
-  const saveToLibraryAndDownload = async () => {
-    if (!recordedBlob) {
-      alert('No recording data available. Please try recording again.');
-      return;
-    }
-
-    // Download first
-    downloadRecording();
-    
-    // Then upload to cloud
-    await saveAndUploadToStream();
-  };
-
   const handleSaveOption = async (option: 'library' | 'download' | 'both' | 'discard') => {
     switch (option) {
       case 'library':
-        await saveAndUploadToStream();
+        await saveToLibrary();
         break;
       case 'download':
         downloadRecording();
@@ -416,7 +349,8 @@ export default function Record({ onBack }: RecordProps) {
         discardRecording();
         break;
       case 'both':
-        await saveToLibraryAndDownload();
+        downloadRecording();
+        await saveToLibrary();
         break;
       case 'discard':
         discardRecording();
@@ -730,8 +664,8 @@ export default function Record({ onBack }: RecordProps) {
               
               <div className="space-y-3">
                 <button
-                  onClick={() => handleSaveOption('library-only')}
-                  disabled={isUploading}
+                  onClick={() => handleSaveOption('library')}
+                  disabled={isSavingToLibrary}
                   className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center">
@@ -743,14 +677,14 @@ export default function Record({ onBack }: RecordProps) {
                       <div className="text-sm text-gray-600">Save for later viewing</div>
                     </div>
                   </div>
-                  {isUploading && (
+                  {isSavingToLibrary && (
                     <Loader className="w-5 h-5 text-purple-600 animate-spin" />
                   )}
                 </button>
 
                 <button
                   onClick={() => handleSaveOption('download')}
-                  disabled={isUploading}
+                  disabled={isSavingToLibrary}
                   className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center">
@@ -766,7 +700,7 @@ export default function Record({ onBack }: RecordProps) {
 
                 <button
                   onClick={() => handleSaveOption('both')}
-                  disabled={isUploading}
+                  disabled={isSavingToLibrary}
                   className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center">
@@ -782,7 +716,7 @@ export default function Record({ onBack }: RecordProps) {
 
                 <button
                   onClick={() => handleSaveOption('discard')}
-                  disabled={isUploading}
+                  disabled={isSavingToLibrary}
                   className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-red-300 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center">
@@ -798,16 +732,16 @@ export default function Record({ onBack }: RecordProps) {
               </div>
 
               {/* Upload Progress */}
-              {isUploading && (
+              {isSavingToLibrary && (
                 <div className="mt-6 pt-4 border-t border-gray-200">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-600">Uploading to library...</span>
-                    <span className="text-sm font-medium">{uploadProgress}%</span>
+                    <span className="text-sm text-gray-600">Saving to library...</span>
+                    <span className="text-sm font-medium">Processing...</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
-                      className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${uploadProgress}%` }}
+                      className="bg-purple-600 h-2 rounded-full transition-all duration-300 animate-pulse"
+                      style={{ width: '100%' }}
                     ></div>
                   </div>
                 </div>
