@@ -595,13 +595,22 @@ export default function VideoLibrary() {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center space-x-3">
-                            <div className="w-12 h-8 bg-gray-900 rounded flex items-center justify-center">
-                              <button 
-                                onClick={() => playVideo(recording)}
-                                className="text-white hover:text-purple-300 transition-colors"
-                              >
-                                <Play className="w-3 h-3" />
-                              </button>
+                            <div className="w-12 h-8 bg-gray-900 rounded overflow-hidden flex items-center justify-center">
+                              {recording.thumbnail ? (
+                                <img
+                                  src={recording.thumbnail}
+                                  alt={recording.title}
+                                  className="w-full h-full object-cover cursor-pointer"
+                                  onClick={() => playVideo(recording)}
+                                />
+                              ) : (
+                                <button 
+                                  onClick={() => playVideo(recording)}
+                                  className="text-white hover:text-purple-300 transition-colors"
+                                >
+                                  <Play className="w-3 h-3" />
+                                </button>
+                              )}
                             </div>
                             <div>
                               <div className="font-medium text-gray-900">{recording.title}</div>

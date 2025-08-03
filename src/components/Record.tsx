@@ -298,6 +298,9 @@ export default function Record({ onBack }: RecordProps) {
     setIsSavingToLibrary(true);
 
     try {
+      // Generate thumbnail from video
+      const thumbnail = await generateVideoThumbnail(recordedBlob);
+      
       const videoData: StoredVideo = {
         id: Date.now(),
         title: `Recording ${new Date().toLocaleString()}`,
@@ -306,7 +309,8 @@ export default function Record({ onBack }: RecordProps) {
         size: recordedBlob.size,
         type: recordedBlob.type,
         mode: recordingMode,
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
+        thumbnail: thumbnail
       };
 
       await videoStorage.saveVideo(videoData);

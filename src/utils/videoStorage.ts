@@ -11,6 +11,55 @@ export interface StoredVideo {
   thumbnail?: string;
 }
 
+// Generate thumbnail from video blob
+export const generateVideoThumbnail = (videoBlob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      reject(new Error('Could not get canvas context'));
+      return;
+    }
+
+    video.addEventListener('loadedmetadata', () => {
+      // Set canvas dimensions to video dimensions
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      // Seek to 1 second or 10% of video duration, whichever is smaller
+      const seekTime = Math.min(1, video.duration * 0.1);
+      video.currentTime = seekTime;
+    });
+
+    video.addEventListener('seeked', () => {
+      try {
+        // Draw the current frame to canvas
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Convert canvas to data URL (thumbnail)
+        const thumbnail = canvas.toDataURL('image/jpeg', 0.8);
+        
+        // Clean up
+        URL.revokeObjectURL(video.src);
+        
+        resolve(thumbnail);
+      } catch (error) {
+        reject(error);
+      }
+    });
+
+    video.addEventListener('error', () => {
+      reject(new Error('Failed to load video for thumbnail generation'));
+    });
+
+    // Load the video
+    video.src = URL.createObjectURL(videoBlob);
+    video.load();
+  });
+};
+
 class VideoStorageManager {
   private dbName = 'TrainrVideoLibrary';
   private dbVersion = 1;
