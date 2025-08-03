@@ -92,14 +92,12 @@ class VideoStorageManager {
   async saveVideo(videoBlob: Blob, metadata: { id: number; title: string; duration: number; mode: string; thumbnail?: string }): Promise<void> {
     if (!this.db) await this.init();
     
-    // Store blob directly as Uint8Array for better compatibility
     const arrayBuffer = await videoBlob.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
     
     const videoData: StoredVideo = {
       id: metadata.id,
       title: metadata.title,
-      arrayBuffer: uint8Array.buffer,
+      arrayBuffer: arrayBuffer,
       mimeType: videoBlob.type,
       duration: metadata.duration,
       size: videoBlob.size,
@@ -107,8 +105,6 @@ class VideoStorageManager {
       date: new Date().toISOString(),
       thumbnail: metadata.thumbnail
     };
-    
-    console.log('Saving video to IndexedDB:', videoData.id, videoData.title);
     
     return new Promise((resolve, reject) => {
       if (!this.db) {
@@ -121,12 +117,10 @@ class VideoStorageManager {
       const request = store.put(videoData);
 
       request.onerror = () => {
-        console.error('Failed to save video:', request.error);
         reject(request.error);
       };
       
       request.onsuccess = () => {
-        console.log('Video saved successfully to IndexedDB');
         resolve();
       };
     });

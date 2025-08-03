@@ -336,41 +336,23 @@ export default function Record({ onBack }: RecordProps) {
 
       // Handle recording stop
       mediaRecorder.onstop = () => {
-        console.log('Recording stopped. Total chunks:', chunksRef.current.length);
-        
-        if (chunksRef.current.length === 0) {
-          alert('No recording data captured. Please try recording for at least 1 second.');
-          return;
+        if (chunksRef.current.length > 0) {
+          const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+          if (blob.size > 0) {
+            setRecordedBlob(blob);
+            setHasRecording(true);
+            setShowSaveOptions(true);
+            
+            const url = URL.createObjectURL(blob);
+            setPreviewUrl(url);
+            
+            if (videoRef.current) {
+              videoRef.current.srcObject = null;
+              videoRef.current.src = url;
+              videoRef.current.muted = false;
+            }
+          }
         }
-
-        // Create blob immediately without filtering
-        const mimeType = mediaRecorder.mimeType || 'video/webm';
-        const blob = new Blob(chunksRef.current, { type: mimeType });
-        
-        console.log('Created blob:', blob.size, 'bytes, type:', blob.type);
-        
-        if (blob.size === 0) {
-          alert('Failed to create recording. Please try again.');
-          return;
-        }
-
-        // Set the blob immediately for preview
-        setRecordedBlob(blob);
-        setHasRecording(true);
-        setShowSaveOptions(true);
-
-        // Create preview URL
-        const url = URL.createObjectURL(blob);
-        setPreviewUrl(url);
-
-        // Update video element to show recording
-        if (videoRef.current) {
-          videoRef.current.srcObject = null;
-          videoRef.current.src = url;
-          videoRef.current.muted = false;
-        }
-
-        // Clean up streams
         cleanupStreams();
       };
 
@@ -381,7 +363,7 @@ export default function Record({ onBack }: RecordProps) {
       };
 
       // Start recording with time slice for regular data capture
-      mediaRecorder.start(); // Start without time slice for simpler recording
+      mediaRecorder.start(1000);
       setIsRecording(true);
       setRecordingTime(0);
 
