@@ -36,12 +36,16 @@ export default function Record({ onBack }: RecordProps) {
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [recordingMode, setRecordingMode] = useState<'camera' | 'screen'>('screen');
+  const [recordingMode, setRecordingMode] = useState<'camera' | 'screen' | 'both'>('screen');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showSaveOptions, setShowSaveOptions] = useState(false);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSavingToLibrary, setIsSavingToLibrary] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
+  const cameraVideoRef = useRef<HTMLVideoElement>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -107,7 +111,7 @@ export default function Record({ onBack }: RecordProps) {
           },
           audio: isAudioEnabled
         });
-      } else {
+      } else if (recordingMode === 'camera') {
         // Camera recording
         stream = await navigator.mediaDevices.getUserMedia({
           video: isVideoEnabled ? {
@@ -117,6 +121,87 @@ export default function Record({ onBack }: RecordProps) {
           } : false,
           audio: isAudioEnabled
         });
+      } else {
+        // Both screen and camera
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            mediaSource: 'screen',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            frameRate: { ideal: 30 }
+          },
+          audio: isAudioEnabled
+        });
+        
+        const cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: isVideoEnabled ? {
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+            frameRate: { ideal: 30 }
+          } : false,
+          audio: false // Audio from screen only to avoid echo
+        });
+
+        setScreenStream(screenStream);
+        setCameraStream(cameraStream);
+
+        // Create a canvas to combine both streams
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 1920;
+        canvas.height = 1080;
+
+        // Create video elements for both streams
+        const screenVideo = document.createElement('video');
+        const cameraVideo = document.createElement('video');
+        
+        screenVideo.srcObject = screenStream;
+        cameraVideo.srcObject = cameraStream;
+        screenVideo.play();
+        cameraVideo.play();
+
+        // Create a new stream from the canvas
+        const combinedStream = canvas.captureStream(30);
+        
+        // Add audio from screen stream
+        const audioTracks = screenStream.getAudioTracks();
+        audioTracks.forEach(track => combinedStream.addTrack(track));
+
+        // Function to draw both videos on canvas
+        const drawFrame = () => {
+          if (ctx && screenVideo.readyState >= 2 && cameraVideo.readyState >= 2) {
+            // Draw screen video (full size)
+            ctx.drawImage(screenVideo, 0, 0, canvas.width, canvas.height);
+            
+            // Draw camera video (picture-in-picture, bottom-right corner)
+            const pipWidth = 320;
+            const pipHeight = 240;
+            const pipX = canvas.width - pipWidth - 20;
+            const pipY = canvas.height - pipHeight - 20;
+            
+            // Add border around camera feed
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(pipX - 2, pipY - 2, pipWidth + 4, pipHeight + 4);
+            
+            // Draw camera video
+            ctx.drawImage(cameraVideo, pipX, pipY, pipWidth, pipHeight);
+          }
+          
+          if (isRecording && !isPaused) {
+            requestAnimationFrame(drawFrame);
+          }
+        };
+
+        // Start drawing when both videos are ready
+        Promise.all([
+          new Promise(resolve => screenVideo.addEventListener('loadeddata', resolve)),
+          new Promise(resolve => cameraVideo.addEventListener('loadeddata', resolve))
+        ]).then(() => {
+          drawFrame();
+        });
+
+        stream = combinedStream;
       }
 
       streamRef.current = stream;
@@ -204,6 +289,17 @@ export default function Record({ onBack }: RecordProps) {
         stream.getTracks().forEach(track => {
           track.stop();
         });
+        
+        // Clean up additional streams for 'both' mode
+        if (screenStream) {
+          screenStream.getTracks().forEach(track => track.stop());
+          setScreenStream(null);
+        }
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(track => track.stop());
+          setCameraStream(null);
+        }
+        
         streamRef.current = null;
       };
 
@@ -260,6 +356,15 @@ export default function Record({ onBack }: RecordProps) {
       streamRef.current = null;
     }
 
+    // Clean up additional streams for 'both' mode
+    if (screenStream) {
+      screenStream.getTracks().forEach(track => track.stop());
+      setScreenStream(null);
+    }
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
     setIsRecording(false);
     setIsPaused(false);
     
@@ -401,6 +506,19 @@ export default function Record({ onBack }: RecordProps) {
                 <Camera className="w-4 h-4 mr-2 inline" />
                 Camera
               </button>
+              <button
+                onClick={() => setRecordingMode('both')}
+                disabled={isRecording}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  recordingMode === 'both' ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                } ${isRecording ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <div className="flex items-center">
+                  <Monitor className="w-3 h-3 mr-1" />
+                  <Camera className="w-3 h-3 mr-2" />
+                </div>
+                Both
+              </button>
             </div>
           </div>
         </div>
@@ -445,15 +563,27 @@ export default function Record({ onBack }: RecordProps) {
                       <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
                         {recordingMode === 'screen' ? (
                           <Monitor className="w-10 h-10" />
-                        ) : (
+                        ) : recordingMode === 'camera' ? (
                           <Camera className="w-10 h-10" />
+                        ) : (
+                          <div className="flex items-center space-x-1">
+                            <Monitor className="w-6 h-6" />
+                            <Camera className="w-6 h-6" />
+                          </div>
                         )}
                       </div>
                       <h3 className="text-xl font-semibold mb-2">
-                        Ready to Record {recordingMode === 'screen' ? 'Screen' : 'Camera'}
+                        Ready to Record {
+                          recordingMode === 'screen' ? 'Screen' : 
+                          recordingMode === 'camera' ? 'Camera' : 
+                          'Screen + Camera'
+                        }
                       </h3>
                       <p className="text-gray-300">
-                        Click the record button to start capturing
+                        {recordingMode === 'both' 
+                          ? 'Camera will appear as picture-in-picture overlay'
+                          : 'Click the record button to start capturing'
+                        }
                       </p>
                     </div>
                   </div>
@@ -601,6 +731,23 @@ export default function Record({ onBack }: RecordProps) {
                       </button>
                     </div>
                     
+                  
+                  {recordingMode === 'both' && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Camera</span>
+                      <button
+                        onClick={() => setIsVideoEnabled(!isVideoEnabled)}
+                        disabled={isRecording}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          isVideoEnabled ? 'bg-purple-600' : 'bg-gray-300'
+                        } ${isRecording ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          isVideoEnabled ? 'translate-x-6' : 'translate-x-1'
+                        }`} />
+                      </button>
+                    </div>
+                  )}
                     {recordingMode === 'camera' && (
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-700">Camera</span>
@@ -649,7 +796,9 @@ export default function Record({ onBack }: RecordProps) {
                   )}
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Mode</span>
-                    <span className="font-medium capitalize">{recordingMode}</span>
+                    <span className="font-medium capitalize">
+                      {recordingMode === 'both' ? 'Screen + Camera' : recordingMode}
+                    </span>
                   </div>
                 </div>
               </div>
