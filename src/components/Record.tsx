@@ -128,13 +128,13 @@ export default function Record({ onBack }: RecordProps) {
     }
   };
   const startRecording = async () => {
-    // Check permissions first
-    const hasPermissions = await checkAndRequestPermissions();
-    if (!hasPermissions) {
-      return;
-    }
-
     try {
+      // Check permissions first
+      const hasPermissions = await checkAndRequestPermissions();
+      if (!hasPermissions) {
+        return;
+      }
+
       // Reset previous recording data
       chunksRef.current = [];
       setRecordedBlob(null);
