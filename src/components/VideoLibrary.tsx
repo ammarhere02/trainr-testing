@@ -161,53 +161,53 @@ export default function VideoLibrary() {
   // Play video function
   const playVideo = async (recording: any) => {
     console.log('Playing video:', recording.title);
-    console.log('Recording object:', recording);
-    console.log('Blob exists:', !!recording.blob);
-    console.log('Blob size:', recording.blob?.size);
-    console.log('Blob type:', recording.blob?.type);
-    
-    // Try to get fresh video data from IndexedDB
-    let videoData = recording;
-    if (!recording.blob || recording.blob.size === 0) {
-      console.log('Blob missing or empty, fetching from IndexedDB...');
-      try {
-        const freshVideoData = await videoStorage.getVideo(recording.id);
-        if (freshVideoData && freshVideoData.blob && freshVideoData.blob.size > 0) {
-          videoData = freshVideoData;
-          console.log('Retrieved fresh video data:', freshVideoData.blob.size, 'bytes');
-        } else {
-          console.error('No valid video data found in IndexedDB');
-          alert('Video data is not available or corrupted.');
-          return;
-        }
-      } catch (error) {
-        console.error('Error retrieving video from IndexedDB:', error);
-        alert('Failed to load video data.');
-        return;
-      }
-    }
-    
-    // Ensure we have a valid blob
-    if (!videoData.blob || videoData.blob.size === 0) {
-      console.error('No valid blob data available');
-      alert('Video data is not available or corrupted.');
-      return;
-    }
+    console.log('Initial recording data:', {
+      id: recording.id,
+      title: recording.title,
+      blobExists: !!recording.blob,
+      blobSize: recording.blob?.size,
+      blobType: recording.blob?.type
+    });
     
     try {
-      // Create a fresh blob URL for playback
-      const playbackUrl = URL.createObjectURL(videoData.blob);
+      // Always fetch fresh data from IndexedDB to ensure we have the blob
+      console.log('Fetching fresh video data from IndexedDB...');
+      const freshVideoData = await videoStorage.getVideo(recording.id);
+      
+      if (!freshVideoData) {
+        console.error('Video not found in IndexedDB');
+        alert('Video not found in database.');
+        return;
+      }
+      
+      if (!freshVideoData.blob || freshVideoData.blob.size === 0) {
+        console.error('Video blob is missing or empty:', {
+          blobExists: !!freshVideoData.blob,
+          blobSize: freshVideoData.blob?.size
+        });
+        alert('Video data is corrupted or missing.');
+        return;
+      }
+      
+      console.log('Fresh video data retrieved successfully:', {
+        id: freshVideoData.id,
+        title: freshVideoData.title,
+        blobSize: freshVideoData.blob.size,
+        blobType: freshVideoData.blob.type
+      });
+      
+      // Create blob URL for playback
+      const playbackUrl = URL.createObjectURL(freshVideoData.blob);
+      console.log('Created blob URL for playback:', playbackUrl);
+      
       setVideoPlaybackUrl(playbackUrl);
-      console.log('Created playback URL:', playbackUrl);
-      console.log('Blob URL created successfully for blob size:', videoData.blob.size);
+      setSelectedVideo(freshVideoData);
+      setShowVideoModal(true);
+      
     } catch (error) {
-      console.error('Error creating video URL:', error);
-      alert('Failed to prepare video for playback.');
-      return;
+      console.error('Error preparing video for playback:', error);
+      alert('Failed to load video. Please try again.');
     }
-    
-    setSelectedVideo(videoData);
-    setShowVideoModal(true);
   };
 
   // Delete recording
@@ -810,46 +810,39 @@ export default function VideoLibrary() {
 
             {/* Video Player */}
             <div className="aspect-video bg-gray-900">
-              {selectedVideo && selectedVideo.blob ? (
+              {selectedVideo && videoPlaybackUrl ? (
                 <video
                   key={selectedVideo.id}
-                  src={videoPlaybackUrl || URL.createObjectURL(selectedVideo.blob)}
+                  src={videoPlaybackUrl}
                   controls
                   autoPlay
                   className="w-full h-full"
                   onError={(e) => {
                     console.error('Video playback error:', e);
-                    console.error('Video URL:', videoPlaybackUrl);
-                    console.error('Selected video blob size:', selectedVideo?.blob?.size);
-                    console.error('Selected video blob type:', selectedVideo?.blob?.type);
-                    console.error('Video element error:', e.currentTarget.error);
+                    const videoElement = e.currentTarget;
+                    console.error('Video element error details:', {
+                      error: videoElement.error,
+                      networkState: videoElement.networkState,
+                      readyState: videoElement.readyState,
+                      src: videoElement.src,
+                      currentSrc: videoElement.currentSrc
+                    });
                   }}
-                  onLoadedData={() => console.log('Video loaded successfully:', selectedVideo.title)}
-                  onCanPlay={() => console.log('Video can play:', selectedVideo.title)}
-                  onLoadStart={() => console.log('Video load started:', selectedVideo.title)}
-                  onLoadedMetadata={() => console.log('Video metadata loaded:', selectedVideo.title)}
-                  onCanPlayThrough={() => console.log('Video can play through:', selectedVideo.title)}
-                  onProgress={() => console.log('Video loading progress')}
-                  onSuspend={() => console.log('Video loading suspended')}
-                  onStalled={() => console.log('Video loading stalled')}
+                  onLoadStart={() => console.log('Video load started')}
+                  onLoadedMetadata={() => console.log('Video metadata loaded')}
+                  onCanPlay={() => console.log('Video can play')}
+                  onCanPlayThrough={() => console.log('Video can play through')}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white">
                   <div className="text-center">
                     <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-60" />
                     <p className="text-lg font-medium">
-                      {selectedVideo ? 'Video not available' : 'No video selected'}
+                      {selectedVideo ? 'Loading video...' : 'No video selected'}
                     </p>
                     <p className="text-sm opacity-80">
-                      {selectedVideo ? 'The video file could not be loaded' : 'Please select a video to play'}
+                      {selectedVideo ? 'Please wait while we prepare your video' : 'Please select a video to play'}
                     </p>
-                    {selectedVideo && (
-                      <div className="mt-4 text-xs opacity-60">
-                        <p>Video ID: {selectedVideo.id}</p>
-                        <p>Blob size: {selectedVideo.blob?.size || 'N/A'} bytes</p>
-                        <p>Blob type: {selectedVideo.blob?.type || 'N/A'}</p>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}

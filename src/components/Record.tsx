@@ -494,6 +494,11 @@ export default function Record({ onBack }: RecordProps) {
       return;
     }
 
+    console.log('Saving recording to library:', {
+      blobSize: recordedBlob.size,
+      blobType: recordedBlob.type,
+      duration: recordingTime
+    });
     setIsSavingToLibrary(true);
 
     try {
@@ -512,7 +517,15 @@ export default function Record({ onBack }: RecordProps) {
         thumbnail: thumbnail
       };
 
+      console.log('Video data to save:', {
+        id: videoData.id,
+        title: videoData.title,
+        blobSize: videoData.blob.size,
+        blobType: videoData.blob.type,
+        duration: videoData.duration
+      });
       await videoStorage.saveVideo(videoData);
+      console.log('Video saved successfully to IndexedDB');
       alert('Recording saved to library successfully!');
       setShowSaveOptions(false);
       discardRecording();

@@ -90,13 +90,28 @@ class VideoStorageManager {
   async saveVideo(video: StoredVideo): Promise<void> {
     if (!this.db) await this.init();
     
+    // Validate video data before saving
+    if (!video.blob || video.blob.size === 0) {
+      throw new Error('Cannot save video: blob is empty or missing');
+    }
+    
+    console.log('Saving video to IndexedDB:', {
+      id: video.id,
+      title: video.title,
+      blobSize: video.blob.size,
+      blobType: video.blob.type
+    });
+    
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([this.storeName], 'readwrite');
       const store = transaction.objectStore(this.storeName);
       const request = store.put(video);
 
       request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve();
+      request.onsuccess = () => {
+        console.log('Video saved successfully to IndexedDB');
+        resolve();
+      };
     });
   }
 
@@ -109,7 +124,18 @@ class VideoStorageManager {
       const request = store.get(id);
 
       request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result || null);
+      request.onsuccess = () => {
+        const result = request.result;
+        if (result) {
+          console.log('Retrieved video from IndexedDB:', {
+            id: result.id,
+            title: result.title,
+            blobSize: result.blob?.size,
+            blobType: result.blob?.type
+          });
+        }
+        resolve(result || null);
+      };
     });
   }
 
