@@ -164,6 +164,16 @@ export default function VideoLibrary() {
     }
   };
 
+  // Copy video link
+  const copyVideoLink = (recording: any) => {
+    if (recording.cloudflareId) {
+      const link = `Video ID: ${recording.cloudflareId} (Cloudflare Stream not configured)`;
+      navigator.clipboard.writeText(link);
+      alert('Video ID copied to clipboard!');
+    } else {
+      alert('No shareable link available for this recording.');
+    }
+  };
 
   // Select/deselect video
   const toggleVideoSelection = (id: number) => {
@@ -269,7 +279,16 @@ export default function VideoLibrary() {
               <TrendingUp className="w-6 h-6 text-yellow-600" />
             </div>
           </div>
-            {selectedVideo.localUrl ? (
+        </div>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
                 type="text"
                 placeholder="Search videos..."
                 value={searchTerm}
@@ -485,6 +504,13 @@ export default function VideoLibrary() {
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
@@ -558,6 +584,13 @@ export default function VideoLibrary() {
                               title="Download"
                             >
                               <Download className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => copyVideoLink(recording)}
+                              className="p-1 text-gray-400 hover:text-purple-600 transition-colors"
+                              title="Copy Link"
+                            >
+                              <Copy className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => deleteRecording(recording.id)}
