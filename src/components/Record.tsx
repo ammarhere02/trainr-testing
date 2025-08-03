@@ -103,7 +103,25 @@ export default function Record({ onBack }: RecordProps) {
         return false;
       }
       
-      return true;
+      // Try to request permissions proactively by attempting to get user media
+      try {
+        const testStream = await navigator.mediaDevices.getUserMedia({
+          video: recordingMode !== 'screen',
+          audio: isAudioEnabled
+        });
+        // Stop the test stream immediately
+        testStream.getTracks().forEach(track => track.stop());
+        return true;
+      } catch (testError) {
+        console.log('Permission test failed:', testError);
+        if (testError instanceof Error && testError.name === 'NotAllowedError') {
+          alert('Permission denied. Please:\n\n1. Click "Allow" when your browser asks for camera/microphone access\n2. If you previously denied access, click the lock/camera icon in your browser\'s address bar\n3. Set Camera and Microphone to "Allow"\n4. Refresh the page and try again');
+          return false;
+        }
+        // For other errors, continue and let the main recording attempt handle them
+        return true;
+      }
+      
     } catch (error) {
       console.log('Permission API not supported, will try direct access');
       return true;
