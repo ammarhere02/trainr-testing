@@ -469,15 +469,24 @@ export default function VideoLibrary() {
                   <div className="relative">
                     {/* Video Thumbnail */}
                     <div className="aspect-video bg-gray-900 flex items-center justify-center">
-                      <div className="relative w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
-                        <div className="text-center text-white">
-                          <Video className="w-12 h-12 mx-auto mb-2" />
-                          <p className="text-sm font-medium">
-                            {recording.mode === 'camera' ? 'Camera Recording' : 'Screen Recording'}
-                          </p>
-                          <p className="text-xs opacity-80">Click to play</p>
+                      {recording.thumbnail ? (
+                        <img
+                          src={recording.thumbnail}
+                          alt={recording.title}
+                          className="w-full h-full object-cover cursor-pointer"
+                          onClick={() => playVideo(recording)}
+                        />
+                      ) : (
+                        <div className="relative w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+                          <div className="text-center text-white">
+                            <Video className="w-12 h-12 mx-auto mb-2" />
+                            <p className="text-sm font-medium">
+                              {recording.mode === 'camera' ? 'Camera Recording' : 'Screen Recording'}
+                            </p>
+                            <p className="text-xs opacity-80">Click to play</p>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                     
                     {/* Play Button Overlay */}
