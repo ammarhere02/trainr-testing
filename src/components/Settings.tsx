@@ -94,17 +94,7 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
     setIsCheckingDomain(true);
     try {
       const isCustom = !currentDomain.includes('.trainr.app');
-      
-      let status: DomainStatus;
-      if (isCustom) {
-        // For custom domains, use the full domain checker
-        status = await domainChecker.simulateDomainCheck(currentDomain, true);
-      } else {
-        // For subdomains, use the subdomain-specific checker
-        const subdomain = currentDomain.replace('.trainr.app', '');
-        status = await checkSubdomainSetup(subdomain);
-      }
-      
+      const status = await domainChecker.simulateDomainCheck(currentDomain, isCustom);
       setDomainConnectionStatus(status);
     } catch (error) {
       console.error('Domain check failed:', error);
@@ -563,24 +553,20 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
                           </p>
                         </div>
                       ) : (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                           <h4 className="font-medium text-red-800 mb-2 flex items-center">
                             <AlertCircle className="w-4 h-4 mr-2" />
-                        {currentDomain.includes('.trainr.app') ? 'Subdomain Setup Issues' : 'Domain Connection Issues'}
+                            Domain Connection Issues
                           </h4>
                           {domainConnectionStatus.error && (
                             <p className="text-sm text-red-700 mb-3">{domainConnectionStatus.error}</p>
                           )}
-                      <p className="text-sm text-yellow-700 mb-3">
-                        {currentDomain.includes('.trainr.app') 
-                          ? 'Your subdomain is not properly set up. This may be a temporary issue.'
-                          : 'Your domain is not properly connected. Please check the following:'
-                        }
-                      </p>
-                      {!currentDomain.includes('.trainr.app') && (
-                        <div className="text-sm text-red-700">
-                        <p className="font-medium mb-1">Next steps:</p>
-                        <ol className="list-decimal list-inside space-y-1">
+                          <p className="text-sm text-yellow-700 mb-3">
+                            Your domain is not properly connected. Please check the following:
+                          </p>
+                          <div className="text-sm text-red-700">
+                            <p className="font-medium mb-1">Next steps:</p>
+                            <ol className="list-decimal list-inside space-y-1">
                               <li className={domainConnectionStatus.cnameValid ? 'line-through text-green-600' : ''}>
                                 Add a CNAME record pointing to trainr.app
                               </li>
@@ -590,23 +576,12 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
                               <li className={domainConnectionStatus.hasSSL ? 'line-through text-green-600' : ''}>
                                 SSL certificate will be automatically provisioned
                               </li>
-                        </ol>
-                        </div>
-                      )}
-                      {currentDomain.includes('.trainr.app') && (
-                        <div className="text-sm text-yellow-700">
-                          <p className="font-medium mb-1">Possible solutions:</p>
-                          <ul className="list-disc list-inside space-y-1">
-                            <li>Wait a few minutes and try again</li>
-                            <li>Check if the subdomain name is correct</li>
-                            <li>Contact support if the issue persists</li>
-                          </ul>
-                        </div>
-                      )}
+                            </ol>
+                          </div>
                           <p className="text-xs text-red-600 mt-2">
                             Last checked: {new Date(domainConnectionStatus.lastChecked).toLocaleString()}
                           </p>
-                    </div>
+                        </div>
                       )}
                     </div>
                   )}
