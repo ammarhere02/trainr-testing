@@ -581,8 +581,13 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
                           <p className="text-xs text-red-600 mt-2">
                             Last checked: {new Date(domainConnectionStatus.lastChecked).toLocaleString()}
                           </p>
-                    </div>
-                      )}
+                        {currentDomain.includes('.trainr.app') 
+                          ? 'Subdomain Active & Secure' 
+                          : domainConnectionStatus.hasSSL ? 'Custom Domain Active & Secure' : 'Active (No SSL)'
+                        }
+                      <span className="text-sm text-red-600">
+                        {currentDomain.includes('.trainr.app') ? 'Subdomain Not Set Up' : 'Domain Not Connected'}
+                      </span>
                     </div>
                   )}
                 </div>

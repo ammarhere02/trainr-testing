@@ -152,3 +152,36 @@ export class DomainChecker {
 
 // Export singleton instance
 export const domainChecker = DomainChecker.getInstance();
+
+// Subdomain-specific checker
+export const checkSubdomainSetup = async (subdomain: string): Promise<DomainStatus> => {
+  const fullDomain = `${subdomain}.trainr.app`;
+  
+  const status: DomainStatus = {
+    isConnected: false,
+    hasSSL: false,
+    dnsConfigured: false,
+    cnameValid: false,
+    lastChecked: new Date().toISOString()
+  };
+
+  try {
+    // Check if subdomain is accessible
+    const response = await fetch(`https://${fullDomain}`, { 
+      method: 'HEAD', 
+      mode: 'no-cors',
+      signal: AbortSignal.timeout(5000)
+    });
+    
+    status.isConnected = true;
+    status.hasSSL = true;
+    status.dnsConfigured = true;
+    status.cnameValid = true;
+    
+  } catch (error) {
+    // For subdomains, if we can't reach it, it might not be set up
+    status.error = `Subdomain ${fullDomain} is not accessible. Please check if it's properly configured.`;
+  }
+
+  return status;
+};
