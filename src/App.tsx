@@ -187,6 +187,11 @@ function App() {
   
   const renderCurrentView = () => {
     if (!isLoggedIn) {
+      // Show Hero component for main landing page
+      if (currentView === 'home' || currentView === 'landing') {
+        return <Hero onLogin={handleLogin} onShowEducatorSignup={() => setShowEducatorSignup(true)} />;
+      }
+      // Default to Hero for any unrecognized view when not logged in
       return <Hero onLogin={handleLogin} onShowEducatorSignup={() => setShowEducatorSignup(true)} />;
     }
 

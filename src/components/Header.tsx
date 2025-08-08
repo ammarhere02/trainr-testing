@@ -36,7 +36,7 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
             {/* Logo */}
             <div className="flex items-center">
               <button 
-                onClick={() => isLoggedIn ? onViewChange('dashboard') : undefined}
+                onClick={() => isLoggedIn ? onViewChange('dashboard') : onViewChange('home')}
                 className={`flex items-center space-x-2 ${isLoggedIn ? 'hover:opacity-80 transition-opacity cursor-pointer' : ''}`}
               >
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
