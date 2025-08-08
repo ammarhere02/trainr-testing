@@ -23,7 +23,7 @@ export const isSubdomain = (): boolean => {
 };
 
 export const getMainDomain = (): string => {
-  if (typeof window === 'undefined') return 'trainr.app';
+  if (typeof window === 'undefined') return 'trytrainr.com';
   
   const hostname = window.location.hostname;
   const parts = hostname.split('.');
@@ -33,7 +33,7 @@ export const getMainDomain = (): string => {
     return parts.slice(-2).join('.');
   }
   
-  return hostname;
+  return 'trytrainr.com';
 };
 
 export const buildSubdomainUrl = (subdomain: string): string => {

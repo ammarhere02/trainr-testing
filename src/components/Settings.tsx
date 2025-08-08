@@ -46,11 +46,11 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
   const [showDomainModal, setShowDomainModal] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<'subdomain' | 'custom'>('subdomain');
   const [domainData, setDomainData] = useState({
-    subdomain: 'webdevacademy',
+    subdomain: 'webdevacademy', 
     customDomain: '',
     businessName: 'Web Dev Academy'
   });
-  const [currentDomain, setCurrentDomain] = useState('webdevacademy.trainr.app');
+  const [currentDomain, setCurrentDomain] = useState('webdevacademy.trytrainr.com');
   const [domainStatus, setDomainStatus] = useState<'active' | 'pending' | 'none'>('active');
   const [domainConnectionStatus, setDomainConnectionStatus] = useState<DomainStatus | null>(null);
   const [isCheckingDomain, setIsCheckingDomain] = useState(false);
@@ -72,7 +72,7 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
     console.log('Setting up domain:', { selectedDomain, domainData });
     
     if (selectedDomain === 'subdomain') {
-      setCurrentDomain(`${domainData.subdomain}.trainr.app`);
+      setCurrentDomain(`${domainData.subdomain}.trytrainr.com`);
       setDomainStatus('active');
     } else {
       setCurrentDomain(domainData.customDomain);
@@ -568,7 +568,7 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
                             <p className="font-medium mb-1">Next steps:</p>
                             <ol className="list-decimal list-inside space-y-1">
                               <li className={domainConnectionStatus.cnameValid ? 'line-through text-green-600' : ''}>
-                                Add a CNAME record pointing to trainr.app
+                                Add a CNAME record pointing to trytrainr.com
                               </li>
                               <li className={domainConnectionStatus.dnsConfigured ? 'line-through text-green-600' : ''}>
                                 Wait for DNS propagation (up to 48 hours)
@@ -823,7 +823,7 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
                           <div className="bg-blue-50 rounded-lg p-4">
                             <h5 className="font-medium text-blue-900 mb-2">Setup Instructions:</h5>
                             <ol className="text-sm text-blue-800 space-y-1">
-                              <li>1. Add a CNAME record pointing to trainr.app</li>
+                              <li>1. Add a CNAME record pointing to trytrainr.com</li>
                               <li>2. We'll verify and set up SSL automatically</li>
                               <li>3. Your domain will be ready in 24-48 hours</li>
                             </ol>

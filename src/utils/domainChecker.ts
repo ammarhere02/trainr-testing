@@ -98,7 +98,7 @@ export class DomainChecker {
   }
 
   async checkSubdomainStatus(subdomain: string): Promise<DomainStatus> {
-    const fullDomain = `${subdomain}.trainr.app`;
+    const fullDomain = `${subdomain}.trytrainr.com`;
     return this.checkDomainConnection(fullDomain);
   }
 
@@ -155,7 +155,7 @@ export const domainChecker = DomainChecker.getInstance();
 
 // Subdomain-specific checker
 export const checkSubdomainSetup = async (subdomain: string): Promise<DomainStatus> => {
-  const fullDomain = `${subdomain}.trainr.app`;
+  const fullDomain = `${subdomain}.trytrainr.com`;
   
   const status: DomainStatus = {
     isConnected: false,
