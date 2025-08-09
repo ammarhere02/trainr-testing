@@ -93,7 +93,7 @@ export async function signUpEmail(email: string, password: string, fullName: str
 // Get current user profile
 export async function getProfile(userId?: string): Promise<Profile | null> {
   try {
-    const id = userId || (await supabase.auth.getUser()).data.user?.id
+    const id = userId || (await getCurrentUser())?.id
     
     if (!id) return null
     

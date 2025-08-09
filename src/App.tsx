@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { getSubdomain } from './lib/org';
 import CanonicalLogin from './components/auth/CanonicalLogin';
@@ -28,13 +28,9 @@ function App() {
         <Route path="/library" element={<StudentLibrary />} />
         
         {/* Subdomain routes */}
-        {subdomain && (
-          <>
-            <Route path={`/${subdomain}/login`} element={<SubdomainLogin />} />
-            <Route path={`/${subdomain}/after-login`} element={<AfterLogin />} />
-            <Route path={`/${subdomain}/courses`} element={<StudentLibrary />} />
-          </>
-        )}
+        <Route path="/*/login" element={<SubdomainLogin />} />
+        <Route path="/*/after-login" element={<AfterLogin />} />
+        <Route path="/*/courses" element={<StudentLibrary />} />
         
         {/* Home route */}
         <Route path="/" element={<Hero onLogin={() => {}} onShowEducatorSignup={() => {}} />} />
