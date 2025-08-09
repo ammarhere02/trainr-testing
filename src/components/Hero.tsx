@@ -8,6 +8,13 @@ interface HeroProps {
 }
 
 export default function Hero({ onLogin, onShowEducatorSignup }: HeroProps) {
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const handleGetStarted = () => {
     if (onShowEducatorSignup) {
       onShowEducatorSignup();
@@ -31,8 +38,74 @@ export default function Hero({ onLogin, onShowEducatorSignup }: HeroProps) {
 
   return (
     <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 min-h-screen">
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">T</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">trainr</span>
+            </div>
+
+            {/* Navigation Menu */}
+            <nav className="hidden md:flex items-center space-x-8">
+              <button
+                onClick={() => scrollToSection('features-section')}
+                className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+              >
+                Features
+              </button>
+              <button
+                onClick={() => scrollToSection('testimonials-section')}
+                className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+              >
+                Success Stories
+              </button>
+              <button
+                onClick={() => scrollToSection('pricing-section')}
+                className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+              >
+                Pricing
+              </button>
+              <button
+                onClick={() => scrollToSection('comparison-section')}
+                className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+              >
+                Compare
+              </button>
+              <button
+                onClick={() => scrollToSection('help-section')}
+                className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+              >
+                Help
+              </button>
+            </nav>
+
+            {/* Auth Buttons */}
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => window.location.href = '/login'}
+                className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+              >
+                Sign In
+              </button>
+              <button 
+                onClick={handleGetStarted}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 flex items-center"
+              >
+                Get Started
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16">
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-8 leading-tight">
             Only Platform Creators & Educators Need
@@ -151,12 +224,6 @@ export default function Hero({ onLogin, onShowEducatorSignup }: HeroProps) {
             >
               Start Your Teaching Business
               <ArrowRight className="ml-2 w-5 h-5" />
-            </button>
-            <button 
-              onClick={() => window.location.href = '/login'}
-              className="text-purple-600 px-8 py-4 rounded-xl font-semibold border-2 border-purple-200 hover:bg-purple-50 transition-colors"
-            >
-              Sign In
             </button>
             <button className="text-purple-600 px-8 py-4 rounded-xl font-semibold border-2 border-purple-200 hover:bg-purple-50 transition-colors">
               See Live Demo
