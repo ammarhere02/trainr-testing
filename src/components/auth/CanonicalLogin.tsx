@@ -316,7 +316,12 @@ export default function CanonicalLogin() {
             <p className="text-gray-600 text-sm">
               Don't have an account?{' '}
               <a
-                href="/signup"
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  // In a real app, this would navigate to signup
+                  alert('Signup functionality would be implemented here');
+                }}
                 className="font-medium hover:underline"
                 style={{ color: brandColor }}
               >

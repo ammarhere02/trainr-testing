@@ -152,6 +152,12 @@ export default function Hero({ onLogin, onShowEducatorSignup }: HeroProps) {
               Start Your Teaching Business
               <ArrowRight className="ml-2 w-5 h-5" />
             </button>
+            <button 
+              onClick={() => window.location.href = '/login'}
+              className="text-purple-600 px-8 py-4 rounded-xl font-semibold border-2 border-purple-200 hover:bg-purple-50 transition-colors"
+            >
+              Sign In
+            </button>
             <button className="text-purple-600 px-8 py-4 rounded-xl font-semibold border-2 border-purple-200 hover:bg-purple-50 transition-colors">
               See Live Demo
             </button>
