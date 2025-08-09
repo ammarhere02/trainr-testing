@@ -51,7 +51,7 @@ export default function SubdomainLogin() {
     const redirectUrl = `${window.location.protocol}//${window.location.hostname}/after-login`
     const canonicalUrl = buildCanonicalLoginUrl(subdomain, redirectUrl)
     
-    window.location.assign(canonicalUrl)
+    window.location.href = canonicalUrl
   }
 
   const handleEmailLogin = async (e: React.FormEvent) => {

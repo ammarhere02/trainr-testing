@@ -14,7 +14,7 @@ export default function PostLogin() {
         
         if (!user) {
           // No user found, redirect to login
-          window.location.assign('/login')
+          window.location.href = '/login'
           return
         }
 
@@ -34,16 +34,16 @@ export default function PostLogin() {
         
         if (redirectTo) {
           // Redirect to the specified URL
-          window.location.assign(redirectTo)
+          window.location.href = redirectTo
           return
         }
 
         // Route by role
         if (profile.role === 'educator') {
-          window.location.assign('/studio/dashboard')
+          window.location.href = '/studio/dashboard'
         } else {
           // Student - redirect to library
-          window.location.assign('/library')
+          window.location.href = '/library'
         }
         
       } catch (error) {

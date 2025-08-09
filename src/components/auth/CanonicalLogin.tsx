@@ -58,9 +58,9 @@ export default function CanonicalLogin() {
       } else if (user) {
         // Redirect to post-login handler
         if (redirectTo) {
-          window.location.assign('/post-login?redirect_to=' + encodeURIComponent(redirectTo))
+          window.location.href = '/post-login?redirect_to=' + encodeURIComponent(redirectTo)
         } else {
-          window.location.assign('/post-login')
+          window.location.href = '/post-login'
         }
       }
     } catch (error) {
@@ -77,7 +77,8 @@ export default function CanonicalLogin() {
     setLoadingType('google')
 
     try {
-      await signInGoogle(redirectTo || `${window.location.origin}/post-login`)
+      const redirectUrl = redirectTo || `${window.location.origin}/post-login`
+      await signInGoogle(redirectUrl)
     } catch (error) {
       console.error('Google login failed:', error)
       setErrors({ general: 'Google login failed. Please try again.' })
@@ -101,7 +102,8 @@ export default function CanonicalLogin() {
     setLoadingType('magic')
 
     try {
-      await sendMagicLink(formData.email, redirectTo || `${window.location.origin}/post-login`)
+      const redirectUrl = redirectTo || `${window.location.origin}/post-login`
+      await sendMagicLink(formData.email, redirectUrl)
       setShowMagicLinkSent(true)
       setErrors({})
     } catch (error) {
@@ -189,7 +191,7 @@ export default function CanonicalLogin() {
                   className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent ${
                     errors.email ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
                   }`}
-                  style={{ focusRingColor: brandColor }}
+                  style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
                   placeholder="john@example.com"
                 />
               </div>
@@ -219,7 +221,7 @@ export default function CanonicalLogin() {
                   className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:border-transparent ${
                     errors.password ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
                   }`}
-                  style={{ focusRingColor: brandColor }}
+                  style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
                   placeholder="••••••••"
                 />
                 <button
@@ -242,7 +244,7 @@ export default function CanonicalLogin() {
                   checked={formData.rememberMe}
                   onChange={(e) => setFormData(prev => ({ ...prev, rememberMe: e.target.checked }))}
                   className="rounded border-gray-300 focus:ring-2"
-                  style={{ color: brandColor, focusRingColor: brandColor }}
+                  style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
                 />
                 <label htmlFor="remember-me" className="ml-2 text-sm text-gray-600">
                   Remember me

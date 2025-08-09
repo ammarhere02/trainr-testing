@@ -17,9 +17,9 @@ export default function AfterLogin() {
           // No user found, redirect to subdomain login
           const subdomain = getSubdomain()
           if (subdomain) {
-            window.location.assign(`/${subdomain}/login`)
+            window.location.href = `/${subdomain}/login`
           } else {
-            window.location.assign('/login')
+            window.location.href = '/login'
           }
           return
         }
@@ -37,15 +37,15 @@ export default function AfterLogin() {
         // Route based on role and subdomain
         if (profile.role === 'educator') {
           // Educators should go to studio dashboard regardless of subdomain
-          window.location.assign('/studio/dashboard')
+          window.location.href = '/studio/dashboard'
         } else {
           // Students stay on the subdomain
           if (subdomain) {
             // Redirect to subdomain home/courses
-            window.location.assign(`/${subdomain}/courses`)
+            window.location.href = `/${subdomain}/courses`
           } else {
             // Fallback to main library
-            window.location.assign('/library')
+            window.location.href = '/library'
           }
         }
         
