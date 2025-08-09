@@ -33,7 +33,7 @@ function App() {
         <Route path="/*/courses" element={<StudentLibrary />} />
         
         {/* Home route */}
-        <Route path="/" element={<Hero onLogin={() => {}} onShowEducatorSignup={() => {}} />} />
+        <Route path="/" element={<Hero onLogin={() => window.location.href = '/login'} onShowEducatorSignup={() => window.location.href = '/login'} />} />
         
         {/* Catch all - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
