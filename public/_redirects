@@ -1,0 +1,8 @@
+# Netlify redirects file
+# This ensures all routes are handled by the React app
+
+# Redirect any existing /lander paths to root
+/lander /  301
+
+# Handle all other routes with the SPA
+/*    /index.html   200
