@@ -178,17 +178,49 @@ export default function CanonicalLogin() {
     setLoadingType('email')
 
     try {
-      const { user, error } = await signInEmail(formData.email, formData.password)
+      // Check if Supabase is configured
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
       
-      if (error) {
-        setErrors({ general: error.message })
-      } else if (user) {
-        // Redirect to post-login handler
-        if (redirectTo) {
-          window.location.href = '/post-login?redirect_to=' + encodeURIComponent(redirectTo)
-        } else {
-          window.location.href = '/post-login'
+      if (!supabaseUrl || !supabaseKey) {
+        // Supabase not configured - use mock login for demo
+        console.log('Supabase not configured, using mock login')
+        
+        // Simulate login
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // Mock successful login
+        const mockUser = {
+          id: 'demo-user',
+          email: formData.email,
+          role: 'educator'
         }
+        
+        localStorage.setItem('current-user', JSON.stringify(mockUser))
+        localStorage.setItem('user-role', 'educator')
+        
+        // Redirect to dashboard
+        window.location.href = '/studio/dashboard'
+        return
+      }
+      
+      // Supabase is configured - use real login
+      try {
+        const { user, error } = await signInEmail(formData.email, formData.password)
+        
+        if (error) {
+          setErrors({ general: error.message })
+        } else if (user) {
+          // Redirect to post-login handler
+          if (redirectTo) {
+            window.location.href = '/post-login?redirect_to=' + encodeURIComponent(redirectTo)
+          } else {
+            window.location.href = '/post-login'
+          }
+        }
+      } catch (supabaseError) {
+        console.error('Supabase login error:', supabaseError)
+        setErrors({ general: 'Database connection failed. Please try again or contact support.' })
       }
     } catch (error) {
       console.error('Login failed:', error)

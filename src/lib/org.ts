@@ -79,6 +79,34 @@ export async function updateOrganization(id: string, updates: Partial<Organizati
   }
 }
 
+// Check subdomain availability
+export async function checkSubdomainAvailability(subdomain: string): Promise<boolean> {
+  try {
+    // Check if Supabase is configured
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+    
+    if (!supabaseUrl || !supabaseKey) {
+      // Supabase not configured - use mock availability check
+      const takenSubdomains = ['admin', 'api', 'www', 'mail', 'support', 'help', 'blog', 'app', 'test', 'demo']
+      return !takenSubdomains.includes(subdomain.toLowerCase())
+    }
+    
+    const { data, error } = await supabase
+      .from('organizations')
+      .select('id')
+      .eq('subdomain', subdomain)
+      .single()
+    
+    // If no data found, subdomain is available
+    return !data
+  } catch (error) {
+    console.error('Error checking subdomain availability:', error)
+    // On error, assume available for better UX
+    return true
+  }
+}
+
 // Get subdomain from current hostname
 export function getSubdomain(): string | null {
   if (typeof window === 'undefined') return null
