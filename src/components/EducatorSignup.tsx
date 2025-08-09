@@ -267,6 +267,7 @@ export default function EducatorSignup({ onSignupComplete, onBackToLogin }: Educ
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
                   {getSubdomainStatusIcon()}
                   <span className="text-gray-500 text-sm">.trainr.app</span>
+                  <span className="text-gray-500 text-sm">.trytrainr.com</span>
                 </div>
               </div>
               {subdomainStatus && (
