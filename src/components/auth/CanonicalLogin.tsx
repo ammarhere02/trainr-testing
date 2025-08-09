@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Mail, Lock, Eye, EyeOff, Loader, ArrowRight, Chrome, Building, Globe, User } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, Loader, ArrowRight, Chrome, Building, Globe, User, CheckCircle, X } from 'lucide-react'
 import { signInEmail, signInGoogle, sendMagicLink } from '../../lib/auth'
 import { getOrganizationBySubdomain } from '../../lib/org'
 import type { Organization } from '../../lib/org'
@@ -630,104 +630,6 @@ export default function CanonicalLogin() {
                 )}
               </button>
             </form>
-          ) : (
-            <form onSubmit={handleEmailLogin} className="space-y-6">
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent ${
-                    errors.email ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
-                  }`}
-                  style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
-                  placeholder="john@example.com"
-                />
-              </div>
-              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-            </div>
-
-            {/* Password */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Password
-                </label>
-                <button
-                  type="button"
-                  className="text-sm hover:underline"
-                  style={{ color: brandColor }}
-                >
-                  Forgot password?
-                </button>
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={formData.password}
-                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                  className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:border-transparent ${
-                    errors.password ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
-                  }`}
-                  style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
-            </div>
-
-            {/* Remember Me */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="remember-me"
-                  checked={formData.rememberMe}
-                  onChange={(e) => setFormData(prev => ({ ...prev, rememberMe: e.target.checked }))}
-                  className="rounded border-gray-300 focus:ring-2"
-                  style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
-                />
-                <label htmlFor="remember-me" className="ml-2 text-sm text-gray-600">
-                  Remember me
-                </label>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3 px-4 rounded-lg font-semibold text-white hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center"
-              style={{ backgroundColor: brandColor }}
-            >
-              {isLoading && loadingType === 'email' ? (
-                <>
-                  <Loader className="w-4 h-4 mr-2 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                <>
-                  Sign In
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              )}
-            </button>
-          </form>
-
           )}
 
           {mode === 'login' && (
