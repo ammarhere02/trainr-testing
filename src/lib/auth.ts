@@ -64,7 +64,7 @@ export async function sendMagicLink(email: string, redirectTo?: string): Promise
 }
 
 // Sign up with email and password
-export async function signUpEmail(email: string, password: string, fullName: string, role: string = 'student', orgId?: string): Promise<AuthResult> {
+export async function signUpEmail(email: string, password: string, fullName: string, role: string = 'student'): Promise<AuthResult> {
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -72,8 +72,7 @@ export async function signUpEmail(email: string, password: string, fullName: str
       options: {
         data: {
           full_name: fullName,
-          role,
-          org_id: orgId
+          role
         }
       }
     })

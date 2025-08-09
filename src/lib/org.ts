@@ -1,3 +1,4 @@
+import { CheckCircle, X } from 'lucide-react'
 import { supabase } from './supabase'
 
 export interface Organization {
