@@ -8,6 +8,7 @@ import AfterLogin from './components/auth/AfterLogin';
 import StudioDashboard from './components/StudioDashboard';
 import StudentLibrary from './components/StudentLibrary';
 import Hero from './components/Hero';
+import DatabaseTest from './components/DatabaseTest';
 
 function App() {
   const subdomain = getSubdomain();
@@ -15,6 +16,9 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Database test route */}
+        <Route path="/test-db" element={<DatabaseTest />} />
+        
         {/* Canonical login route */}
         <Route path="/login" element={<CanonicalLogin />} />
         
