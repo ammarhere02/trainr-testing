@@ -123,6 +123,15 @@ export default function CanonicalLogin() {
     setLoadingType('email')
 
     try {
+      // Check if Supabase is configured
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+      
+      if (!supabaseUrl || !supabaseKey) {
+        setErrors({ general: 'Database not configured. Please check your environment setup.' })
+        return
+      }
+
       // Import signup functions
       const { signUpEmail } = await import('../../lib/auth')
       const { createOrganization } = await import('../../lib/org')
@@ -141,20 +150,30 @@ export default function CanonicalLogin() {
       }
 
       if (user) {
-        // Create organization
-        const org = await createOrganization({
-          subdomain: formData.subdomain,
-          name: formData.businessName,
-          color: '#7c3aed'
-        })
+        try {
+          // Create organization
+          const org = await createOrganization({
+            subdomain: formData.subdomain,
+            name: formData.businessName,
+            color: '#7c3aed'
+          })
 
-        if (org) {
-          // Update user profile with org_id
-          const { supabase } = await import('../../lib/supabase')
-          await supabase
-            .from('profiles')
-            .update({ org_id: org.id })
-            .eq('id', user.id)
+          if (org) {
+            // Update user profile with org_id
+            const { supabase } = await import('../../lib/supabase')
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ org_id: org.id, role: 'educator' })
+              .eq('id', user.id)
+            
+            if (updateError) {
+              console.error('Error updating profile:', updateError)
+              // Continue anyway - the user was created successfully
+            }
+          }
+        } catch (orgError) {
+          console.error('Error creating organization:', orgError)
+          // Continue anyway - the user was created successfully
         }
 
         // Redirect to post-login
@@ -162,7 +181,12 @@ export default function CanonicalLogin() {
       }
     } catch (error) {
       console.error('Signup failed:', error)
-      setErrors({ general: 'Signup failed. Please try again.' })
+      
+      if (error instanceof Error) {
+        setErrors({ general: error.message })
+      } else {
+        setErrors({ general: 'Account creation failed. Please try again.' })
+      }
     } finally {
       setIsLoading(false)
       setLoadingType(null)

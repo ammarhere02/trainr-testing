@@ -39,6 +39,15 @@ export async function createOrganization(data: {
   color?: string
 }): Promise<Organization | null> {
   try {
+    // Check if Supabase is configured
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Supabase not configured')
+      return null
+    }
+
     const { data: org, error } = await supabase
       .from('organizations')
       .insert([data])
@@ -47,13 +56,21 @@ export async function createOrganization(data: {
     
     if (error) {
       console.error('Error creating organization:', error)
-      return null
+      
+      // Provide more specific error handling
+      if (error.code === '23505') {
+        throw new Error('This subdomain is already taken. Please choose a different one.')
+      } else if (error.message.includes('relation "organizations" does not exist')) {
+        throw new Error('Database tables not set up. Please contact support.')
+      } else {
+        throw new Error(`Failed to create organization: ${error.message}`)
+      }
     }
     
     return org
   } catch (error) {
     console.error('Error in createOrganization:', error)
-    return null
+    throw error
   }
 }
 

@@ -66,6 +66,14 @@ export async function sendMagicLink(email: string, redirectTo?: string): Promise
 // Sign up with email and password
 export async function signUpEmail(email: string, password: string, fullName: string, role: string = 'student'): Promise<AuthResult> {
   try {
+    // Check if Supabase is properly configured
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Database not configured. Please check your environment variables.')
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -73,15 +81,33 @@ export async function signUpEmail(email: string, password: string, fullName: str
         data: {
           full_name: fullName,
           role
-        }
+        },
+        emailRedirectTo: `${window.location.origin}/post-login`
       }
     })
     
+    if (error) {
+      console.error('Supabase signup error:', error)
+      
+      // Provide more specific error messages
+      if (error.message.includes('User already registered')) {
+        throw new Error('An account with this email already exists. Please sign in instead.')
+      } else if (error.message.includes('Invalid email')) {
+        throw new Error('Please enter a valid email address.')
+      } else if (error.message.includes('Password')) {
+        throw new Error('Password must be at least 6 characters long.')
+      } else {
+        throw new Error(`Account creation failed: ${error.message}`)
+        }
+      }
+    }
+    
     return {
       user: data.user,
-      error: error ? new Error(error.message) : null
+      error: null
     }
   } catch (error) {
+    console.error('SignUp error:', error)
     return {
       user: null,
       error: error instanceof Error ? error : new Error('Unknown error')
