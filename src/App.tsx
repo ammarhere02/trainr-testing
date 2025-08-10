@@ -31,13 +31,13 @@ function App() {
         {/* Student library */}
         <Route path="/library" element={<StudentLibrary />} />
         
-        {/* Subdomain routes */}
-        <Route path="/*/login" element={<SubdomainLogin />} />
-        <Route path="/*/after-login" element={<AfterLogin />} />
-        <Route path="/*/courses" element={<StudentLibrary />} />
-        
         {/* Home route */}
         <Route path="/" element={<Hero onLogin={() => window.location.href = '/login'} onShowEducatorSignup={() => window.location.href = '/login'} />} />
+        
+        {/* Subdomain routes - must come after specific routes */}
+        <Route path="/:subdomain/login" element={<SubdomainLogin />} />
+        <Route path="/:subdomain/after-login" element={<AfterLogin />} />
+        <Route path="/:subdomain/courses" element={<StudentLibrary />} />
         
         {/* Catch all - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
