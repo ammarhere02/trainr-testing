@@ -150,34 +150,62 @@ export default function CanonicalLogin() {
       }
 
       if (user) {
-        try {
-          // Create organization
-          const org = await createOrganization({
+        // Check if we're using mock data (Supabase not configured)
+        const isMockUser = user.id.startsWith('mock-')
+        
+        if (isMockUser) {
+          // Store organization data in localStorage for demo
+          const orgData = {
+            id: `org-${Date.now()}`,
             subdomain: formData.subdomain,
             name: formData.businessName,
-            color: '#7c3aed'
-          })
-
-          if (org) {
-            // Update user profile with org_id
-            const { supabase } = await import('../../lib/supabase')
-            const { error: updateError } = await supabase
-              .from('profiles')
-              .update({ org_id: org.id, role: 'educator' })
-              .eq('id', user.id)
-            
-            if (updateError) {
-              console.error('Error updating profile:', updateError)
-              // Continue anyway - the user was created successfully
-            }
+            color: '#7c3aed',
+            created_at: new Date().toISOString()
           }
-        } catch (orgError) {
-          console.error('Error creating organization:', orgError)
-          // Continue anyway - the user was created successfully
-        }
+          localStorage.setItem('current-organization', JSON.stringify(orgData))
+          
+          // Redirect to welcome page
+          const educatorData = {
+            id: user.id,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            businessName: formData.businessName,
+            subdomain: formData.subdomain,
+            fullSubdomain: `${formData.subdomain}.trytrainr.com`,
+            createdAt: new Date().toISOString(),
+            role: 'educator'
+          }
+          localStorage.setItem('educator-data', JSON.stringify(educatorData))
+          window.location.href = '/studio/dashboard'
+        } else {
+          // Real Supabase user - create organization
+          try {
+            const org = await createOrganization({
+              subdomain: formData.subdomain,
+              name: formData.businessName,
+              color: '#7c3aed'
+            })
 
-        // Redirect to post-login
-        window.location.href = '/post-login'
+            if (org) {
+              // Update user profile with org_id
+              const { supabase } = await import('../../lib/supabase')
+              const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ org_id: org.id, role: 'educator' })
+                .eq('id', user.id)
+              
+              if (updateError) {
+                console.error('Error updating profile:', updateError)
+              }
+            }
+          } catch (orgError) {
+            console.error('Error creating organization:', orgError)
+          }
+          
+          // Redirect to post-login
+          window.location.href = '/post-login'
+        }
       }
     } catch (error) {
       console.error('Signup failed:', error)
@@ -390,6 +418,15 @@ export default function CanonicalLogin() {
           {errors.general && (
             <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
               {errors.general}
+            </div>
+          )}
+
+          {/* Supabase Setup Notice */}
+          {(!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL === 'your_supabase_project_url_here') && (
+            <div className="mb-6 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm">
+              <p className="font-medium mb-1">🚀 Demo Mode Active</p>
+              <p>Supabase is not configured. Account creation will work in demo mode.</p>
+              <p className="text-xs mt-1">To enable full functionality, set up Supabase in your environment variables.</p>
             </div>
           )}
 

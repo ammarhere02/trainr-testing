@@ -71,7 +71,31 @@ export async function signUpEmail(email: string, password: string, fullName: str
     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
     
     if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Database not configured. Please check your environment variables.')
+      // Supabase not configured - use mock signup for demo
+      console.log('Supabase not configured, using mock signup')
+      
+      // Simulate signup process
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Create mock user
+      const mockUser = {
+        id: `mock-${Date.now()}`,
+        email,
+        user_metadata: {
+          full_name: fullName,
+          role
+        },
+        created_at: new Date().toISOString()
+      }
+      
+      // Store in localStorage for demo
+      localStorage.setItem('current-user', JSON.stringify(mockUser))
+      localStorage.setItem('user-role', role)
+      
+      return {
+        user: mockUser as any,
+        error: null
+      }
     }
 
     const { data, error } = await supabase.auth.signUp({
