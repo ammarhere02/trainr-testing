@@ -124,13 +124,6 @@ export default function CanonicalLogin() {
 
     try {
       // Check if Supabase is configured
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-      
-      if (!supabaseUrl || !supabaseKey) {
-        setErrors({ general: 'Database not configured. Please check your environment setup.' })
-        return
-      }
 
       // Import signup functions
       const { signUpEmail } = await import('../../lib/auth')
@@ -150,62 +143,32 @@ export default function CanonicalLogin() {
       }
 
       if (user) {
-        // Check if we're using mock data (Supabase not configured)
-        const isMockUser = user.id.startsWith('mock-')
-        
-        if (isMockUser) {
-          // Store organization data in localStorage for demo
-          const orgData = {
-            id: `org-${Date.now()}`,
+        // Create organization
+        try {
+          const org = await createOrganization({
             subdomain: formData.subdomain,
             name: formData.businessName,
-            color: '#7c3aed',
-            created_at: new Date().toISOString()
-          }
-          localStorage.setItem('current-organization', JSON.stringify(orgData))
-          
-          // Redirect to welcome page
-          const educatorData = {
-            id: user.id,
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            businessName: formData.businessName,
-            subdomain: formData.subdomain,
-            fullSubdomain: `${formData.subdomain}.trytrainr.com`,
-            createdAt: new Date().toISOString(),
-            role: 'educator'
-          }
-          localStorage.setItem('educator-data', JSON.stringify(educatorData))
-          window.location.href = '/studio/dashboard'
-        } else {
-          // Real Supabase user - create organization
-          try {
-            const org = await createOrganization({
-              subdomain: formData.subdomain,
-              name: formData.businessName,
-              color: '#7c3aed'
-            })
+            color: '#7c3aed'
+          })
 
-            if (org) {
-              // Update user profile with org_id
-              const { supabase } = await import('../../lib/supabase')
-              const { error: updateError } = await supabase
-                .from('profiles')
-                .update({ org_id: org.id, role: 'educator' })
-                .eq('id', user.id)
-              
-              if (updateError) {
-                console.error('Error updating profile:', updateError)
-              }
+          if (org) {
+            // Update user profile with org_id
+            const { supabase } = await import('../../lib/supabase')
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ org_id: org.id, role: 'educator' })
+              .eq('id', user.id)
+            
+            if (updateError) {
+              console.error('Error updating profile:', updateError)
             }
-          } catch (orgError) {
-            console.error('Error creating organization:', orgError)
           }
-          
-          // Redirect to post-login
-          window.location.href = '/post-login'
+        } catch (orgError) {
+          console.error('Error creating organization:', orgError)
         }
+        
+        // Redirect to post-login
+        window.location.href = '/post-login'
       }
     } catch (error) {
       console.error('Signup failed:', error)
@@ -230,49 +193,17 @@ export default function CanonicalLogin() {
     setLoadingType('email')
 
     try {
-      // Check if Supabase is configured
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+      const { user, error } = await signInEmail(formData.email, formData.password)
       
-      if (!supabaseUrl || !supabaseKey) {
-        // Supabase not configured - use mock login for demo
-        console.log('Supabase not configured, using mock login')
-        
-        // Simulate login
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        // Mock successful login
-        const mockUser = {
-          id: 'demo-user',
-          email: formData.email,
-          role: 'educator'
+      if (error) {
+        setErrors({ general: error.message })
+      } else if (user) {
+        // Redirect to post-login handler
+        if (redirectTo) {
+          window.location.href = '/post-login?redirect_to=' + encodeURIComponent(redirectTo)
+        } else {
+          window.location.href = '/post-login'
         }
-        
-        localStorage.setItem('current-user', JSON.stringify(mockUser))
-        localStorage.setItem('user-role', 'educator')
-        
-        // Redirect to dashboard
-        window.location.href = '/studio/dashboard'
-        return
-      }
-      
-      // Supabase is configured - use real login
-      try {
-        const { user, error } = await signInEmail(formData.email, formData.password)
-        
-        if (error) {
-          setErrors({ general: error.message })
-        } else if (user) {
-          // Redirect to post-login handler
-          if (redirectTo) {
-            window.location.href = '/post-login?redirect_to=' + encodeURIComponent(redirectTo)
-          } else {
-            window.location.href = '/post-login'
-          }
-        }
-      } catch (supabaseError) {
-        console.error('Supabase login error:', supabaseError)
-        setErrors({ general: 'Database connection failed. Please try again or contact support.' })
       }
     } catch (error) {
       console.error('Login failed:', error)
@@ -422,13 +353,6 @@ export default function CanonicalLogin() {
           )}
 
           {/* Supabase Setup Notice */}
-          {(!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL === 'your_supabase_project_url_here') && (
-            <div className="mb-6 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm">
-              <p className="font-medium mb-1">🚀 Demo Mode Active</p>
-              <p>Supabase is not configured. Account creation will work in demo mode.</p>
-              <p className="text-xs mt-1">To enable full functionality, set up Supabase in your environment variables.</p>
-            </div>
-          )}
 
           {mode === 'login' ? (
             <form onSubmit={handleEmailLogin} className="space-y-6">

@@ -39,28 +39,6 @@ export async function createOrganization(data: {
   color?: string
 }): Promise<Organization | null> {
   try {
-    // Check if Supabase is configured
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-    
-    if (!supabaseUrl || !supabaseKey || supabaseUrl === 'your_supabase_project_url_here' || supabaseKey === 'your_supabase_anon_key_here') {
-      // Supabase not configured - create mock organization
-      console.log('Supabase not configured, creating mock organization')
-      
-      const mockOrg: Organization = {
-        id: `org-${Date.now()}`,
-        subdomain: data.subdomain,
-        name: data.name,
-        logo_url: data.logo_url || null,
-        color: data.color || '#7c3aed',
-        created_at: new Date().toISOString()
-      }
-      
-      // Store in localStorage for demo
-      localStorage.setItem('current-organization', JSON.stringify(mockOrg))
-      
-      return mockOrg
-    }
 
     const { data: org, error } = await supabase
       .from('organizations')
