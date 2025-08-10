@@ -98,7 +98,6 @@ export async function signUpEmail(email: string, password: string, fullName: str
         throw new Error('Password must be at least 6 characters long.')
       } else {
         throw new Error(`Account creation failed: ${error.message}`)
-        }
       }
     }
     
