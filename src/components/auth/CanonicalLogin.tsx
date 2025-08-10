@@ -198,6 +198,8 @@ export default function CanonicalLogin() {
       if (error) {
         setErrors({ general: error.message })
       } else if (user) {
+        // Show success message
+        setErrors({ general: '' })
         // Redirect to post-login handler
         if (redirectTo) {
           window.location.href = '/post-login?redirect_to=' + encodeURIComponent(redirectTo)
@@ -207,7 +209,11 @@ export default function CanonicalLogin() {
       }
     } catch (error) {
       console.error('Login failed:', error)
-      setErrors({ general: 'Login failed. Please try again.' })
+      if (error instanceof Error) {
+        setErrors({ general: error.message })
+      } else {
+        setErrors({ general: 'Login failed. Please try again.' })
+      }
     } finally {
       setIsLoading(false)
       setLoadingType(null)
@@ -352,7 +358,22 @@ export default function CanonicalLogin() {
             </div>
           )}
 
-          {/* Supabase Setup Notice */}
+          {/* Database Setup Notice */}
+          {!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('your_supabase_project_url_here') ? (
+            <div className="mb-6 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg text-sm">
+              <div className="flex items-start space-x-2">
+                <div className="w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-white text-xs font-bold">!</span>
+                </div>
+                <div>
+                  <p className="font-medium mb-1">Database Setup Required</p>
+                  <p className="text-xs">
+                    Please configure your Supabase credentials and run the SQL migration to enable account creation.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           {mode === 'login' ? (
             <form onSubmit={handleEmailLogin} className="space-y-6">

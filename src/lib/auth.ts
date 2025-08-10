@@ -66,6 +66,13 @@ export async function sendMagicLink(email: string, redirectTo?: string): Promise
 // Sign up with email and password
 export async function signUpEmail(email: string, password: string, fullName: string, role: string = 'student'): Promise<AuthResult> {
   try {
+    // Check if Supabase is properly configured
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+    
+    if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('your_supabase_project_url_here')) {
+      throw new Error('Database not configured. Please set up your Supabase credentials in the environment variables.')
+    }
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -83,12 +90,18 @@ export async function signUpEmail(email: string, password: string, fullName: str
       console.error('Supabase signup error:', error)
       
       // Provide more specific error messages
-      if (error.message.includes('User already registered')) {
+      if (error.message.includes('User already registered') || error.message.includes('already been registered')) {
         throw new Error('An account with this email already exists. Please sign in instead.')
+      } else if (error.message.includes('Invalid API key') || error.message.includes('Invalid JWT')) {
+        throw new Error('Database configuration error. Please check your Supabase setup.')
+      } else if (error.message.includes('relation') && error.message.includes('does not exist')) {
+        throw new Error('Database tables not found. Please run the SQL migration in your Supabase dashboard.')
       } else if (error.message.includes('Invalid email')) {
         throw new Error('Please enter a valid email address.')
       } else if (error.message.includes('Password')) {
         throw new Error('Password must be at least 6 characters long.')
+      } else if (error.message.includes('Database error')) {
+        throw new Error('Database connection failed. Please check your Supabase configuration and try again.')
       } else {
         throw new Error(`Account creation failed: ${error.message}`)
       }
