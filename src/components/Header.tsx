@@ -76,7 +76,7 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
              </button>
 
               {/* Center Navigation - Only show when not logged in */}
-              {!isLoggedIn && (
+              {true && (
                 <div className="flex items-center space-x-6 mr-6">
                   {/* Admin Button - Always Visible */}
                   <button
@@ -114,13 +114,12 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
                   </button>
                   
                   <button
-                    onClick={onShowLogin}
+                    onClick={() => window.location.href = '/studio/dashboard'}
                     className="text-gray-300 hover:text-white font-medium transition-colors"
                   >
                     Login
                   </button>
                   
-                  {/* Temporary Admin Button */}
                   <button
                     onClick={handleJoinClick}
                     className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 flex items-center"
@@ -129,7 +128,6 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </button>
                 </div>
-              )}
 
               {/* Search and Actions */}
               <div className="flex items-center space-x-4 relative">
