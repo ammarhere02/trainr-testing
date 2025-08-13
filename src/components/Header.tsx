@@ -135,6 +135,8 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
                   <Menu className="w-5 h-5" />
                 </button>
               </div>
+             )
+             }
             </div>
           </div>
         </div>
