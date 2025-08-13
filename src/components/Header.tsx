@@ -77,6 +77,7 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
 
               {/* Center Navigation - Only show when not logged in */}
               {true && (
+               <>
                 <div className="flex items-center space-x-6 mr-6">
                   {/* Admin Button - Always Visible */}
                   <button
@@ -135,8 +136,8 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
                   <Menu className="w-5 h-5" />
                 </button>
               </div>
-             )
-             }
+               </>
+              )}
             </div>
           </div>
         </div>
