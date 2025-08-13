@@ -57,6 +57,15 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
 
             {/* Navigation and Actions */}
             <div className="flex-1 flex justify-end items-center">
+             {/* Admin Button - Always Visible */}
+             <button
+               onClick={() => window.location.href = '/studio/dashboard'}
+               className="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700 transition-colors mr-4"
+               title="Admin Access"
+             >
+               <Settings className="w-4 h-4" />
+             </button>
+
               {/* Center Navigation - Only show when not logged in */}
               {!isLoggedIn && (
                 <div className="flex items-center space-x-6 mr-6">
