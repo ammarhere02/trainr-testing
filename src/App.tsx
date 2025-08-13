@@ -28,6 +28,9 @@ function App() {
         {/* Educator studio */}
         <Route path="/studio/dashboard" element={<StudioDashboard />} />
         
+        {/* Admin routes - temporary access */}
+        <Route path="/admin/dashboard" element={<StudioDashboard />} />
+        
         {/* Student library */}
         <Route path="/library" element={<StudentLibrary />} />
         
