@@ -101,6 +101,14 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
                     ADMIN
                   </button>
                   
+                  {/* Temporary Admin Button */}
+                  <button
+                    onClick={() => window.location.href = '/studio/dashboard'}
+                    className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors text-sm"
+                  >
+                    ADMIN
+                  </button>
+                  
                   <button
                     onClick={handleJoinClick}
                     className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 flex items-center"
