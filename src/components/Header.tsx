@@ -60,6 +60,15 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
              {/* Admin Button - Always Visible */}
              <button
                onClick={() => window.location.href = '/studio/dashboard'}
+               className="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors mr-4 text-sm font-medium"
+               title="Admin Access"
+             >
+               ADMIN
+             </button>
+
+             {/* Admin Button - Always Visible */}
+             <button
+               onClick={() => window.location.href = '/studio/dashboard'}
                className="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700 transition-colors mr-4"
                title="Admin Access"
              >
@@ -104,21 +113,6 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
                   
                   {/* Temporary Admin Button */}
                   <button
-                    onClick={() => window.location.href = '/studio/dashboard'}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors text-sm"
-                  >
-                    ADMIN
-                  </button>
-                  
-                  {/* Temporary Admin Button */}
-                  <button
-                    onClick={() => window.location.href = '/studio/dashboard'}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors text-sm"
-                  >
-                    ADMIN
-                  </button>
-                  
-                  <button
                     onClick={handleJoinClick}
                     className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 flex items-center"
                   >
@@ -130,113 +124,6 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
 
               {/* Search and Actions */}
               <div className="flex items-center space-x-4 relative">
-                {isLoggedIn && (
-                  <>
-                    <div className="relative hidden sm:block">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
-                      <input
-                        type="text"
-                        placeholder="Search..."
-                        className="pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 text-white placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
-                      />
-                    </div>
-                    <button className="relative p-2 text-gray-300 hover:text-white transition-colors">
-                      <Bell className="w-5 h-5" />
-                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full"></span>
-                    </button>
-                    
-                    {/* Account Dropdown */}
-                    <div className="relative">
-                      <button 
-                        onClick={() => setShowAccountDropdown(!showAccountDropdown)}
-                        className="flex items-center space-x-2 p-1 text-gray-300 hover:text-white transition-colors rounded-full hover:bg-slate-700"
-                      >
-                        <img
-                          src={userRole === 'educator' 
-                            ? 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=60'
-                            : 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=60'
-                          }
-                          alt="Profile"
-                          className="w-8 h-8 rounded-full object-cover border-2 border-slate-600"
-                        />
-                      </button>
-                      
-                      {showAccountDropdown && (
-                        <>
-                          {/* Backdrop */}
-                          <div 
-                            className="fixed inset-0 z-40"
-                            onClick={() => setShowAccountDropdown(false)}
-                          />
-                          
-                          {/* Dropdown Menu */}
-                          <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                            {/* User Info */}
-                            <div className="px-4 py-3 border-b border-gray-100">
-                              <div className="flex items-center space-x-3">
-                                <img
-                                  src={userRole === 'educator' 
-                                    ? 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=80'
-                                    : 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=80'
-                                  }
-                                  alt="Profile"
-                                  className="w-10 h-10 rounded-full object-cover"
-                                />
-                                <div>
-                                  <p className="font-medium text-gray-900">
-                                    {userRole === 'educator' ? 'Sarah Johnson' : 'John Doe'}
-                                  </p>
-                                  <p className="text-sm text-gray-500">
-                                    {userRole === 'educator' ? 'Educator' : 'Student'}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {/* Menu Items */}
-                            <div className="py-1">
-                              <button
-                                onClick={() => {
-                                  onViewChange('member-profile');
-                                  setShowAccountDropdown(false);
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
-                              >
-                                <User className="w-4 h-4 mr-3" />
-                                View Profile
-                              </button>
-                              
-                              <button
-                                onClick={() => {
-                                  // Navigate to help/support page
-                                  setShowAccountDropdown(false);
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
-                              >
-                                <HelpCircle className="w-4 h-4 mr-3" />
-                                Help & Support
-                              </button>
-                            </div>
-                            
-                            {/* Logout */}
-                            <div className="border-t border-gray-100 pt-1">
-                              <button
-                                onClick={() => {
-                                  onLogout();
-                                  setShowAccountDropdown(false);
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center"
-                              >
-                                <LogOut className="w-4 h-4 mr-3" />
-                                Sign Out
-                              </button>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </>
-                )}
                 <button className="md:hidden p-2 text-gray-300 hover:text-white transition-colors">
                   <Menu className="w-5 h-5" />
                 </button>
