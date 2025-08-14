@@ -67,15 +67,15 @@ export default function SideMenu({ currentView, onViewChange, userRole, onCollap
       hasSubmenu: false
     },
     {
-      key: 'website',
-      label: 'Website',
-      icon: Globe,
-      hasSubmenu: false
-    },
-    {
       key: 'member',
       label: 'Member Area',
       icon: Users,
+      hasSubmenu: false
+    },
+    {
+      key: 'website',
+      label: 'Website',
+      icon: Globe,
       hasSubmenu: false
     }
   ];
