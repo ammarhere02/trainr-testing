@@ -71,6 +71,7 @@ export default function SideMenu({ currentView, onViewChange, userRole, onCollap
       label: 'Website',
       icon: Globe,
       hasSubmenu: false
+    }
   ];
 
   if (userRole !== 'educator') {
