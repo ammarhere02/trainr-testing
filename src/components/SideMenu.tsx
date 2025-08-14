@@ -55,6 +55,12 @@ export default function SideMenu({ currentView, onViewChange, userRole, onCollap
       hasSubmenu: false
     },
     {
+      key: 'content-planner',
+      label: 'Content Planner',
+      icon: FileText,
+      hasSubmenu: false
+    },
+    {
       key: 'sales',
       label: 'Sales',
       icon: DollarSign,
@@ -62,15 +68,6 @@ export default function SideMenu({ currentView, onViewChange, userRole, onCollap
       submenu: [
         { key: 'sales', label: 'Payments', icon: DollarSign },
         { key: 'sales-coupons', label: 'Coupons', icon: FileText }
-      ]
-    },
-    {
-      key: 'marketing',
-      label: 'Marketing',
-      icon: Megaphone,
-      hasSubmenu: true,
-      submenu: [
-        { key: 'content-planner', label: 'Content Planner', icon: FileText }
       ]
     },
     {
