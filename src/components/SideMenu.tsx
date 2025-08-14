@@ -69,7 +69,8 @@ export default function SideMenu({ currentView, onViewChange, userRole, onCollap
       hasSubmenu: true,
       submenu: [
         { key: 'content-planner', label: 'Content Planner', icon: FileText },
-        { key: 'testimonials', label: 'Testimonials', icon: Users }
+        { key: 'testimonials', label: 'Testimonials', icon: Users },
+        { key: 'email-automation', label: 'Email Automation', icon: Mail }
       ]
     },
     {

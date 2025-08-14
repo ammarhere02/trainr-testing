@@ -50,6 +50,8 @@ function App() {
         return <Profile onBack={() => setCurrentView('dashboard')} />;
       case 'website':
         return <Funnel userRole="educator" />;
+      case 'course-learning':
+        return <CourseLearning onBack={() => setCurrentView('courses')} />;
       default:
         return <Dashboard />;
     }
