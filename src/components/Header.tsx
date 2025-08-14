@@ -9,9 +9,10 @@ interface HeaderProps {
   userRole: 'educator' | 'student' | null;
   onLogout: () => void;
   onLogin?: (role: 'educator' | 'student', educatorId?: string) => void;
+  showFullNavigation?: boolean;
 }
 
-export default function Header({ currentView, onViewChange, onShowLogin, isLoggedIn, userRole, onLogout, onLogin }: HeaderProps) {
+export default function Header({ currentView, onViewChange, onShowLogin, isLoggedIn, userRole, onLogout, onLogin, showFullNavigation = false }: HeaderProps) {
   const [showProductsDropdown, setShowProductsDropdown] = useState(false);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
 
@@ -66,8 +67,8 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
                ADMIN
              </button>
 
-              {/* Center Navigation - Only show when not logged in */}
-              {true && (
+              {/* Center Navigation - Only show when showFullNavigation is true */}
+              {showFullNavigation && (
                <>
                 <div className="flex items-center space-x-6 mr-6">
                   <button

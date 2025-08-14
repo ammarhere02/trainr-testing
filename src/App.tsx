@@ -59,6 +59,7 @@ function App() {
         isLoggedIn={true}
         userRole="educator"
         onLogout={() => {}}
+        showFullNavigation={false}
       />
 
       <div className="flex">
