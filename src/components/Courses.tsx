@@ -298,10 +298,6 @@ export default function Courses({ onStartLearning }: CoursesProps) {
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-8">
-          <button className="text-purple-600 hover:text-purple-700 font-medium flex items-center">
-            <Video className="w-4 h-4 mr-2" />
-            Library
-          </button>
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Courses</h1>
           <p className="text-gray-600 mt-2">Continue your learning journey</p>

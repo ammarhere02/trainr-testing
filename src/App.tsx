@@ -4,8 +4,6 @@ import Header from './components/Header';
 import SideMenu from './components/SideMenu';
 import Dashboard from './components/Dashboard';
 import Courses from './components/Courses';
-import VideoLibrary from './components/VideoLibrary';
-import Record from './components/Record';
 import Community from './components/Community';
 import Meet from './components/Meet';
 import Events from './components/Events';
@@ -33,10 +31,6 @@ function App() {
         return <Dashboard />;
       case 'courses':
         return <Courses onStartLearning={handleStartLearning} />;
-      case 'library':
-        return <VideoLibrary />;
-      case 'member-record':
-        return <Record onBack={() => setCurrentView('library')} />;
       case 'member-community':
         return <Community userRole="educator" />;
       case 'meet':

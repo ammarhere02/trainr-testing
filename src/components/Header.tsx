@@ -66,28 +66,10 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
                ADMIN
              </button>
 
-             {/* Admin Button - Always Visible */}
-             <button
-               onClick={() => window.location.href = '/studio/dashboard'}
-               className="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700 transition-colors mr-4"
-               title="Admin Access"
-             >
-               <Settings className="w-4 h-4" />
-             </button>
-
               {/* Center Navigation - Only show when not logged in */}
               {true && (
                <>
                 <div className="flex items-center space-x-6 mr-6">
-                  {/* Admin Button - Always Visible */}
-                  <button
-                    onClick={() => window.location.href = '/studio/dashboard'}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
-                    title="Admin Access"
-                  >
-                    ADMIN
-                  </button>
-                  
                   <button
                     onClick={() => scrollToSection('features-section')}
                     className="text-gray-300 hover:text-white font-medium transition-colors"
