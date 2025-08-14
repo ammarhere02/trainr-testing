@@ -50,10 +50,7 @@ export default function SideMenu({ currentView, onViewChange, userRole, onCollap
       key: 'courses',
       label: 'Courses',
       icon: BookOpen,
-      hasSubmenu: true,
-      submenu: [
-        { key: 'courses', label: 'Manage Courses', icon: BookOpen }
-      ]
+      hasSubmenu: false
     },
     {
       key: 'sales',
