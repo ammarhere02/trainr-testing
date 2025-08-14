@@ -56,7 +56,7 @@ export default function SideMenu({ currentView, onViewChange, userRole, onCollap
     },
     {
       key: 'content-planner',
-      label: 'Content Planner',
+      label: 'Content Calendar',
       icon: FileText,
       hasSubmenu: false
     },
