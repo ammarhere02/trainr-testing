@@ -159,9 +159,8 @@ export default function Sales() {
   ]);
 
   const tabs = [
-    { id: 'payments', label: 'Payments', icon: CreditCard },
+    { id: 'payments', label: 'Payments & Contacts', icon: CreditCard },
     { id: 'coupons', label: 'Coupons', icon: Tag },
-    { id: 'contacts', label: 'Contacts', icon: Users }
   ];
 
   // Calculate stats
