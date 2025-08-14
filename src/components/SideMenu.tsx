@@ -13,7 +13,9 @@ import {
   PlayCircle,
   FileText,
   HelpCircle,
-  Mail
+  Mail,
+  MessageCircle,
+  Calendar
 } from 'lucide-react';
 
 interface SideMenuProps {
