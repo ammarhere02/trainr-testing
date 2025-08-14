@@ -44,15 +44,13 @@ function App() {
       case 'contacts':
         return <Contacts />;
       case 'sales':
-        return <Products onStartLearning={handleStartLearning} />;
+        return <Sales />;
       case 'settings':
         return <Settings userRole="educator" />;
       case 'profile':
         return <Profile onBack={() => setCurrentView('dashboard')} />;
       case 'website':
         return <Funnel userRole="educator" />;
-      case 'course-learning':
-        return <CourseLearning onBack={() => setCurrentView('courses')} />;
       default:
         return <Dashboard />;
     }

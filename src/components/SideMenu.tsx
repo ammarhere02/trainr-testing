@@ -64,28 +64,18 @@ export default function SideMenu({ currentView, onViewChange, userRole, onCollap
       key: 'sales',
       label: 'Sales',
       icon: DollarSign,
-      hasSubmenu: true,
-      submenu: [
-        { key: 'sales', label: 'Payments', icon: DollarSign },
-        { key: 'sales-coupons', label: 'Coupons', icon: FileText }
-      ]
-    },
-    {
-      key: 'member',
-      label: 'Member Area',
-      icon: Users,
-      hasSubmenu: false
-    },
-    {
-      key: 'contacts',
-      label: 'Contacts',
-      icon: Users,
       hasSubmenu: false
     },
     {
       key: 'website',
       label: 'Website',
       icon: Globe,
+      hasSubmenu: false
+    },
+    {
+      key: 'member',
+      label: 'Member Area',
+      icon: Users,
       hasSubmenu: false
     }
   ];
