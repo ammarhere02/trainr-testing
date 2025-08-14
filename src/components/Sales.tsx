@@ -53,47 +53,11 @@ import {
 } from 'lucide-react';
 
 export default function Sales() {
-  const [activeTab, setActiveTab] = useState('products');
+  const [activeTab, setActiveTab] = useState('payments');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [createType, setCreateType] = useState<'product' | 'coupon' | 'contact'>('product');
-
-  // Products data
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      title: 'Complete Web Development Bootcamp',
-      price: 199,
-      originalPrice: 299,
-      description: 'Learn full-stack web development from scratch with HTML, CSS, JavaScript, React, Node.js, and MongoDB.',
-      category: 'web-development',
-      status: 'published',
-      thumbnail: 'https://images.pexels.com/photos/3861958/pexels-photo-3861958.jpeg?auto=compress&cs=tinysrgb&w=400',
-      students: 2847,
-      rating: 4.8,
-      reviews: 1234,
-      revenue: 567430,
-      sales: 2847,
-      createdDate: '2024-01-15'
-    },
-    {
-      id: 2,
-      title: 'Advanced React Patterns',
-      price: 149,
-      originalPrice: null,
-      description: 'Master advanced React patterns including hooks, context, HOCs, and performance optimization.',
-      category: 'programming',
-      status: 'published',
-      thumbnail: 'https://images.pexels.com/photos/1181676/pexels-photo-1181676.jpeg?auto=compress&cs=tinysrgb&w=400',
-      students: 1532,
-      rating: 4.9,
-      reviews: 687,
-      revenue: 228280,
-      sales: 1532,
-      createdDate: '2024-01-10'
-    }
-  ]);
+  const [createType, setCreateType] = useState<'coupon' | 'contact'>('contact');
 
   // Coupons data
   const [coupons, setCoupons] = useState([
@@ -195,7 +159,6 @@ export default function Sales() {
   ]);
 
   const tabs = [
-    { id: 'products', label: 'Products', icon: BookOpen },
     { id: 'payments', label: 'Payments', icon: CreditCard },
     { id: 'coupons', label: 'Coupons', icon: Tag },
     { id: 'contacts', label: 'Contacts', icon: Users }
@@ -204,7 +167,6 @@ export default function Sales() {
   // Calculate stats
   const stats = {
     totalRevenue: payments.filter(p => p.status === 'completed').reduce((sum, p) => sum + p.amount, 0),
-    totalProducts: products.length,
     totalContacts: contacts.length,
     activeCoupons: coupons.filter(c => c.isActive && new Date(c.expiryDate) > new Date()).length,
     pendingPayments: payments.filter(p => p.status === 'pending').length,
@@ -271,7 +233,7 @@ export default function Sales() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-6 mb-8">
+      <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -280,18 +242,6 @@ export default function Sales() {
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Products</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalProducts}</p>
-            </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <BookOpen className="w-6 h-6 text-purple-600" />
             </div>
           </div>
         </div>
@@ -366,96 +316,6 @@ export default function Sales() {
           </nav>
         </div>
       </div>
-
-      {/* Products Tab */}
-      {activeTab === 'products' && (
-        <div className="space-y-6">
-          {/* Filters */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-              <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    placeholder="Search products..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent w-64"
-                  />
-                </div>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                >
-                  <option value="all">All Status</option>
-                  <option value="published">Published</option>
-                  <option value="draft">Draft</option>
-                </select>
-              </div>
-              <span className="text-sm text-gray-600">{products.length} products</span>
-            </div>
-          </div>
-
-          {/* Products Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => (
-              <div key={product.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                <div className="relative">
-                  <img src={product.thumbnail} alt={product.title} className="w-full h-48 object-cover" />
-                  <div className="absolute top-3 left-3">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(product.status)}`}>
-                      {product.status}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="p-6">
-                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{product.title}</h3>
-                  <p className="text-sm text-gray-600 mb-4 line-clamp-2">{product.description}</p>
-                  
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-1">
-                      <span className="text-lg font-bold text-gray-900">${product.price}</span>
-                      {product.originalPrice && (
-                        <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
-                      )}
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span className="text-sm font-medium">{product.rating}</span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                    <div className="text-center">
-                      <div className="font-medium text-gray-900">{product.students.toLocaleString()}</div>
-                      <div className="text-gray-600">Students</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-medium text-green-600">${product.revenue.toLocaleString()}</div>
-                      <div className="text-gray-600">Revenue</div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <button className="p-1 text-gray-400 hover:text-blue-600 transition-colors" title="Edit">
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                    <button className="p-1 text-gray-400 hover:text-purple-600 transition-colors" title="View">
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button className="p-1 text-gray-400 hover:text-green-600 transition-colors" title="Share">
-                      <Share2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Payments Tab */}
       {activeTab === 'payments' && (
@@ -697,23 +557,6 @@ export default function Sales() {
               <h3 className="text-xl font-semibold text-gray-900 mb-6">What would you like to create?</h3>
               
               <div className="space-y-3">
-                <button
-                  onClick={() => {
-                    setCreateType('product');
-                    setActiveTab('products');
-                    setShowCreateModal(false);
-                  }}
-                  className="w-full p-4 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-all text-left"
-                >
-                  <div className="flex items-center space-x-3">
-                    <BookOpen className="w-6 h-6 text-purple-600" />
-                    <div>
-                      <h4 className="font-medium text-gray-900">New Product</h4>
-                      <p className="text-sm text-gray-600">Create a new course or product</p>
-                    </div>
-                  </div>
-                </button>
-
                 <button
                   onClick={() => {
                     setCreateType('coupon');
