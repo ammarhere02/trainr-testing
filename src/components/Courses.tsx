@@ -377,24 +377,22 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${course.progress}%` }}></div>
                 </div>
-                {/* Progress Bar and Actions */}
-                <div className="mt-auto space-y-3">
-                  {/* Course Actions */}
-                  <div className="flex items-center justify-between pt-2">
-                    <button
-                      onClick={() => onStartLearning(course.id)}
-                      className="text-purple-600 hover:text-purple-700 font-medium text-sm transition-colors"
-                    >
-                      Continue Learning
-                    </button>
-                    <button
-                      onClick={() => handleEditVideo(course)}
-                      className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors flex items-center"
-                    >
-                      <Video className="w-4 h-4 mr-1" />
-                      Edit Video
-                    </button>
-                  </div>
+                
+                {/* Course Actions */}
+                <div className="flex items-center justify-between pt-4">
+                  <button
+                    onClick={() => onStartLearning(course.id)}
+                    className="text-purple-600 hover:text-purple-700 font-medium text-sm transition-colors"
+                  >
+                    Continue Learning
+                  </button>
+                  <button
+                    onClick={() => handleEditVideo(course)}
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors flex items-center"
+                  >
+                    <Video className="w-4 h-4 mr-1" />
+                    Edit Video
+                  </button>
                 </div>
               </div>
             </div>
