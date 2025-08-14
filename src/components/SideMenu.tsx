@@ -83,12 +83,6 @@ export default function SideMenu({ currentView, onViewChange, userRole, onCollap
       hasSubmenu: false
     },
     {
-      key: 'meet',
-      label: 'Meet',
-      icon: Video,
-      hasSubmenu: false
-    },
-    {
       key: 'contacts',
       label: 'Contacts',
       icon: Users,

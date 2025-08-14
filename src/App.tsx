@@ -5,7 +5,6 @@ import SideMenu from './components/SideMenu';
 import Dashboard from './components/Dashboard';
 import Courses from './components/Courses';
 import Community from './components/Community';
-import Meet from './components/Meet';
 import Events from './components/Events';
 import Content from './components/Content';
 import Testimonials from './components/Testimonials';
@@ -33,8 +32,6 @@ function App() {
         return <Courses onStartLearning={handleStartLearning} />;
       case 'member-community':
         return <Community userRole="educator" />;
-      case 'meet':
-        return <Meet />;
       case 'events':
         return <Events />;
       case 'content-planner':
