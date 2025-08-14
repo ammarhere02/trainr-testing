@@ -312,44 +312,12 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                     >
                       Continue Learning
                     </button>
-                    <div className="relative">
-                      <button
-                        onClick={() => setShowCourseMenu(showCourseMenu === course.id ? null : course.id)}
-                        className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                        title="Course options"
-                      >
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-                      
-                      {showCourseMenu === course.id && (
-                        <>
-                          {/* Backdrop */}
-                          <div 
-                            className="fixed inset-0 z-10"
-                            onClick={() => setShowCourseMenu(null)}
-                          />
-                          
-                          {/* Dropdown Menu */}
-                          <div className="absolute right-0 bottom-full mb-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                            <button
-                              onClick={() => handleEditCourse(course)}
-                              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                            >
-                              Edit course
-                            </button>
-                            
-                            <hr className="my-1 border-gray-200" />
-                            
-                            <button
-                              onClick={() => handleDeleteCourse(course)}
-                              className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                            >
-                              Delete course
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                    <button
+                      onClick={() => setShowEditVideoModal(true)}
+                      className="bg-purple-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-purple-700 transition-colors"
+                    >
+                      Edit Video
+                    </button>
                   </div>
                 </div>
               </div>
