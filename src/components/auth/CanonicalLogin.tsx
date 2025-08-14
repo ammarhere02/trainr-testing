@@ -263,8 +263,8 @@ export default function CanonicalLogin() {
     }
   }
 
-  const getSubdomainStatusIcon = () => {
-    switch (subdomainStatus) {
+  const getSubdirectoryStatusIcon = () => {
+    switch (subdirectoryStatus) {
       case 'checking':
         return <Loader className="w-4 h-4 text-blue-500 animate-spin" />
       case 'available':
@@ -277,16 +277,16 @@ export default function CanonicalLogin() {
     }
   }
 
-  const getSubdomainStatusMessage = () => {
-    switch (subdomainStatus) {
+  const getSubdirectoryStatusMessage = () => {
+    switch (subdirectoryStatus) {
       case 'checking':
         return 'Checking availability...'
       case 'available':
-        return `${formData.subdomain}.trainr.app is available!`
+        return `trytrainr.com/${formData.subdirectory} is available!`
       case 'taken':
-        return 'This subdomain is already taken'
+        return 'This subdirectory is already taken'
       case 'invalid':
-        return 'Invalid subdomain format (3+ chars, letters, numbers, hyphens only)'
+        return 'Invalid subdirectory format (3+ chars, letters, numbers, hyphens only)'
       default:
         return ''
     }
