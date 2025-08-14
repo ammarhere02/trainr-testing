@@ -386,13 +386,22 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                   >
                     Continue Learning
                   </button>
-                  <button
-                    onClick={() => handleEditVideo(course)}
-                    className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors flex items-center"
-                  >
-                    <Video className="w-4 h-4 mr-1" />
-                    Edit Video
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handleEditVideo(course)}
+                      className="bg-purple-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors flex items-center"
+                    >
+                      <Video className="w-4 h-4 mr-1" />
+                      Edit Video
+                    </button>
+                    <button
+                      onClick={() => handleEditCourse(course)}
+                      className="bg-gray-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors flex items-center"
+                    >
+                      <Edit3 className="w-4 h-4 mr-1" />
+                      Edit Course
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
