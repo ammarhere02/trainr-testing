@@ -15,6 +15,7 @@ import Settings from './components/Settings';
 import Profile from './components/Profile';
 import Funnel from './components/Funnel';
 import CourseLearning from './components/CourseLearning';
+import MemberArea from './components/MemberArea';
 
 function App() {
   const [currentView, setCurrentView] = useState('dashboard');
@@ -31,7 +32,8 @@ function App() {
       case 'courses':
         return <Courses onStartLearning={handleStartLearning} />;
       case 'member-community':
-        return <Community userRole="educator" />;
+      case 'member-area':
+        return <MemberArea userRole="educator" onStartLearning={handleStartLearning} />;
       case 'events':
         return <Events />;
       case 'content-planner':

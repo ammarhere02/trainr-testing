@@ -78,11 +78,7 @@ export default function SideMenu({ currentView, onViewChange, userRole, onCollap
       key: 'member',
       label: 'Member Area',
       icon: Users,
-      hasSubmenu: true,
-      submenu: [
-        { key: 'member-community', label: 'Community', icon: MessageCircle },
-        { key: 'events', label: 'Live Calls', icon: Calendar }
-      ]
+      hasSubmenu: false
     },
     {
       key: 'contacts',
