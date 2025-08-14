@@ -71,6 +71,12 @@ export default function SideMenu({ currentView, onViewChange, userRole, onCollap
       label: 'Website',
       icon: Globe,
       hasSubmenu: false
+    },
+    {
+      key: 'member',
+      label: 'Member Area',
+      icon: Users,
+      hasSubmenu: false
     }
   ];
 
