@@ -17,8 +17,10 @@ import MemberArea from './components/MemberArea';
 function App() {
   const [currentView, setCurrentView] = useState('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
 
   const handleStartLearning = (courseId: number) => {
+    setSelectedCourseId(courseId);
     setCurrentView('course-learning');
   };
 
@@ -44,6 +46,8 @@ function App() {
         return <Profile onBack={() => setCurrentView('dashboard')} />;
       case 'website':
         return <Funnel userRole="educator" />;
+      case 'course-learning':
+        return <CourseLearning courseId={selectedCourseId} onBack={() => setCurrentView('courses')} />;
       default:
         return <Dashboard />;
     }
