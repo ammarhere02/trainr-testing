@@ -12,6 +12,8 @@ export default function Courses({ onStartLearning }: CoursesProps) {
   const [showCourseMenu, setShowCourseMenu] = React.useState<number | null>(null);
   const [courseToDelete, setCourseToDelete] = React.useState<any>(null);
   const [courseToEdit, setCourseToEdit] = React.useState<any>(null);
+  const [showVideoModal, setShowVideoModal] = React.useState(false);
+  const [videoToEdit, setVideoToEdit] = React.useState<any>(null);
   const [courses, setCourses] = React.useState(() => {
     const saved = localStorage.getItem('courses-data');
     return saved ? JSON.parse(saved) : [
@@ -70,10 +72,77 @@ export default function Courses({ onStartLearning }: CoursesProps) {
     published: true
   });
 
+  const [videoData, setVideoData] = React.useState({
+    videoUrl: '',
+    videoTitle: '',
+    videoDescription: '',
+    videoSource: 'youtube'
+  });
+
   const handleDeleteCourse = (course: any) => {
     setCourseToDelete(course);
     setShowDeleteModal(true);
     setShowCourseMenu(null);
+  };
+
+  const handleEditVideo = (course: any) => {
+    setVideoToEdit(course);
+    setVideoData({
+      videoUrl: course.videoUrl || '',
+      videoTitle: course.videoTitle || course.title,
+      videoDescription: course.videoDescription || course.description,
+      videoSource: course.videoSource || 'youtube'
+    });
+    setShowVideoModal(true);
+    setShowCourseMenu(null);
+  };
+
+  const saveVideoChanges = () => {
+    if (videoToEdit) {
+      const updatedCourses = courses.map(course => 
+        course.id === videoToEdit.id 
+          ? { 
+              ...course, 
+              videoUrl: videoData.videoUrl,
+              videoTitle: videoData.videoTitle,
+              videoDescription: videoData.videoDescription,
+              videoSource: videoData.videoSource
+            }
+          : course
+      );
+      setCourses(updatedCourses);
+      localStorage.setItem('courses-data', JSON.stringify(updatedCourses));
+      setShowVideoModal(false);
+      setVideoToEdit(null);
+      setVideoData({
+        videoUrl: '',
+        videoTitle: '',
+        videoDescription: '',
+        videoSource: 'youtube'
+      });
+    }
+  };
+
+  const cancelVideoEdit = () => {
+    setShowVideoModal(false);
+    setVideoToEdit(null);
+    setVideoData({
+      videoUrl: '',
+      videoTitle: '',
+      videoDescription: '',
+      videoSource: 'youtube'
+    });
+  };
+
+  const getYouTubeVideoId = (url: string) => {
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+  };
+
+  const getEmbedUrl = (url: string) => {
+    const videoId = getYouTubeVideoId(url);
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
   };
 
   const handleEditCourse = (course: any) => {
@@ -312,12 +381,51 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                     >
                       Continue Learning
                     </button>
-                    <button
-                      onClick={() => setShowEditVideoModal(true)}
-                      className="bg-purple-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-purple-700 transition-colors"
-                    >
-                      Edit Video
-                    </button>
+                    <div className="relative">
+                      <button
+                        onClick={() => setShowCourseMenu(showCourseMenu === course.id ? null : course.id)}
+                        className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                        title="Course options"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                      
+                      {showCourseMenu === course.id && (
+                        <>
+                          {/* Backdrop */}
+                          <div 
+                            className="fixed inset-0 z-10"
+                            onClick={() => setShowCourseMenu(null)}
+                          />
+                          
+                          {/* Dropdown Menu */}
+                          <div className="absolute right-0 bottom-full mb-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                            <button
+                              onClick={() => handleEditCourse(course)}
+                              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                              Edit course
+                            </button>
+                            
+                            <button
+                              onClick={() => handleEditVideo(course)}
+                              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                              Edit video
+                            </button>
+                            
+                            <hr className="my-1 border-gray-200" />
+                            
+                            <button
+                              onClick={() => handleDeleteCourse(course)}
+                              className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                            >
+                              Delete course
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -838,6 +946,139 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                   className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
                 >
                   Delete Course
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Video Modal */}
+      {showVideoModal && videoToEdit && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Edit Course Video</h2>
+                <button
+                  onClick={cancelVideoEdit}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                {/* Video Source */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Video Source
+                  </label>
+                  <select
+                    value={videoData.videoSource}
+                    onChange={(e) => setVideoData(prev => ({ ...prev, videoSource: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="youtube">YouTube</option>
+                    <option value="vimeo">Vimeo</option>
+                    <option value="wistia">Wistia</option>
+                    <option value="loom">Loom</option>
+                    <option value="library">Trainr Library</option>
+                  </select>
+                </div>
+
+                {/* Video URL */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Video URL
+                  </label>
+                  <input
+                    type="url"
+                    value={videoData.videoUrl}
+                    onChange={(e) => setVideoData(prev => ({ ...prev, videoUrl: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Paste the full URL from {videoData.videoSource}
+                  </p>
+                </div>
+
+                {/* Video Title */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Video Title (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={videoData.videoTitle}
+                    onChange={(e) => setVideoData(prev => ({ ...prev, videoTitle: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Custom video title (defaults to course title)"
+                  />
+                </div>
+
+                {/* Video Description */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Video Description (Optional)
+                  </label>
+                  <textarea
+                    value={videoData.videoDescription}
+                    onChange={(e) => setVideoData(prev => ({ ...prev, videoDescription: e.target.value }))}
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    placeholder="Custom video description (defaults to course description)"
+                  />
+                </div>
+
+                {/* Video Preview */}
+                {videoData.videoUrl && getEmbedUrl(videoData.videoUrl) && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Video Preview
+                    </label>
+                    <div className="bg-black rounded-xl overflow-hidden">
+                      <div className="aspect-video">
+                        <iframe
+                          src={getEmbedUrl(videoData.videoUrl)}
+                          className="w-full h-full"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          title="Video Preview"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Current Video Info */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-2">Current Course: {videoToEdit.title}</h4>
+                  <p className="text-sm text-gray-600">{videoToEdit.description}</p>
+                  {videoToEdit.videoUrl && (
+                    <div className="mt-2">
+                      <p className="text-xs text-gray-500">Current video: {videoToEdit.videoUrl}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end space-x-3 mt-8">
+                <button
+                  onClick={cancelVideoEdit}
+                  className="px-6 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+                >
+                  CANCEL
+                </button>
+                <button
+                  onClick={saveVideoChanges}
+                  className="bg-gray-800 text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-900 transition-colors"
+                >
+                  SAVE VIDEO
                 </button>
               </div>
             </div>
