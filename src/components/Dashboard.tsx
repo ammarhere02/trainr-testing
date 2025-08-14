@@ -492,7 +492,7 @@ export default function Dashboard() {
           </div>
           <div className="space-y-4">
             <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Scheduled Content</span>
+              <span className="text-sm text-gray-600">Active Members</span>
               <span className="font-medium">2,156</span>
             </div>
             <div className="flex justify-between">
@@ -505,11 +505,8 @@ export default function Dashboard() {
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">Satisfaction</span>
-                <Target className="w-5 h-5 text-red-600 mr-3" />
-                <span className="text-sm text-gray-600">Active Coupons</span>
-                <span className="text-sm text-gray-600">Active Members</span>
-              <span className="font-medium text-gray-900">12</span>
-              <span className="font-medium text-gray-900">2,847</span>
+              <span className="font-medium">4.7/5</span>
+            </div>
           </div>
         </div>
       </div>
@@ -518,20 +515,25 @@ export default function Dashboard() {
       <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
         <div className="grid md:grid-cols-4 gap-4">
-          <button className="p-4 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-all text-left">
+          <button className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow text-left">
+            <Plus className="w-8 h-8 text-purple-600 mb-2" />
+            <h4 className="font-medium text-gray-900">Create Course</h4>
+            <p className="text-sm text-gray-600">Start building a new course</p>
+          </button>
+          <button className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow text-left">
             <Calendar className="w-8 h-8 text-green-600 mb-2" />
-            <h3 className="font-medium text-gray-900">Content Calendar</h3>
+            <h4 className="font-medium text-gray-900">Schedule Live Session</h4>
             <p className="text-sm text-gray-600">Plan and schedule content</p>
           </button>
-          <button className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all text-left">
+          <button className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow text-left">
             <Users className="w-8 h-8 text-blue-600 mb-2" />
-            <h3 className="font-medium text-gray-900">Member Area</h3>
-            <p className="text-sm text-gray-600">Manage community and courses</p>
+            <h4 className="font-medium text-gray-900">Manage Students</h4>
+            <p className="text-sm text-gray-600">View and manage student progress</p>
           </button>
-          <button className="p-4 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-all text-left">
-            <DollarSign className="w-8 h-8 text-orange-600 mb-2" />
-            <h3 className="font-medium text-gray-900">Manage Sales</h3>
-            <p className="text-sm text-gray-600">View payments and coupons</p>
+          <button className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow text-left">
+            <Settings className="w-8 h-8 text-gray-600 mb-2" />
+            <h4 className="font-medium text-gray-900">Analytics & Reports</h4>
+            <p className="text-sm text-gray-600">View detailed analytics</p>
           </button>
         </div>
       </div>
