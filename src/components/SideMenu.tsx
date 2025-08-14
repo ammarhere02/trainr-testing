@@ -76,7 +76,11 @@ export default function SideMenu({ currentView, onViewChange, userRole, onCollap
       key: 'member',
       label: 'Member Area',
       icon: Users,
-      hasSubmenu: false
+      hasSubmenu: true,
+      submenu: [
+        { key: 'member-community', label: 'Community', icon: MessageCircle },
+        { key: 'events', label: 'Live Calls', icon: Calendar }
+      ]
     },
     {
       key: 'contacts',
@@ -109,9 +113,7 @@ export default function SideMenu({ currentView, onViewChange, userRole, onCollap
                     if (item.hasSubmenu) {
                       toggleMenu(item.key);
                     } else {
-                      if (item.key === 'member') {
-                        onViewChange('member-community');
-                     } else if (item.key === 'sales') {
+                    if (item.key === 'sales') {
                        onViewChange('sales');
                       } else {
                         onViewChange(item.key);
