@@ -82,7 +82,7 @@ export default function Community({ userRole = 'student' }: CommunityProps) {
     return saved ? JSON.parse(saved) : [
     {
       id: 1,
-      author: 'Max Perzon',
+      author: 'John Smith',
       avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=60',
       time: '20h',
       category: '🏆 #Wins',
@@ -106,7 +106,7 @@ export default function Community({ userRole = 'student' }: CommunityProps) {
     },
     {
       id: 2,
-      author: 'Max Perzon',
+      author: 'John Smith',
       avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=60',
       time: '4d',
       category: '🏆 #Wins',
