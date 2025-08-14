@@ -31,8 +31,7 @@ function App() {
         return <Dashboard />;
       case 'courses':
         return <Courses onStartLearning={handleStartLearning} />;
-      case 'member-community':
-      case 'member-area':
+      case 'member':
         return <MemberArea userRole="educator" onStartLearning={handleStartLearning} />;
       case 'events':
         return <Events />;
