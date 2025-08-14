@@ -2,576 +2,244 @@ import React, { useState } from 'react';
 import { 
   ArrowLeft, 
   Play, 
-  Pause, 
-  Volume2, 
-  VolumeX, 
-  Maximize, 
-  Settings, 
   CheckCircle, 
   Clock, 
+  BookOpen, 
   Users, 
   Star,
-  ChevronDown,
   ChevronRight,
+  ChevronLeft,
+  Volume2,
+  VolumeX,
+  Maximize,
+  Settings,
+  Download,
+  Share2,
   Edit3,
-  MoreHorizontal,
-  Upload,
-  Link,
-  Video,
-  X,
   Save,
-  FileText,
-  Monitor
+  X,
+  Video,
+  Plus,
+  Trash2,
+  ExternalLink
 } from 'lucide-react';
 
 interface CourseLearningProps {
-  courseId: number;
+  courseId: number | null;
   onBack: () => void;
-  userRole?: 'educator' | 'student';
 }
 
-export default function CourseLearning({ courseId, onBack, userRole = 'student' }: CourseLearningProps) {
-  const [currentLessonId, setCurrentLessonId] = useState(1);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [showVideoEditModal, setShowVideoEditModal] = useState(false);
-  const [videoSource, setVideoSource] = useState('link');
-  const [videoLink, setVideoLink] = useState('');
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [selectedLibraryVideo, setSelectedLibraryVideo] = useState('');
-  const [currentVideoSource, setCurrentVideoSource] = useState<string | null>(null);
-  const [expandedModules, setExpandedModules] = useState<{ [key: number]: boolean }>({
-    1: true,
-    2: false,
-    3: false
+export default function CourseLearning({ courseId, onBack }: CourseLearningProps) {
+  const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
+  const [isEditingLesson, setIsEditingLesson] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [editingLessonData, setEditingLessonData] = useState({
+    title: '',
+    content: '',
+    videoUrl: '',
+    videoSource: 'youtube',
+    duration: ''
   });
-  const [isEditingLessonContent, setIsEditingLessonContent] = useState(false);
-  const [lessonContent, setLessonContent] = useState(`In this lesson, we'll dive deep into React props and state management. You'll learn how to pass data between components and manage local component state effectively. We'll cover practical examples and best practices to help you build more dynamic and interactive React applications.
 
-By the end of this lesson, you'll understand how to create reusable components that can receive and display different data, and how to handle user interactions that change the component's appearance or behavior.`);
-  const [tempLessonContent, setTempLessonContent] = useState(lessonContent);
-  const [showLessonMenu, setShowLessonMenu] = useState(false);
-  const [activeLessonMenu, setActiveLessonMenu] = useState<number | null>(null);
-  const [showThumbnail, setShowThumbnail] = useState(true);
-  const [editingLessonId, setEditingLessonId] = useState<number | null>(null);
-  const [editingLessonTitle, setEditingLessonTitle] = useState('');
-  const [showCourseMenu, setShowCourseMenu] = useState(false);
-  const [showAddFolderModal, setShowAddFolderModal] = useState(false);
-  const [newFolderName, setNewFolderName] = useState('');
-  const [activeFolderMenu, setActiveFolderMenu] = useState<number | null>(null);
-  const [editingFolderId, setEditingFolderId] = useState<number | null>(null);
-  const [editingFolderName, setEditingFolderName] = useState('');
-  
-  // Mock library videos
-  const [libraryVideos] = useState([
-    {
-      id: 1,
-      title: 'React Hooks Tutorial Recording',
-      duration: '15:32',
-      thumbnail: 'https://images.pexels.com/photos/3861958/pexels-photo-3861958.jpeg?auto=compress&cs=tinysrgb&w=300',
-      url: 'trainr://video/abc123',
-      createdDate: '2024-01-15'
-    },
-    {
-      id: 2,
-      title: 'JavaScript Best Practices Session',
-      duration: '22:15',
-      thumbnail: 'https://images.pexels.com/photos/1181676/pexels-photo-1181676.jpeg?auto=compress&cs=tinysrgb&w=300',
-      url: 'trainr://video/def456',
-      createdDate: '2024-01-12'
-    }
-  ]);
-
-  // Mock course data
-  const [course, setCourse] = useState({
+  // Mock course data - in real app this would be fetched based on courseId
+  const [courseData, setCourseData] = useState({
     id: courseId,
     title: 'Complete Web Development Bootcamp',
+    description: 'Learn full-stack web development from scratch',
     instructor: 'Dr. Angela Yu',
-    modules: [
+    totalLessons: 12,
+    completedLessons: 4,
+    lessons: [
       {
         id: 1,
-        title: 'React Fundamentals',
-        lessons: [
-          { 
-            id: 1, 
-            title: 'Introduction to React', 
-            duration: '12:34', 
-            completed: true,
-            videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-          },
-          { 
-            id: 2, 
-            title: 'Components and Props', 
-            duration: '18:45', 
-            completed: false,
-            videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-          },
-          { 
-            id: 3, 
-            title: 'State Management', 
-            duration: '22:15', 
-            completed: false,
-            videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-          }
-        ]
+        title: 'Introduction to Web Development',
+        content: 'Welcome to the complete web development bootcamp! In this lesson, we\'ll cover what you\'ll learn throughout the course and set up your development environment.',
+        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        videoSource: 'youtube',
+        duration: '15:30',
+        completed: true
       },
       {
         id: 2,
-        title: 'Advanced React',
-        lessons: [
-          { 
-            id: 4, 
-            title: 'Hooks Deep Dive', 
-            duration: '25:30', 
-            completed: false,
-            videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-          },
-          { 
-            id: 5, 
-            title: 'Context API', 
-            duration: '19:20', 
-            completed: false,
-            videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-          }
-        ]
+        title: 'HTML Fundamentals',
+        content: 'Learn the building blocks of web pages with HTML. We\'ll cover semantic markup, forms, and best practices.',
+        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        videoSource: 'youtube',
+        duration: '22:45',
+        completed: true
       },
       {
         id: 3,
-        title: 'Project Building',
-        lessons: [
-          { 
-            id: 6, 
-            title: 'Building a Todo App', 
-            duration: '45:10', 
-            completed: false,
-            videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-          }
-        ]
+        title: 'CSS Styling and Layout',
+        content: 'Master CSS to create beautiful and responsive designs. Learn Flexbox, Grid, and modern CSS techniques.',
+        videoUrl: 'https://vimeo.com/123456789',
+        videoSource: 'vimeo',
+        duration: '28:15',
+        completed: true
+      },
+      {
+        id: 4,
+        title: 'JavaScript Basics',
+        content: 'Dive into JavaScript programming. Learn variables, functions, DOM manipulation, and event handling.',
+        videoUrl: 'https://www.loom.com/share/abc123def456',
+        videoSource: 'loom',
+        duration: '35:20',
+        completed: true
+      },
+      {
+        id: 5,
+        title: 'Advanced JavaScript',
+        content: 'Explore advanced JavaScript concepts including async/await, promises, and ES6+ features.',
+        videoUrl: '',
+        videoSource: 'youtube',
+        duration: '42:10',
+        completed: false
+      },
+      {
+        id: 6,
+        title: 'React Introduction',
+        content: 'Get started with React, the popular JavaScript library for building user interfaces.',
+        videoUrl: '',
+        videoSource: 'youtube',
+        duration: '38:30',
+        completed: false
       }
     ]
   });
 
-  const currentLessonData = course.modules
-    .flatMap(module => module.lessons)
-    .find(lesson => lesson.id === currentLessonId);
-
-  // Reset thumbnail visibility when video URL changes
-  React.useEffect(() => {
-    setShowThumbnail(true);
-  }, [currentLessonData?.videoUrl]);
-
-  const handleVideoEdit = () => {
-    if (currentLessonData?.videoUrl) {
-      setVideoLink(currentLessonData.videoUrl);
-    }
-    setShowVideoEditModal(true);
-  };
-
-  const handleVideoSave = () => {
-    let newVideoUrl = '';
-    
-    if (videoSource === 'link' && videoLink) {
-      newVideoUrl = videoLink;
-    } else if (videoSource === 'upload' && uploadedFile) {
-      newVideoUrl = URL.createObjectURL(uploadedFile);
-    } else if (videoSource === 'library' && selectedLibraryVideo) {
-      const selectedVideo = libraryVideos.find(v => v.id.toString() === selectedLibraryVideo);
-      newVideoUrl = selectedVideo?.url || '';
-    }
-
-    if (newVideoUrl) {
-      // Update the course data with the new video URL
-      setCourse(prev => ({
-        ...prev,
-        modules: prev.modules.map(module => ({
-          ...module,
-          lessons: module.lessons.map(lesson =>
-            lesson.id === currentLessonId ? { ...lesson, videoUrl: newVideoUrl } : lesson
-          )
-        }))
-      }));
-    }
-
-    setShowVideoEditModal(false);
-    resetVideoForm();
-  };
-
-  const resetVideoForm = () => {
-    setVideoSource('link');
-    setVideoLink('');
-    setUploadedFile(null);
-    setSelectedLibraryVideo('');
-  };
-
-  const closeVideoModal = () => {
-    setShowVideoEditModal(false);
-    resetVideoForm();
-  };
-
-  const handleMarkAsComplete = () => {
-    if (currentLessonData) {
-      setCourse(prev => ({
-        ...prev,
-        modules: prev.modules.map(module => ({
-          ...module,
-          lessons: module.lessons.map(lesson =>
-            lesson.id === currentLessonData.id ? { ...lesson, completed: !lesson.completed } : lesson
-          )
-        }))
-      }));
-    }
-  };
-
-  const handleEditLessonContent = () => {
-    setTempLessonContent(lessonContent);
-    setIsEditingLessonContent(true);
-    setShowLessonMenu(false);
-  };
-
-  const handleSaveLessonContent = () => {
-    setLessonContent(tempLessonContent);
-    setIsEditingLessonContent(false);
-  };
-
-  const handleCancelEditLessonContent = () => {
-    setTempLessonContent(lessonContent);
-    setIsEditingLessonContent(false);
-  };
-
-  const moveLessonUp = (lessonId: number) => {
-    setCourse(prev => ({
-      ...prev,
-      modules: prev.modules.map(module => {
-        const lessonIndex = module.lessons.findIndex(lesson => lesson.id === lessonId);
-        if (lessonIndex > 0) {
-          const newLessons = [...module.lessons];
-          [newLessons[lessonIndex - 1], newLessons[lessonIndex]] = [newLessons[lessonIndex], newLessons[lessonIndex - 1]];
-          return { ...module, lessons: newLessons };
-        }
-        return module;
-      })
-    }));
-    setActiveLessonMenu(null);
-  };
-
-  const moveLessonDown = (lessonId: number) => {
-    setCourse(prev => ({
-      ...prev,
-      modules: prev.modules.map(module => {
-        const lessonIndex = module.lessons.findIndex(lesson => lesson.id === lessonId);
-        if (lessonIndex < module.lessons.length - 1 && lessonIndex !== -1) {
-          const newLessons = [...module.lessons];
-          [newLessons[lessonIndex], newLessons[lessonIndex + 1]] = [newLessons[lessonIndex + 1], newLessons[lessonIndex]];
-          return { ...module, lessons: newLessons };
-        }
-        return module;
-      })
-    }));
-    setActiveLessonMenu(null);
-  };
-
-  const deleteLesson = (lessonId: number) => {
-    if (confirm('Are you sure you want to delete this lesson?')) {
-      setCourse(prev => ({
-        ...prev,
-        modules: prev.modules.map(module => ({
-          ...module,
-          lessons: module.lessons.filter(lesson => lesson.id !== lessonId)
-        }))
-      }));
-      
-      // If we're deleting the current lesson, switch to the first available lesson
-      if (currentLessonId === lessonId) {
-        const firstLesson = course.modules.flatMap(m => m.lessons).find(l => l.id !== lessonId);
-        if (firstLesson) {
-          setCurrentLessonId(firstLesson.id);
-        }
-      }
-    }
-    setActiveLessonMenu(null);
-  };
-
-  const duplicateLesson = (lessonId: number) => {
-    const lessonToDuplicate = course.modules
-      .flatMap(module => module.lessons)
-      .find(lesson => lesson.id === lessonId);
-    
-    if (lessonToDuplicate) {
-      const newLesson = {
-        ...lessonToDuplicate,
-        id: Date.now(),
-        title: `${lessonToDuplicate.title} (Copy)`,
-        completed: false
-      };
-      
-      setCourse(prev => ({
-        ...prev,
-        modules: prev.modules.map(module => {
-          const lessonIndex = module.lessons.findIndex(lesson => lesson.id === lessonId);
-          if (lessonIndex !== -1) {
-            const newLessons = [...module.lessons];
-            newLessons.splice(lessonIndex + 1, 0, newLesson);
-            return { ...module, lessons: newLessons };
-          }
-          return module;
-        })
-      }));
-    }
-    setActiveLessonMenu(null);
-  };
-
-  const startEditingLesson = (lessonId: number, currentTitle: string) => {
-    setEditingLessonId(lessonId);
-    setEditingLessonTitle(currentTitle);
-    setActiveLessonMenu(null);
-  };
-
-  const saveEditingLesson = () => {
-    if (editingLessonId && editingLessonTitle.trim()) {
-      setCourse(prev => ({
-        ...prev,
-        modules: prev.modules.map(module => ({
-          ...module,
-          lessons: module.lessons.map(lesson =>
-            lesson.id === editingLessonId 
-              ? { ...lesson, title: editingLessonTitle.trim() }
-              : lesson
-          )
-        }))
-      }));
-    }
-    setEditingLessonId(null);
-    setEditingLessonTitle('');
-  };
-
-  const cancelEditingLesson = () => {
-    setEditingLessonId(null);
-    setEditingLessonTitle('');
-  };
-
-  const handleEditCourse = () => {
-    console.log('Edit course');
-    setShowCourseMenu(false);
-    // Add edit course logic here
-  };
-
-  const handleAddFolder = () => {
-    setShowAddFolderModal(true);
-    setShowCourseMenu(false);
-  };
-
-  const handleCreateFolder = () => {
-    if (!newFolderName.trim()) return;
-    
-    const newModule = {
-      id: Date.now(),
-      title: newFolderName.trim(),
-      lessons: []
-    };
-    
-    setCourse(prev => ({
-      ...prev,
-      modules: [...prev.modules, newModule]
-    }));
-    
-    // Expand the new module by default
-    setExpandedModules(prev => ({
-      ...prev,
-      [newModule.id]: true
-    }));
-    
-    // Reset and close modal
-    setNewFolderName('');
-    setShowAddFolderModal(false);
-  };
-
-  const handleCancelAddFolder = () => {
-    setNewFolderName('');
-    setShowAddFolderModal(false);
-  };
-
-  const handleEditFolder = (moduleId: number, currentName: string) => {
-    setEditingFolderId(moduleId);
-    setEditingFolderName(currentName);
-    setActiveFolderMenu(null);
-  };
-
-  const handleSaveFolderEdit = () => {
-    if (!editingFolderId || !editingFolderName.trim()) return;
-    
-    setCourse(prev => ({
-      ...prev,
-      modules: prev.modules.map(module =>
-        module.id === editingFolderId 
-          ? { ...module, title: editingFolderName.trim() }
-          : module
-      )
-    }));
-    
-    setEditingFolderId(null);
-    setEditingFolderName('');
-  };
-
-  const handleCancelFolderEdit = () => {
-    setEditingFolderId(null);
-    setEditingFolderName('');
-  };
-
-  const handleDuplicateFolder = (moduleId: number) => {
-    const moduleToDuplicate = course.modules.find(m => m.id === moduleId);
-    if (!moduleToDuplicate) return;
-    
-    const duplicatedModule = {
-      ...moduleToDuplicate,
-      id: Date.now(),
-      title: `${moduleToDuplicate.title} (Copy)`,
-      lessons: moduleToDuplicate.lessons.map(lesson => ({
-        ...lesson,
-        id: Date.now() + Math.random(),
-        title: `${lesson.title} (Copy)`,
-        completed: false
-      }))
-    };
-    
-    setCourse(prev => ({
-      ...prev,
-      modules: [...prev.modules, duplicatedModule]
-    }));
-    
-    // Expand the new module
-    setExpandedModules(prev => ({
-      ...prev,
-      [duplicatedModule.id]: true
-    }));
-    
-    setActiveFolderMenu(null);
-  };
-
-  const handleDeleteFolder = (moduleId: number) => {
-    const moduleToDelete = course.modules.find(m => m.id === moduleId);
-    if (!moduleToDelete) return;
-    
-    if (confirm(`Are you sure you want to delete "${moduleToDelete.title}"? This will also delete all lessons in this folder.`)) {
-      setCourse(prev => ({
-        ...prev,
-        modules: prev.modules.filter(module => module.id !== moduleId)
-      }));
-      
-      // If we're deleting the module containing the current lesson, switch to first available lesson
-      const currentLessonInModule = moduleToDelete.lessons.find(l => l.id === currentLessonId);
-      if (currentLessonInModule) {
-        const firstAvailableLesson = course.modules
-          .filter(m => m.id !== moduleId)
-          .flatMap(m => m.lessons)[0];
-        if (firstAvailableLesson) {
-          setCurrentLessonId(firstAvailableLesson.id);
-        }
-      }
-    }
-    
-    setActiveFolderMenu(null);
-  };
-
-  const handleAddLessonToFolder = (moduleId: number) => {
-    // Placeholder for add lesson functionality
-    console.log('Add lesson to folder:', moduleId);
-    setActiveFolderMenu(null);
-  };
-  const handleAddLesson = () => {
-    console.log('Add lesson');
-    setShowCourseMenu(false);
-    // Add lesson logic here
-  };
-
-  const handleDeleteCourse = () => {
-    if (confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
-      console.log('Delete course');
-      setShowCourseMenu(false);
-      // Add delete course logic here
-    }
-  };
-
-  const isValidVideoLink = (url: string) => {
-    const videoPatterns = [
-      /youtube\.com\/watch\?v=|youtu\.be\//,
-      /vimeo\.com\//,
-      /wistia\.com\//,
-      /loom\.com\//
-    ];
-    return videoPatterns.some(pattern => pattern.test(url));
-  };
+  const currentLesson = courseData.lessons[currentLessonIndex];
+  const progress = (courseData.completedLessons / courseData.totalLessons) * 100;
 
   const getYouTubeVideoId = (url: string) => {
-    if (!url) return null;
-    
-    // Handle different YouTube URL formats
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
-      /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
-      /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
-      /(?:youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/
-    ];
-    
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) return match[1];
-    }
-    
-    return null;
-  };
-
-  const getVimeoVideoId = (url: string) => {
-    const match = url.match(/vimeo\.com\/(\d+)/);
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = url.match(regex);
     return match ? match[1] : null;
   };
 
-  const isValidVideoUrl = (url: string) => {
-    if (!url) return false;
-    return getYouTubeVideoId(url) !== null || getVimeoVideoId(url) !== null;
+  const getVimeoVideoId = (url: string) => {
+    const regex = /vimeo\.com\/(\d+)/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
   };
 
-  const getEmbedUrl = (url: string) => {
+  const getLoomVideoId = (url: string) => {
+    const regex = /loom\.com\/share\/([a-zA-Z0-9]+)/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+  };
+
+  const getEmbedUrl = (url: string, source: string) => {
     if (!url) return '';
     
-    // YouTube
-    const youtubeId = getYouTubeVideoId(url);
-    if (youtubeId) {
-      return `https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1&showinfo=0`;
+    switch (source) {
+      case 'youtube':
+        const youtubeId = getYouTubeVideoId(url);
+        return youtubeId ? `https://www.youtube.com/embed/${youtubeId}` : '';
+      case 'vimeo':
+        const vimeoId = getVimeoVideoId(url);
+        return vimeoId ? `https://player.vimeo.com/video/${vimeoId}` : '';
+      case 'loom':
+        const loomId = getLoomVideoId(url);
+        return loomId ? `https://www.loom.com/embed/${loomId}` : '';
+      case 'wistia':
+        // Wistia embed format
+        return url.includes('wistia') ? url : '';
+      default:
+        return url;
     }
-    
-    // Vimeo
-    const vimeoId = getVimeoVideoId(url);
-    if (vimeoId) {
-      return `https://player.vimeo.com/video/${vimeoId}`;
-    }
-    
-    // Return empty string for invalid URLs
-    return '';
   };
 
-  const getThumbnailUrl = (url: string) => {
-    if (!url) return '';
-    
-    // YouTube thumbnail
-    const youtubeId = getYouTubeVideoId(url);
-    if (youtubeId) {
-      return `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+  const getVideoSourceIcon = (source: string) => {
+    switch (source) {
+      case 'youtube':
+        return '📺';
+      case 'vimeo':
+        return '🎬';
+      case 'loom':
+        return '🔴';
+      case 'wistia':
+        return '🎥';
+      default:
+        return '🎬';
     }
-    
-    // Vimeo thumbnail (would need API call in real app)
-    const vimeoId = getVimeoVideoId(url);
-    if (vimeoId) {
-      return `https://vumbnail.com/${vimeoId}.jpg`;
-    }
-    
-    return '';
   };
 
-  const toggleModuleExpansion = (moduleId: number) => {
-    setExpandedModules(prev => ({
+  const handleEditLesson = () => {
+    setEditingLessonData({
+      title: currentLesson.title,
+      content: currentLesson.content,
+      videoUrl: currentLesson.videoUrl,
+      videoSource: currentLesson.videoSource,
+      duration: currentLesson.duration
+    });
+    setIsEditingLesson(true);
+  };
+
+  const handleSaveLesson = () => {
+    const updatedLessons = courseData.lessons.map((lesson, index) => 
+      index === currentLessonIndex 
+        ? {
+            ...lesson,
+            title: editingLessonData.title,
+            content: editingLessonData.content,
+            videoUrl: editingLessonData.videoUrl,
+            videoSource: editingLessonData.videoSource,
+            duration: editingLessonData.duration
+          }
+        : lesson
+    );
+
+    setCourseData(prev => ({
       ...prev,
-      [moduleId]: !prev[moduleId]
+      lessons: updatedLessons
     }));
+
+    setIsEditingLesson(false);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingLesson(false);
+    setEditingLessonData({
+      title: '',
+      content: '',
+      videoUrl: '',
+      videoSource: 'youtube',
+      duration: ''
+    });
+  };
+
+  const handleVideoSourceChange = (source: string) => {
+    setEditingLessonData(prev => ({
+      ...prev,
+      videoSource: source,
+      videoUrl: '' // Clear URL when changing source
+    }));
+  };
+
+  const nextLesson = () => {
+    if (currentLessonIndex < courseData.lessons.length - 1) {
+      setCurrentLessonIndex(currentLessonIndex + 1);
+    }
+  };
+
+  const prevLesson = () => {
+    if (currentLessonIndex > 0) {
+      setCurrentLessonIndex(currentLessonIndex - 1);
+    }
+  };
+
+  const markAsComplete = () => {
+    if (!currentLesson.completed) {
+      const updatedLessons = courseData.lessons.map((lesson, index) => 
+        index === currentLessonIndex ? { ...lesson, completed: true } : lesson
+      );
+      
+      setCourseData(prev => ({
+        ...prev,
+        lessons: updatedLessons,
+        completedLessons: prev.completedLessons + 1
+      }));
+    }
   };
 
   return (
@@ -588,764 +256,449 @@ By the end of this lesson, you'll understand how to create reusable components t
               Back to Courses
             </button>
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">{course.title}</h1>
-              <p className="text-sm text-gray-600">by {course.instructor}</p>
+              <h1 className="text-xl font-bold text-gray-900">{courseData.title}</h1>
+              <p className="text-sm text-gray-600">by {courseData.instructor}</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <button 
-              onClick={handleMarkAsComplete}
-              className={`p-2 transition-colors ${
-                currentLessonData?.completed 
-                  ? 'text-green-600 hover:text-green-700' 
-                  : 'text-gray-400 hover:text-green-600'
-              }`}
-              title={currentLessonData?.completed ? 'Completed' : 'Mark as complete'}
-            >
-              <CheckCircle className="w-5 h-5" />
-            </button>
-            {userRole === 'educator' && (
-              <>
-                <button 
-                  onClick={handleEditLessonContent}
-                  className="p-2 text-gray-400 hover:text-purple-600 transition-colors"
-                  title="Edit lesson content"
-                >
-                  <Edit3 className="w-5 h-5" />
-                </button>
-                <div className="relative">
-                  <button 
-                    onClick={() => setShowLessonMenu(!showLessonMenu)}
-                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                    title="More options"
-                  >
-                    <MoreHorizontal className="w-5 h-5" />
-                  </button>
-                  
-                  {showLessonMenu && (
-                    <>
-                      <div 
-                        className="fixed inset-0 z-10"
-                        onClick={() => setShowLessonMenu(false)}
-                      />
-                      <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                        <button
-                          onClick={handleEditLessonContent}
-                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          Edit lesson content
-                        </button>
-                        <button
-                          onClick={handleVideoEdit}
-                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          Change video
-                        </button>
-                        <button
-                          onClick={handleMarkAsComplete}
-                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          {currentLessonData?.completed ? 'Mark as incomplete' : 'Mark as complete'}
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </>
-            )}
+          
+          <div className="flex items-center space-x-4">
+            <div className="text-sm text-gray-600">
+              Lesson {currentLessonIndex + 1} of {courseData.totalLessons}
+            </div>
+            <div className="w-32 bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-purple-600 h-2 rounded-full transition-all duration-300" 
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+            <span className="text-sm font-medium text-gray-900">{Math.round(progress)}%</span>
           </div>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-4 gap-6 p-6">
-        {/* Course Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">{course.title}</h3>
-              {userRole === 'educator' && (
-                <div className="relative">
-                  <button
-                    onClick={() => setShowCourseMenu(!showCourseMenu)}
-                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                    title="Course options"
-                  >
-                    <MoreHorizontal className="w-5 h-5" />
-                  </button>
-                  
-                  {showCourseMenu && (
-                    <>
-                      <div 
-                        className="fixed inset-0 z-10"
-                        onClick={() => setShowCourseMenu(false)}
-                      />
-                      <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                        <button
-                          onClick={handleEditCourse}
-                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          Edit course
-                        </button>
-                        <button
-                          onClick={handleAddFolder}
-                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          Add folder
-                        </button>
-                        <hr className="my-1 border-gray-200" />
-                        <button
-                          onClick={handleDeleteCourse}
-                          className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                          Delete course
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-4">
-              {course.modules.map((module) => (
-                <div key={module.id} className="border border-gray-200 rounded-lg">
-                  <div className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-                    <button
-                      onClick={() => toggleModuleExpansion(module.id)}
-                      className="flex-1 flex items-center justify-between text-left"
-                    >
-                      {editingFolderId === module.id ? (
-                        <div className="flex items-center space-x-2 flex-1">
-                          <input
-                            type="text"
-                            value={editingFolderName}
-                            onChange={(e) => setEditingFolderName(e.target.value)}
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter') {
-                                handleSaveFolderEdit();
-                              } else if (e.key === 'Escape') {
-                                handleCancelFolderEdit();
-                              }
-                            }}
-                            className="font-medium text-gray-900 bg-white border border-purple-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500 flex-1"
-                            autoFocus
-                          />
-                          <button
-                            onClick={handleSaveFolderEdit}
-                            className="text-green-600 hover:text-green-700"
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={handleCancelFolderEdit}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
+      <div className="flex">
+        {/* Sidebar - Lesson List */}
+        <div className="w-80 bg-white border-r border-gray-200 h-screen overflow-y-auto">
+          <div className="p-6">
+            <h2 className="font-semibold text-gray-900 mb-4">Course Content</h2>
+            <div className="space-y-2">
+              {courseData.lessons.map((lesson, index) => (
+                <button
+                  key={lesson.id}
+                  onClick={() => setCurrentLessonIndex(index)}
+                  className={`w-full text-left p-4 rounded-lg transition-colors ${
+                    index === currentLessonIndex
+                      ? 'bg-purple-50 border border-purple-200'
+                      : 'hover:bg-gray-50 border border-transparent'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      lesson.completed 
+                        ? 'bg-green-100 text-green-600' 
+                        : index === currentLessonIndex
+                          ? 'bg-purple-100 text-purple-600'
+                          : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {lesson.completed ? (
+                        <CheckCircle className="w-5 h-5" />
                       ) : (
-                        <span className="font-medium text-gray-900">{module.title}</span>
+                        <span className="text-sm font-medium">{index + 1}</span>
                       )}
-                      {editingFolderId !== module.id && (
-                        <div className="ml-4">
-                          {expandedModules[module.id] ? (
-                            <ChevronDown className="w-4 h-4 text-gray-500" />
-                          ) : (
-                            <ChevronRight className="w-4 h-4 text-gray-500" />
-                          )}
-                        </div>
-                      )}
-                    </button>
-                    
-                    {userRole === 'educator' && editingFolderId !== module.id && (
-                      <div className="relative ml-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveFolderMenu(activeFolderMenu === module.id ? null : module.id);
-                          }}
-                          className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                          title="Folder options"
-                        >
-                          <MoreHorizontal className="w-4 h-4" />
-                        </button>
-                        
-                        {activeFolderMenu === module.id && (
-                          <>
-                            <div 
-                              className="fixed inset-0 z-10"
-                              onClick={() => setActiveFolderMenu(null)}
-                            />
-                            <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                              <button
-                                onClick={() => handleAddLessonToFolder(module.id)}
-                                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                              >
-                                Add lesson
-                              </button>
-                              <button
-                                onClick={() => handleEditFolder(module.id, module.title)}
-                                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                              >
-                                Edit folder
-                              </button>
-                              <button
-                                onClick={() => handleDuplicateFolder(module.id)}
-                                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                              >
-                                Duplicate folder
-                              </button>
-                              <hr className="my-1 border-gray-200" />
-                              <button
-                                onClick={() => handleDeleteFolder(module.id)}
-                                className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                              >
-                                Delete folder
-                              </button>
-                            </div>
-                          </>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className={`font-medium text-sm ${
+                        index === currentLessonIndex ? 'text-purple-900' : 'text-gray-900'
+                      }`}>
+                        {lesson.title}
+                      </h3>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <Clock className="w-3 h-3 text-gray-500" />
+                        <span className="text-xs text-gray-600">{lesson.duration}</span>
+                        {lesson.videoSource && (
+                          <span className="text-xs">{getVideoSourceIcon(lesson.videoSource)}</span>
                         )}
                       </div>
-                    )}
-                  </div>
-                  
-                  {expandedModules[module.id] && (
-                    <div className="border-t border-gray-200">
-                      {module.lessons.map((lesson) => (
-                        <button
-                          key={lesson.id}
-                          onClick={() => setCurrentLessonId(lesson.id)}
-                          className={`w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors ${
-                            currentLessonId === lesson.id ? 'bg-purple-50 border-l-4 border-purple-500' : ''
-                          }`}
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                              lesson.completed ? 'bg-green-500' : 'bg-gray-300'
-                            }`}>
-                              {lesson.completed ? (
-                                <CheckCircle className="w-4 h-4 text-white" />
-                              ) : (
-                                <Play className="w-3 h-3 text-white" />
-                              )}
-                            </div>
-                            <div>
-                              {editingLessonId === lesson.id ? (
-                                <div className="flex items-center space-x-2">
-                                  <input
-                                    type="text"
-                                    value={editingLessonTitle}
-                                    onChange={(e) => setEditingLessonTitle(e.target.value)}
-                                    onKeyPress={(e) => {
-                                      if (e.key === 'Enter') {
-                                        saveEditingLesson();
-                                      } else if (e.key === 'Escape') {
-                                        cancelEditingLesson();
-                                      }
-                                    }}
-                                    className="font-medium text-gray-900 text-sm bg-white border border-purple-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    autoFocus
-                                  />
-                                  <button
-                                    onClick={saveEditingLesson}
-                                    className="text-green-600 hover:text-green-700"
-                                  >
-                                    <CheckCircle className="w-4 h-4" />
-                                  </button>
-                                  <button
-                                    onClick={cancelEditingLesson}
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              ) : (
-                                <div className="font-medium text-gray-900 text-sm">{lesson.title}</div>
-                              )}
-                              <div className="text-xs text-gray-600">{lesson.duration}</div>
-                            </div>
-                          </div>
-                          {userRole === 'educator' && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveLessonMenu(activeLessonMenu === lesson.id ? null : lesson.id);
-                              }}
-                              className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                              title="Lesson options"
-                            >
-                              <MoreHorizontal className="w-4 h-4" />
-                            </button>
-                          )}
-                          {userRole === 'educator' && (
-                            <div className="relative">
-                              {/* Lesson Menu Dropdown */}
-                              {activeLessonMenu === lesson.id && (
-                                <>
-                                  <div 
-                                    className="fixed inset-0 z-10"
-                                    onClick={() => setActiveLessonMenu(null)}
-                                  />
-                                  <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                                    <button
-                                      onClick={() => startEditingLesson(lesson.id, lesson.title)}
-                                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                    >
-                                      Edit Name
-                                    </button>
-                                    <button
-                                      onClick={() => moveLessonUp(lesson.id)}
-                                      disabled={module.lessons.findIndex(l => l.id === lesson.id) === 0}
-                                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                      Move Up
-                                    </button>
-                                    <button
-                                      onClick={() => moveLessonDown(lesson.id)}
-                                      disabled={module.lessons.findIndex(l => l.id === lesson.id) === module.lessons.length - 1}
-                                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                      Move Down
-                                    </button>
-                                    <button
-                                      onClick={() => duplicateLesson(lesson.id)}
-                                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                    >
-                                      Duplicate
-                                    </button>
-                                    <hr className="my-1 border-gray-200" />
-                                    <button
-                                      onClick={() => deleteLesson(lesson.id)}
-                                      className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                    >
-                                      Delete
-                                    </button>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </button>
-                      ))}
                     </div>
-                  )}
-                </div>
+                  </div>
+                </button>
               ))}
             </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="lg:col-span-3">
-          {/* Current Lesson Info - Above Video */}
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">{currentLessonData?.title}</h2>
-            {currentLessonData?.description && (
-              <p className="text-gray-600">{currentLessonData.description}</p>
-            )}
-          </div>
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-4xl mx-auto p-8">
+            {/* Lesson Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">{currentLesson.title}</h1>
+                <div className="flex items-center space-x-4 text-sm text-gray-600">
+                  <span>Lesson {currentLessonIndex + 1}</span>
+                  <span>•</span>
+                  <span>{currentLesson.duration}</span>
+                  <span>•</span>
+                  <span>{getVideoSourceIcon(currentLesson.videoSource)} {currentLesson.videoSource}</span>
+                </div>
+              </div>
+              
+              {/* Edit Button */}
+              <button
+                onClick={handleEditLesson}
+                className="bg-orange-500 text-white p-3 rounded-lg hover:bg-orange-600 transition-colors flex items-center"
+                title="Edit lesson content and video"
+              >
+                <Edit3 className="w-5 h-5" />
+              </button>
+            </div>
 
-          {/* Video Player */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
-            <div className="relative bg-black aspect-video">
-              {currentLessonData?.videoUrl ? (
-                isValidVideoUrl(currentLessonData.videoUrl) ? (
-                  getEmbedUrl(currentLessonData.videoUrl) ? (
-                    <div className="relative w-full h-full">
-                      <iframe
-                        src={getEmbedUrl(currentLessonData.videoUrl)}
-                        className="w-full h-full"
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        title={currentLessonData.title}
-                        key={currentLessonData.videoUrl} // Force re-render when URL changes
-                      />
-                      {/* Thumbnail overlay for initial load */}
-                      {showThumbnail && getThumbnailUrl(currentLessonData.videoUrl) && (
-                        <div className="absolute inset-0 bg-black">
-                          <img
-                            src={getThumbnailUrl(currentLessonData.videoUrl)}
-                            alt="Video thumbnail"
-                            className="w-full h-full object-cover"
-                            onLoad={(e) => {
-                              // Hide thumbnail after a delay
-                              setTimeout(() => {
-                                setShowThumbnail(false);
-                              }, 1000);
-                            }}
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="bg-red-600 rounded-full p-4">
-                              <Play className="w-8 h-8 text-white ml-1" />
+            {/* Video Player */}
+            <div className="bg-black rounded-xl overflow-hidden mb-8 shadow-xl">
+              <div className="aspect-video">
+                {currentLesson.videoUrl && getEmbedUrl(currentLesson.videoUrl, currentLesson.videoSource) ? (
+                  <iframe
+                    src={getEmbedUrl(currentLesson.videoUrl, currentLesson.videoSource)}
+                    className="w-full h-full"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title={currentLesson.title}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="text-center text-white">
+                      <div className="bg-white/20 backdrop-blur-sm rounded-full p-8 mb-6">
+                        <Play className="w-16 h-16 text-white ml-2" />
+                      </div>
+                      <h3 className="text-2xl font-bold mb-2">No Video Available</h3>
+                      <p className="text-white/80">Click the edit button to add a video</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Lesson Content */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Lesson Overview</h2>
+              <div className="prose prose-lg max-w-none">
+                <p className="text-gray-700 leading-relaxed">{currentLesson.content}</p>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex items-center justify-between">
+              <button
+                onClick={prevLesson}
+                disabled={currentLessonIndex === 0}
+                className="flex items-center px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-5 h-5 mr-2" />
+                Previous Lesson
+              </button>
+
+              <div className="flex items-center space-x-4">
+                {!currentLesson.completed && (
+                  <button
+                    onClick={markAsComplete}
+                    className="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center"
+                  >
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Mark as Complete
+                  </button>
+                )}
+
+                <button
+                  onClick={nextLesson}
+                  disabled={currentLessonIndex === courseData.lessons.length - 1}
+                  className="flex items-center px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next Lesson
+                  <ChevronRight className="w-5 h-5 ml-2" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Edit Lesson Modal */}
+      {isEditingLesson && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold text-gray-900">Edit Lesson</h2>
+                <button
+                  onClick={handleCancelEdit}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+              
+              <div className="space-y-8">
+                {/* Lesson Title */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Lesson Title
+                  </label>
+                  <input
+                    type="text"
+                    value={editingLessonData.title}
+                    onChange={(e) => setEditingLessonData(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-lg"
+                    placeholder="Enter lesson title"
+                  />
+                </div>
+
+                {/* Video Section */}
+                <div className="bg-gray-50 rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-semibold text-gray-900">Video Content</h3>
+                    <button
+                      onClick={() => setShowVideoModal(true)}
+                      className="bg-orange-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors flex items-center"
+                    >
+                      <Video className="w-4 h-4 mr-2" />
+                      {editingLessonData.videoUrl ? 'Change Video' : 'Add Video'}
+                    </button>
+                  </div>
+
+                  {/* Current Video Display */}
+                  {editingLessonData.videoUrl ? (
+                    <div className="space-y-4">
+                      <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-3">
+                            <span className="text-2xl">{getVideoSourceIcon(editingLessonData.videoSource)}</span>
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {editingLessonData.videoSource.charAt(0).toUpperCase() + editingLessonData.videoSource.slice(1)} Video
+                              </p>
+                              <p className="text-sm text-gray-600">Duration: {editingLessonData.duration}</p>
                             </div>
+                          </div>
+                          <a
+                            href={editingLessonData.videoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-orange-500 hover:text-orange-600 transition-colors"
+                          >
+                            <ExternalLink className="w-5 h-5" />
+                          </a>
+                        </div>
+                        <p className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded truncate">
+                          {editingLessonData.videoUrl}
+                        </p>
+                      </div>
+
+                      {/* Video Preview */}
+                      {getEmbedUrl(editingLessonData.videoUrl, editingLessonData.videoSource) && (
+                        <div className="bg-black rounded-xl overflow-hidden">
+                          <div className="aspect-video">
+                            <iframe
+                              src={getEmbedUrl(editingLessonData.videoUrl, editingLessonData.videoSource)}
+                              className="w-full h-full"
+                              frameBorder="0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                              title="Video Preview"
+                            />
                           </div>
                         </div>
                       )}
                     </div>
                   ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center text-white">
-                        <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                        <p className="text-xl mb-2">Invalid video URL</p>
-                        <p className="text-sm opacity-75 mb-4">Please check the video URL format</p>
-                        {userRole === 'educator' && (
-                          <button
-                            onClick={handleVideoEdit}
-                            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-                          >
-                            Fix Video URL
-                          </button>
-                        )}
-                      </div>
+                    <div className="bg-white rounded-lg p-8 border-2 border-dashed border-gray-300 text-center">
+                      <Video className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600 mb-2">No video added yet</p>
+                      <p className="text-sm text-gray-500">Click "Add Video" to include video content</p>
                     </div>
-                  )
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center text-white">
-                      <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                      <p className="text-xl mb-2">
-                        {currentLessonData?.videoUrl ? 'Invalid video URL' : 'No video available'}
-                      </p>
-                      {currentLessonData?.videoUrl && (
-                        <p className="text-sm opacity-75 mb-4">Please check the video URL format</p>
-                      )}
-                      {userRole === 'educator' && (
-                        <button
-                          onClick={handleVideoEdit}
-                          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-                        >
-                          {currentLessonData?.videoUrl ? 'Fix Video URL' : 'Add Video'}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-xl mb-2">No video available</p>
-                    {userRole === 'educator' && (
-                      <button
-                        onClick={handleVideoEdit}
-                        className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-                      >
-                        Add Video
-                      </button>
-                    )}
-                  </div>
+                  )}
                 </div>
-              )}
-            </div>
-            
-            {/* Video Info */}
-            <div className="p-4 border-t border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-gray-900">{currentLessonData?.title}</h3>
-                  <p className="text-sm text-gray-600">{currentLessonData?.duration}</p>
-                </div>
-                {userRole === 'educator' && (
-                  <button
-                    onClick={handleVideoEdit}
-                    className="text-purple-600 hover:text-purple-700 text-sm font-medium"
-                  >
-                    Change Video
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
 
-          {/* Lesson Content */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Lesson Content</h3>
-              {userRole === 'educator' && !isEditingLessonContent && (
-                <button
-                  onClick={handleEditLessonContent}
-                  className="text-purple-600 hover:text-purple-700 text-sm font-medium flex items-center"
-                >
-                  <Edit3 className="w-4 h-4 mr-1" />
-                  Edit
-                </button>
-              )}
-            </div>
-            
-            {isEditingLessonContent ? (
-              <div className="space-y-4">
-                <textarea
-                  value={tempLessonContent}
-                  onChange={(e) => setTempLessonContent(e.target.value)}
-                  className="w-full h-64 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                  placeholder="Enter lesson content..."
-                />
-                <div className="flex justify-end space-x-3">
-                  <button
-                    onClick={handleCancelEditLessonContent}
-                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveLessonContent}
-                    className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Changes
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="prose max-w-none">
-                <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                  {lessonContent}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Video Edit Modal */}
-      {showVideoEditModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-gray-900">Change Video</h3>
-                <button
-                  onClick={closeVideoModal}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              
-              <div className="space-y-6">
-                {/* Video Source Selection */}
+                {/* Lesson Content */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Video Source
+                    Lesson Content
                   </label>
-                  <div className="grid grid-cols-3 gap-3">
-                    <button
-                      onClick={() => setVideoSource('link')}
-                      className={`p-4 border-2 rounded-lg text-center transition-all ${
-                        videoSource === 'link'
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <Link className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-                      <span className="text-sm font-medium">Video Link</span>
-                    </button>
-                    <button
-                      onClick={() => setVideoSource('upload')}
-                      className={`p-4 border-2 rounded-lg text-center transition-all ${
-                        videoSource === 'upload'
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <Upload className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-                      <span className="text-sm font-medium">Upload</span>
-                    </button>
-                    <button
-                      onClick={() => setVideoSource('library')}
-                      className={`p-4 border-2 rounded-lg text-center transition-all ${
-                        videoSource === 'library'
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <Video className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-                      <span className="text-sm font-medium">Library</span>
-                    </button>
-                  </div>
+                  <textarea
+                    value={editingLessonData.content}
+                    onChange={(e) => setEditingLessonData(prev => ({ ...prev, content: e.target.value }))}
+                    rows={8}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                    placeholder="Enter lesson description and learning objectives..."
+                  />
                 </div>
 
-                {/* Video Link Input */}
-                {videoSource === 'link' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Video URL
-                    </label>
-                    <input
-                      type="url"
-                      value={videoLink}
-                      onChange={(e) => setVideoLink(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="https://www.youtube.com/watch?v=..."
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Supports YouTube, Vimeo, Wistia, and Loom
-                    </p>
-                    {videoLink && getYouTubeVideoId(videoLink) && (
-                      <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <p className="text-sm text-green-700">✓ Valid YouTube URL detected</p>
-                        <p className="text-xs text-green-600">Video ID: {getYouTubeVideoId(videoLink)}</p>
-                        <p className="text-xs text-gray-600 mt-1">Embed URL: {getEmbedUrl(videoLink)}</p>
-                      </div>
-                    )}
-                    {videoLink && !isValidVideoUrl(videoLink) && videoLink.length > 10 && (
-                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-sm text-yellow-700">⚠️ URL format not recognized</p>
-                        <p className="text-xs text-yellow-600">Make sure it's a valid YouTube or Vimeo URL</p>
-                      </div>
-                    )}
-                    
-                    {/* Live Preview */}
-                    {videoLink && isValidVideoUrl(videoLink) && (
-                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-sm text-blue-700 mb-2">Preview:</p>
-                        <div className="bg-black rounded-lg overflow-hidden relative">
-                          <div className="aspect-video">
-                            <div className="relative w-full h-full">
-                              <iframe
-                                src={getEmbedUrl(videoLink)}
-                                className="w-full h-full"
-                                frameBorder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                title="Video Preview"
-                              />
-                              <div className="relative w-full h-full">
-                                <img
-                                  src={getThumbnailUrl(videoLink)}
-                                  alt="Video thumbnail"
-                                  className="w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <div className="bg-red-600 rounded-full p-3">
-                                    <Play className="w-6 h-6 text-white ml-0.5" />
-                                  </div>
-                                </div>
-                                <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
-                                  Preview
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* File Upload */}
-                {videoSource === 'upload' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Upload Video File
-                    </label>
-                    <input
-                      type="file"
-                      accept="video/*"
-                      onChange={(e) => setUploadedFile(e.target.files?.[0] || null)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    />
-                    {uploadedFile && (
-                      <p className="text-sm text-green-600 mt-2">
-                        Selected: {uploadedFile.name}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Library Selection */}
-                {videoSource === 'library' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Choose from Library
-                    </label>
-                    <select
-                      value={selectedLibraryVideo}
-                      onChange={(e) => setSelectedLibraryVideo(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    >
-                      <option value="">Select a video</option>
-                      {libraryVideos.map((video) => (
-                        <option key={video.id} value={video.id.toString()}>
-                          {video.title} ({video.duration})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+                {/* Duration */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Duration
+                  </label>
+                  <input
+                    type="text"
+                    value={editingLessonData.duration}
+                    onChange={(e) => setEditingLessonData(prev => ({ ...prev, duration: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="e.g., 15:30"
+                  />
+                </div>
               </div>
 
-              <div className="flex justify-end space-x-3 mt-8">
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end space-x-4 mt-8">
                 <button
-                  onClick={closeVideoModal}
-                  className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  onClick={handleCancelEdit}
+                  className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleVideoSave}
-                  disabled={
-                    (videoSource === 'link' && !videoLink) ||
-                    (videoSource === 'upload' && !uploadedFile) ||
-                    (videoSource === 'library' && !selectedLibraryVideo)
-                  }
-                  className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleSaveLesson}
+                  className="bg-orange-500 text-white px-6 py-3 rounded-xl font-medium hover:bg-orange-600 transition-colors flex items-center"
                 >
-                  Add Video
+                  <Save className="w-5 h-5 mr-2" />
+                  Save Changes
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-      
-      {/* Add Folder Modal */}
-      {showAddFolderModal && (
+
+      {/* Video Source Modal */}
+      {showVideoModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
-            <div className="p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-6">Add New Folder</h3>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full">
+            <div className="p-8">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-2xl font-bold text-gray-900">Add Video Content</h3>
+                <button
+                  onClick={() => setShowVideoModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
+                {/* Video Source Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Folder Name
+                  <label className="block text-sm font-medium text-gray-700 mb-4">
+                    Choose Video Source
+                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      { id: 'youtube', name: 'YouTube', icon: '📺', color: 'bg-red-500' },
+                      { id: 'vimeo', name: 'Vimeo', icon: '🎬', color: 'bg-blue-500' },
+                      { id: 'loom', name: 'Loom', icon: '🔴', color: 'bg-purple-500' },
+                      { id: 'wistia', name: 'Wistia', icon: '🎥', color: 'bg-green-500' }
+                    ].map((source) => (
+                      <button
+                        key={source.id}
+                        onClick={() => handleVideoSourceChange(source.id)}
+                        className={`p-4 border-2 rounded-xl text-left transition-all ${
+                          editingLessonData.videoSource === source.id
+                            ? 'border-orange-300 bg-orange-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-10 h-10 ${source.color} rounded-lg flex items-center justify-center text-white text-lg`}>
+                            {source.icon}
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-gray-900">{source.name}</h4>
+                            <p className="text-sm text-gray-600">
+                              {source.id === 'youtube' && 'Paste YouTube video URL'}
+                              {source.id === 'vimeo' && 'Paste Vimeo video URL'}
+                              {source.id === 'loom' && 'Paste Loom share URL'}
+                              {source.id === 'wistia' && 'Paste Wistia embed URL'}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Video URL Input */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Video URL
+                  </label>
+                  <input
+                    type="url"
+                    value={editingLessonData.videoUrl}
+                    onChange={(e) => setEditingLessonData(prev => ({ ...prev, videoUrl: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder={
+                      editingLessonData.videoSource === 'youtube' ? 'https://www.youtube.com/watch?v=...' :
+                      editingLessonData.videoSource === 'vimeo' ? 'https://vimeo.com/123456789' :
+                      editingLessonData.videoSource === 'loom' ? 'https://www.loom.com/share/...' :
+                      editingLessonData.videoSource === 'wistia' ? 'https://fast.wistia.net/embed/iframe/...' :
+                      'Paste video URL here'
+                    }
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Paste the full URL from {editingLessonData.videoSource.charAt(0).toUpperCase() + editingLessonData.videoSource.slice(1)}
+                  </p>
+                </div>
+
+                {/* Duration Input */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Video Duration
                   </label>
                   <input
                     type="text"
-                    value={newFolderName}
-                    onChange={(e) => setNewFolderName(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleCreateFolder();
-                      } else if (e.key === 'Escape') {
-                        handleCancelAddFolder();
-                      }
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="e.g., React Fundamentals"
-                    autoFocus
+                    value={editingLessonData.duration}
+                    onChange={(e) => setEditingLessonData(prev => ({ ...prev, duration: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="e.g., 15:30"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Folders help organize your lessons into logical sections
-                  </p>
                 </div>
+
+                {/* Video Preview */}
+                {editingLessonData.videoUrl && getEmbedUrl(editingLessonData.videoUrl, editingLessonData.videoSource) && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Video Preview
+                    </label>
+                    <div className="bg-black rounded-xl overflow-hidden">
+                      <div className="aspect-video">
+                        <iframe
+                          src={getEmbedUrl(editingLessonData.videoUrl, editingLessonData.videoSource)}
+                          className="w-full h-full"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          title="Video Preview"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="flex justify-end space-x-3 mt-6">
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end space-x-4 mt-8">
                 <button
-                  onClick={handleCancelAddFolder}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  onClick={() => setShowVideoModal(false)}
+                  className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleCreateFolder}
-                  disabled={!newFolderName.trim()}
-                  className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setShowVideoModal(false)}
+                  className="bg-orange-500 text-white px-6 py-3 rounded-xl font-medium hover:bg-orange-600 transition-colors"
                 >
-                  Create Folder
+                  Save Video
                 </button>
               </div>
             </div>
