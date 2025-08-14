@@ -7,10 +7,7 @@ import Courses from './components/Courses';
 import Community from './components/Community';
 import Events from './components/Events';
 import Content from './components/Content';
-import Testimonials from './components/Testimonials';
-import Coupons from './components/Coupons';
-import Contacts from './components/Contacts';
-import Products from './components/Products';
+import Sales from './components/Sales';
 import Settings from './components/Settings';
 import Profile from './components/Profile';
 import Funnel from './components/Funnel';
@@ -37,12 +34,8 @@ function App() {
         return <Events />;
       case 'content-planner':
         return <Content />;
-      case 'testimonials':
-        return <Testimonials />;
       case 'sales-coupons':
-        return <Coupons />;
-      case 'contacts':
-        return <Contacts />;
+        return <Sales />;
       case 'sales':
         return <Sales />;
       case 'settings':
