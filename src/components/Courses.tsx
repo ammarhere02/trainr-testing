@@ -156,6 +156,12 @@ export default function Courses({ onStartLearning }: CoursesProps) {
       thumbnailPreview: course.image,
       published: course.published
     });
+    setVideoData({
+      videoUrl: course.videoUrl || '',
+      videoTitle: course.videoTitle || course.title,
+      videoDescription: course.videoDescription || course.description,
+      videoSource: course.videoSource || 'youtube'
+    });
     setShowEditModal(true);
     setShowCourseMenu(null);
   };
