@@ -10,13 +10,13 @@ export default function EducatorWelcome({ educatorData, onContinue }: EducatorWe
   const [copied, setCopied] = useState(false);
 
   const copySubdomain = () => {
-    navigator.clipboard.writeText(`${window.location.protocol}//${educatorData.fullSubdomain}`);
+    navigator.clipboard.writeText(`${window.location.protocol}//${educatorData.fullSubdirectory}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const shareSubdomain = (platform: string) => {
-    const url = window.location.protocol + '//' + educatorData.fullSubdomain;
+    const url = window.location.protocol + '//' + educatorData.fullSubdirectory;
     const text = `Join my online learning community at ${educatorData.businessName}!`;
     
     const shareUrls = {
@@ -76,7 +76,7 @@ export default function EducatorWelcome({ educatorData, onContinue }: EducatorWe
                     {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   </button>
                   <a
-                    href={`${window.location.protocol}//${educatorData.fullSubdomain}`}
+                    href={`${window.location.protocol}//${educatorData.fullSubdirectory}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-2 bg-white text-gray-600 hover:text-purple-600 rounded-lg transition-colors"
@@ -90,7 +90,7 @@ export default function EducatorWelcome({ educatorData, onContinue }: EducatorWe
               <div className="bg-white rounded-lg p-4 border-2 border-dashed border-purple-200">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-purple-600 mb-1">
-                    {educatorData.fullSubdomain}
+                    {educatorData.fullSubdirectory}
                   </div>
                   <p className="text-gray-600 text-sm">Your personalized student signup portal</p>
                 </div>

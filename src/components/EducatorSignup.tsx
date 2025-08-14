@@ -14,7 +14,7 @@ export default function EducatorSignup({ onSignupComplete, onBackToLogin }: Educ
     password: '',
     confirmPassword: '',
     businessName: '',
-    subdomain: '',
+    subdirectory: '',
     agreeToTerms: false
   });
   
@@ -22,49 +22,49 @@ export default function EducatorSignup({ onSignupComplete, onBackToLogin }: Educ
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<any>({});
-  const [subdomainStatus, setSubdomainStatus] = useState<'checking' | 'available' | 'taken' | 'invalid' | null>(null);
+  const [subdirectoryStatus, setSubdirectoryStatus] = useState<'checking' | 'available' | 'taken' | 'invalid' | null>(null);
 
-  // Check subdomain availability
-  const checkSubdomainAvailability = async (subdomain: string) => {
-    if (!subdomain || subdomain.length < 3) {
-      setSubdomainStatus('invalid');
+  // Check subdirectory availability
+  const checkSubdirectoryAvailability = async (subdirectory: string) => {
+    if (!subdirectory || subdirectory.length < 3) {
+      setSubdirectoryStatus('invalid');
       return;
     }
 
-    // Validate subdomain format
-    const subdomainRegex = /^[a-z0-9-]+$/;
-    if (!subdomainRegex.test(subdomain)) {
-      setSubdomainStatus('invalid');
+    // Validate subdirectory format
+    const subdirectoryRegex = /^[a-z0-9-]+$/;
+    if (!subdirectoryRegex.test(subdirectory)) {
+      setSubdirectoryStatus('invalid');
       return;
     }
 
-    setSubdomainStatus('checking');
+    setSubdirectoryStatus('checking');
     
     // Simulate API call to check availability
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Mock some taken subdomains
-    const takenSubdomains = ['admin', 'api', 'www', 'mail', 'support', 'help', 'blog', 'app', 'test', 'demo', 'sarah', 'john'];
+    // Mock some taken subdirectories
+    const takenSubdirectories = ['admin', 'api', 'www', 'mail', 'support', 'help', 'blog', 'app', 'test', 'demo', 'sarah', 'john', 'login', 'signup', 'studio', 'dashboard'];
     
-    if (takenSubdomains.includes(subdomain.toLowerCase())) {
-      setSubdomainStatus('taken');
+    if (takenSubdirectories.includes(subdirectory.toLowerCase())) {
+      setSubdirectoryStatus('taken');
     } else {
-      setSubdomainStatus('available');
+      setSubdirectoryStatus('available');
     }
   };
 
-  const handleSubdomainChange = (value: string) => {
+  const handleSubdirectoryChange = (value: string) => {
     const cleanValue = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
-    setFormData(prev => ({ ...prev, subdomain: cleanValue }));
+    setFormData(prev => ({ ...prev, subdirectory: cleanValue }));
     
     if (cleanValue) {
       const timeoutId = setTimeout(() => {
-        checkSubdomainAvailability(cleanValue);
+        checkSubdirectoryAvailability(cleanValue);
       }, 300);
       
       return () => clearTimeout(timeoutId);
     } else {
-      setSubdomainStatus(null);
+      setSubdirectoryStatus(null);
     }
   };
 
@@ -84,8 +84,8 @@ export default function EducatorSignup({ onSignupComplete, onBackToLogin }: Educ
     }
     
     if (!formData.businessName.trim()) newErrors.businessName = 'Business name is required';
-    if (!formData.subdomain.trim()) newErrors.subdomain = 'Subdomain is required';
-    else if (subdomainStatus !== 'available') newErrors.subdomain = 'Please choose an available subdomain';
+      if (!formData.subdirectory.trim()) newErrors.subdirectory = 'Subdirectory is required';
+      else if (subdirectoryStatus !== 'available') newErrors.subdirectory = 'Please choose an available subdirectory';
     
     if (!formData.agreeToTerms) newErrors.agreeToTerms = 'You must agree to the terms';
 
@@ -110,8 +110,8 @@ export default function EducatorSignup({ onSignupComplete, onBackToLogin }: Educ
         lastName: formData.lastName,
         email: formData.email,
         businessName: formData.businessName,
-        subdomain: formData.subdomain,
-        fullSubdomain: `${formData.subdomain}.trainr.app`,
+        subdirectory: formData.subdirectory,
+        fullSubdirectory: `trytrainr.com/${formData.subdirectory}`,
         createdAt: new Date().toISOString(),
         role: 'educator'
       };
@@ -124,8 +124,8 @@ export default function EducatorSignup({ onSignupComplete, onBackToLogin }: Educ
     }
   };
 
-  const getSubdomainStatusIcon = () => {
-    switch (subdomainStatus) {
+  const getSubdirectoryStatusIcon = () => {
+    switch (subdirectoryStatus) {
       case 'checking':
         return <Loader className="w-4 h-4 text-blue-500 animate-spin" />;
       case 'available':
@@ -138,16 +138,16 @@ export default function EducatorSignup({ onSignupComplete, onBackToLogin }: Educ
     }
   };
 
-  const getSubdomainStatusMessage = () => {
-    switch (subdomainStatus) {
+  const getSubdirectoryStatusMessage = () => {
+    switch (subdirectoryStatus) {
       case 'checking':
         return 'Checking availability...';
       case 'available':
-        return `${formData.subdomain}.trainr.app is available!`;
+        return `trytrainr.com/${formData.subdirectory} is available!`;
       case 'taken':
-        return 'This subdomain is already taken';
+        return 'This subdirectory is already taken';
       case 'invalid':
-        return 'Invalid subdomain format (3+ chars, letters, numbers, hyphens only)';
+        return 'Invalid subdirectory format (3+ chars, letters, numbers, hyphens only)';
       default:
         return '';
     }
@@ -248,37 +248,40 @@ export default function EducatorSignup({ onSignupComplete, onBackToLogin }: Educ
             {/* Subdomain */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Your Subdomain
+                Your Subdirectory
               </label>
               <div className="relative">
                 <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <span className="absolute left-10 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+                  trytrainr.com/
+                </span>
                 <input
                   type="text"
-                  value={formData.subdomain}
-                  onChange={(e) => handleSubdomainChange(e.target.value)}
-                  className={`w-full pl-10 pr-32 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                    errors.subdomain ? 'border-red-300' : 
-                    subdomainStatus === 'available' ? 'border-green-300' :
-                    subdomainStatus === 'taken' || subdomainStatus === 'invalid' ? 'border-red-300' :
+                  value={formData.subdirectory}
+                  onChange={(e) => handleSubdirectoryChange(e.target.value)}
+                  className={`w-full pl-32 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                    errors.subdirectory ? 'border-red-300' : 
+                    subdirectoryStatus === 'available' ? 'border-green-300' :
+                    subdirectoryStatus === 'taken' || subdirectoryStatus === 'invalid' ? 'border-red-300' :
                     'border-gray-300'
                   }`}
                   placeholder="johndoe"
                 />
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
-                  {getSubdomainStatusIcon()}
-                  <span className="text-gray-500 text-sm">.trainr.app</span>
-                  <span className="text-gray-500 text-sm">.trytrainr.com</span>
-                </div>
+                {getSubdirectoryStatusIcon() && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    {getSubdirectoryStatusIcon()}
+                  </div>
+                )}
               </div>
-              {subdomainStatus && (
+              {subdirectoryStatus && (
                 <p className={`text-xs mt-1 ${
-                  subdomainStatus === 'available' ? 'text-green-600' : 
-                  subdomainStatus === 'checking' ? 'text-blue-600' : 'text-red-600'
+                  subdirectoryStatus === 'available' ? 'text-green-600' : 
+                  subdirectoryStatus === 'checking' ? 'text-blue-600' : 'text-red-600'
                 }`}>
-                  {getSubdomainStatusMessage()}
+                  {getSubdirectoryStatusMessage()}
                 </p>
               )}
-              {errors.subdomain && <p className="text-red-500 text-xs mt-1">{errors.subdomain}</p>}
+              {errors.subdirectory && <p className="text-red-500 text-xs mt-1">{errors.subdirectory}</p>}
             </div>
 
             {/* Password */}
@@ -360,7 +363,7 @@ export default function EducatorSignup({ onSignupComplete, onBackToLogin }: Educ
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isLoading || subdomainStatus !== 'available'}
+              disabled={isLoading || subdirectoryStatus !== 'available'}
               className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center"
             >
               {isLoading ? (

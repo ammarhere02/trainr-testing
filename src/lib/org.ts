@@ -117,27 +117,27 @@ export async function checkSubdomainAvailability(subdomain: string): Promise<boo
 }
 
 // Get subdomain from current hostname
-export function getSubdomain(): string | null {
+export function getSubdirectory(): string | null {
   if (typeof window === 'undefined') return null
   
-  const hostname = window.location.hostname
-  const parts = hostname.split('.')
+  const pathname = window.location.pathname
+  const parts = pathname.split('/').filter(part => part.length > 0)
   
-  // Check if we're on a subdomain (more than 2 parts for domain.com)
-  if (parts.length >= 3) {
-    const subdomain = parts[0]
-    // Exclude common subdomains that aren't educator portals
-    if (!['www', 'api', 'admin', 'mail', 'ftp', 'app'].includes(subdomain)) {
-      return subdomain
+  // Check if we're on a subdirectory (first path segment)
+  if (parts.length >= 1) {
+    const subdirectory = parts[0]
+    // Exclude common paths that aren't educator portals
+    if (!['login', 'signup', 'api', 'admin', 'studio', 'library', 'courses', 'dashboard', 'settings', 'profile'].includes(subdirectory)) {
+      return subdirectory
     }
   }
   
   return null
 }
 
-// Check if current hostname is a subdomain
-export function isSubdomain(): boolean {
-  return getSubdomain() !== null
+// Check if current path is a subdirectory
+export function isSubdirectory(): boolean {
+  return getSubdirectory() !== null
 }
 
 // Get main domain
@@ -155,16 +155,16 @@ export function getMainDomain(): string {
   return 'trytrainr.com'
 }
 
-// Build canonical login URL with org and redirect params
-export function buildCanonicalLoginUrl(subdomain?: string, redirectTo?: string): string {
+// Build canonical login URL with org and redirect params  
+export function buildCanonicalLoginUrl(subdirectory?: string, redirectTo?: string): string {
   const mainDomain = getMainDomain()
   const protocol = window.location.protocol
   
   let url = `${protocol}//${mainDomain}/login`
   const params = new URLSearchParams()
   
-  if (subdomain) {
-    params.set('org', subdomain)
+  if (subdirectory) {
+    params.set('org', subdirectory)
   }
   
   if (redirectTo) {

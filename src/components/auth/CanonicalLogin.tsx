@@ -55,31 +55,31 @@ export default function CanonicalLogin() {
     setSubdomainStatus('checking')
     
     try {
-      // Check if subdomain already exists
-      const existingOrg = await getOrganizationBySubdomain(subdomain)
+      // Check if subdirectory already exists  
+      const existingOrg = await getOrganizationBySubdomain(subdirectory)
       if (existingOrg) {
-        setSubdomainStatus('taken')
+        setSubdirectoryStatus('taken')
       } else {
-        setSubdomainStatus('available')
+        setSubdirectoryStatus('available')
       }
     } catch (error) {
-      console.error('Error checking subdomain:', error)
-      setSubdomainStatus('available') // Assume available on error
+      console.error('Error checking subdirectory:', error)
+      setSubdirectoryStatus('available') // Assume available on error
     }
   }
 
-  const handleSubdomainChange = (value: string) => {
+  const handleSubdirectoryChange = (value: string) => {
     const cleanValue = value.toLowerCase().replace(/[^a-z0-9-]/g, '')
-    setFormData(prev => ({ ...prev, subdomain: cleanValue }))
+    setFormData(prev => ({ ...prev, subdirectory: cleanValue }))
     
     if (cleanValue) {
       const timeoutId = setTimeout(() => {
-        checkSubdomainAvailability(cleanValue)
+        checkSubdirectoryAvailability(cleanValue)
       }, 300)
       
       return () => clearTimeout(timeoutId)
     } else {
-      setSubdomainStatus(null)
+      setSubdirectoryStatus(null)
     }
   }
 
@@ -138,15 +138,15 @@ export default function CanonicalLogin() {
       )
       
       if (error) {
-        setErrors({ general: error.message })
-        return
+        if (!formData.subdirectory.trim()) newErrors.subdirectory = 'Subdirectory is required'
+        else if (subdirectoryStatus !== 'available') newErrors.subdirectory = 'Please choose an available subdirectory'
       }
 
       if (user) {
         // Create organization
         try {
           const org = await createOrganization({
-            subdomain: formData.subdomain,
+            subdomain: formData.subdirectory,
             name: formData.businessName,
             color: '#7c3aed'
           })

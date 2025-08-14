@@ -1,25 +1,24 @@
-// Utility functions for handling subdomains
-export const getSubdomain = (): string | null => {
+// Utility functions for handling subdirectories
+export const getSubdirectory = (): string | null => {
   if (typeof window === 'undefined') return null;
   
-  const hostname = window.location.hostname;
-  const parts = hostname.split('.');
+  const pathname = window.location.pathname;
+  const parts = pathname.split('/').filter(part => part.length > 0);
   
-  // Check if we're on a subdomain (more than 2 parts for domain.com)
-  // or more than 3 parts for domain.co.uk style domains
-  if (parts.length >= 3) {
-    const subdomain = parts[0];
-    // Exclude common subdomains that aren't educator portals
-    if (!['www', 'api', 'admin', 'mail', 'ftp'].includes(subdomain)) {
-      return subdomain;
+  // Check if we're on a subdirectory (first path segment)
+  if (parts.length >= 1) {
+    const subdirectory = parts[0];
+    // Exclude common paths that aren't educator portals
+    if (!['login', 'signup', 'api', 'admin', 'studio', 'library', 'courses', 'dashboard', 'settings', 'profile'].includes(subdirectory)) {
+      return subdirectory;
     }
   }
   
   return null;
 };
 
-export const isSubdomain = (): boolean => {
-  return getSubdomain() !== null;
+export const isSubdirectory = (): boolean => {
+  return getSubdirectory() !== null;
 };
 
 export const getMainDomain = (): string => {
@@ -36,25 +35,25 @@ export const getMainDomain = (): string => {
   return 'trytrainr.com';
 };
 
-export const buildSubdomainUrl = (subdomain: string): string => {
+export const buildSubdirectoryUrl = (subdirectory: string): string => {
   const protocol = window.location.protocol;
   const mainDomain = getMainDomain();
-  return `${protocol}//${subdomain}.${mainDomain}`;
+  return `${protocol}//${mainDomain}/${subdirectory}`;
 };
 
-// Mock educator data - in production this would come from your API
-export const getEducatorBySubdomain = async (subdomain: string) => {
+// Mock educator data - in production this would come from your API  
+export const getEducatorBySubdirectory = async (subdirectory: string) => {
   // Simulate API call
   await new Promise(resolve => setTimeout(resolve, 100));
   
-  // Mock educator data based on subdomain
+  // Mock educator data based on subdirectory
   const mockEducators: { [key: string]: any } = {
     'johndoe': {
       id: 'johndoe',
       firstName: 'John',
       lastName: 'Doe',
       businessName: 'Web Development Academy',
-      subdomain: 'johndoe',
+      subdirectory: 'johndoe',
       description: 'Learn modern web development with hands-on projects',
       avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=200',
       stats: {
@@ -89,7 +88,7 @@ export const getEducatorBySubdomain = async (subdomain: string) => {
       firstName: 'Sarah',
       lastName: 'Johnson',
       businessName: 'Design Mastery Academy',
-      subdomain: 'sarahjohnson',
+      subdirectory: 'sarahjohnson',
       description: 'Master UI/UX design and create stunning digital experiences',
       avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=200',
       stats: {
@@ -112,5 +111,5 @@ export const getEducatorBySubdomain = async (subdomain: string) => {
     }
   };
   
-  return mockEducators[subdomain] || null;
+  return mockEducators[subdirectory] || null;
 };

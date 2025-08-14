@@ -46,11 +46,11 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
   const [showDomainModal, setShowDomainModal] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<'subdomain' | 'custom'>('subdomain');
   const [domainData, setDomainData] = useState({
-    subdomain: 'webdevacademy', 
+    subdirectory: 'webdevacademy', 
     customDomain: '',
     businessName: 'Web Dev Academy'
   });
-  const [currentDomain, setCurrentDomain] = useState('webdevacademy.trytrainr.com');
+  const [currentDomain, setCurrentDomain] = useState('trytrainr.com/webdevacademy');
   const [domainStatus, setDomainStatus] = useState<'active' | 'pending' | 'none'>('active');
   const [domainConnectionStatus, setDomainConnectionStatus] = useState<DomainStatus | null>(null);
   const [isCheckingDomain, setIsCheckingDomain] = useState(false);
@@ -71,8 +71,8 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
     // In real app, this would save to backend
     console.log('Setting up domain:', { selectedDomain, domainData });
     
-    if (selectedDomain === 'subdomain') {
-      setCurrentDomain(`${domainData.subdomain}.trytrainr.com`);
+    if (selectedDomain === 'subdirectory') {
+      setCurrentDomain(`trytrainr.com/${domainData.subdirectory}`);
       setDomainStatus('active');
     } else {
       setCurrentDomain(domainData.customDomain);
@@ -82,10 +82,10 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
     setShowDomainModal(false);
   };
 
-  const isSubdomainValid = domainData.subdomain.length >= 3 && /^[a-zA-Z0-9-]+$/.test(domainData.subdomain);
+  const isSubdirectoryValid = domainData.subdirectory.length >= 3 && /^[a-zA-Z0-9-]+$/.test(domainData.subdirectory);
   const isCustomDomainValid = domainData.customDomain.length > 0 && /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domainData.customDomain);
   const isFormValid = domainData.businessName.length > 0 && 
-    ((selectedDomain === 'subdomain' && isSubdomainValid) || 
+    ((selectedDomain === 'subdirectory' && isSubdirectoryValid) || 
      (selectedDomain === 'custom' && isCustomDomainValid));
 
   const checkDomainConnection = async () => {
@@ -689,58 +689,58 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
 
               {/* Domain Options */}
               <div className="space-y-4 mb-8">
-                {/* Subdomain Option */}
+                {/* Subdirectory Option */}
                 <div 
-                  onClick={() => setSelectedDomain('subdomain')}
+                  onClick={() => setSelectedDomain('subdirectory')}
                   className={`p-6 border-2 rounded-xl cursor-pointer transition-all ${
-                    selectedDomain === 'subdomain' 
+                    selectedDomain === 'subdirectory' 
                       ? 'border-purple-300 bg-purple-50' 
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
                   <div className="flex items-start space-x-4">
                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mt-1 ${
-                      selectedDomain === 'subdomain' 
+                      selectedDomain === 'subdirectory' 
                         ? 'border-purple-600 bg-purple-600' 
                         : 'border-gray-300'
                     }`}>
-                      {selectedDomain === 'subdomain' && (
+                      {selectedDomain === 'subdirectory' && (
                         <div className="w-2 h-2 bg-white rounded-full"></div>
                       )}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
-                        <h4 className="font-semibold text-gray-900">Trainr Subdomain</h4>
+                        <h4 className="font-semibold text-gray-900">Trainr Subdirectory</h4>
                         <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">
                           Recommended
                         </span>
                       </div>
                       <p className="text-sm text-gray-600 mb-4">
-                        Get started instantly with a professional subdomain. Perfect for getting started quickly.
+                        Get started instantly with a professional subdirectory. Perfect for getting started quickly.
                       </p>
                       
-                      {selectedDomain === 'subdomain' && (
+                      {selectedDomain === 'subdirectory' && (
                         <div className="space-y-3">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Choose your subdomain
+                              Choose your subdirectory
                             </label>
                             <div className="flex items-center">
+                              <span className="bg-gray-100 px-3 py-2 border border-r-0 border-gray-300 rounded-l-lg text-gray-600">
+                                trytrainr.com/
+                              </span>
                               <input
                                 type="text"
-                                value={domainData.subdomain}
-                                onChange={(e) => setDomainData({...domainData, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')})}
+                                value={domainData.subdirectory}
+                                onChange={(e) => setDomainData({...domainData, subdirectory: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')})}
                                 placeholder="yourname"
-                                className="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                               />
-                              <span className="bg-gray-100 px-3 py-2 border border-l-0 border-gray-300 rounded-r-lg text-gray-600">
-                                .trainr.app
-                              </span>
                             </div>
-                            {domainData.subdomain && (
-                              <p className={`text-xs mt-1 ${isSubdomainValid ? 'text-green-600' : 'text-red-600'}`}>
-                                {isSubdomainValid 
-                                  ? `✓ Available: ${domainData.subdomain}.trainr.app`
+                            {domainData.subdirectory && (
+                              <p className={`text-xs mt-1 ${isSubdirectoryValid ? 'text-green-600' : 'text-red-600'}`}>
+                                {isSubdirectoryValid 
+                                  ? `✓ Available: trytrainr.com/${domainData.subdirectory}`
                                   : '✗ Must be 3+ characters, letters, numbers, and hyphens only'
                                 }
                               </p>
@@ -863,7 +863,7 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
                   disabled={!isFormValid}
                   className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {selectedDomain === 'subdomain' ? 'Update Domain' : 'Setup Custom Domain'}
+                  {selectedDomain === 'subdirectory' ? 'Update Domain' : 'Setup Custom Domain'}
                 </button>
               </div>
 
@@ -871,12 +871,13 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <div className="grid md:grid-cols-2 gap-6 text-sm">
                   <div>
-                    <h5 className="font-medium text-gray-900 mb-2">Subdomain Benefits:</h5>
+                    <h5 className="font-medium text-gray-900 mb-2">Subdirectory Benefits:</h5>
                     <ul className="text-gray-600 space-y-1">
                       <li>• Instant setup (0 minutes)</li>
                       <li>• No technical configuration</li>
                       <li>• Free SSL certificate</li>
                       <li>• Can upgrade to custom domain later</li>
+                      <li>• Better SEO with main domain authority</li>
                     </ul>
                   </div>
                   <div>
@@ -884,7 +885,7 @@ export default function Settings({ userRole = 'educator' }: SettingsProps) {
                     <ul className="text-gray-600 space-y-1">
                       <li>• Your own branding</li>
                       <li>• Professional appearance</li>
-                      <li>• Better for SEO</li>
+                      <li>• Complete independence</li>
                       <li>• Complete control</li>
                     </ul>
                   </div>
