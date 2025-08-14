@@ -426,7 +426,7 @@ export default function CourseLearning({ courseId, onBack }: CourseLearningProps
       {/* Edit Lesson Modal */}
       {isEditingLesson && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
             <div className="p-8">
               {/* Header */}
               <div className="flex items-center justify-between mb-8">
@@ -573,7 +573,7 @@ export default function CourseLearning({ courseId, onBack }: CourseLearningProps
       {/* Video Source Modal */}
       {showVideoModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
             <div className="p-8">
               {/* Header */}
               <div className="flex items-center justify-between mb-8">
