@@ -155,12 +155,6 @@ export default function Courses({ onStartLearning }: CoursesProps) {
       thumbnailPreview: course.image,
       published: course.published
     });
-    setVideoData({
-      videoUrl: course.videoUrl || '',
-      videoTitle: course.videoTitle || course.title,
-      videoDescription: course.videoDescription || course.description,
-      videoSource: course.videoSource || 'youtube'
-    });
     setShowEditModal(true);
     setShowCourseMenu(null);
   };
@@ -385,13 +379,22 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                   >
                     Continue Learning
                   </button>
-                  <button
-                    onClick={() => handleEditVideo(course)}
-                    className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors flex items-center"
-                  >
-                    <Video className="w-4 h-4 mr-2" />
-                    Edit Video
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handleEditVideo(course)}
+                      className="bg-purple-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors flex items-center"
+                    >
+                      <Video className="w-4 h-4 mr-1" />
+                      Edit Video
+                    </button>
+                    <button
+                      onClick={() => handleEditCourse(course)}
+                      className="bg-gray-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors flex items-center"
+                    >
+                      <Edit3 className="w-4 h-4 mr-1" />
+                      Edit Course
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -634,11 +637,11 @@ export default function Courses({ onStartLearning }: CoursesProps) {
       {/* Edit Course Modal */}
       {showEditModal && courseToEdit && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Edit course</h2>
+                <h2 className="text-2xl font-bold text-gray-900">Edit Course</h2>
                 <button
                   onClick={cancelEditCourse}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
