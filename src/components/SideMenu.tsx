@@ -70,8 +70,7 @@ export default function SideMenu({ currentView, onViewChange, userRole, onCollap
       icon: Megaphone,
       hasSubmenu: true,
       submenu: [
-        { key: 'content-planner', label: 'Content Planner', icon: FileText },
-        { key: 'testimonials', label: 'Testimonials', icon: Users }
+        { key: 'content-planner', label: 'Content Planner', icon: FileText }
       ]
     },
     {
