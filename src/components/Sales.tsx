@@ -475,6 +475,92 @@ export default function Sales() {
       {/* Coupons Tab */}
       {activeTab === 'coupons' && (
         <div className="space-y-6">
+          {/* Contacts Section */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Customer Contacts</h2>
+                <button 
+                  onClick={() => {
+                    setCreateType('contact');
+                    setShowCreateModal(true);
+                  }}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center"
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Add Contact
+                </button>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="text-left py-4 px-6 font-medium text-gray-700">Name</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-700">Email</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-700">Company</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-700">Lifetime Value</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-700">Email Marketing</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-700">Added</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {contacts.map((contact) => (
+                    <tr key={contact.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="py-4 px-6">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                            <User className="w-4 h-4 text-purple-600" />
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">{contact.firstName} {contact.lastName}</div>
+                            <div className="text-sm text-gray-500">{contact.position}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="text-sm text-gray-900">{contact.email}</div>
+                        <div className="text-sm text-gray-500">{contact.phone}</div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="text-sm text-gray-900">{contact.company}</div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="text-sm font-medium text-gray-900">${contact.lifetimeValue.toFixed(2)}</div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                          contact.emailMarketing ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                        }`}>
+                          {contact.emailMarketing ? 'Subscribed' : 'Not subscribed'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="text-sm text-gray-900">
+                          {new Date(contact.addedDate).toLocaleDateString()}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center space-x-2">
+                          <button className="p-1 text-gray-400 hover:text-blue-600 transition-colors" title="Edit">
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button className="p-1 text-gray-400 hover:text-green-600 transition-colors" title="Email">
+                            <Mail className="w-4 h-4" />
+                          </button>
+                          <button className="p-1 text-gray-400 hover:text-red-600 transition-colors" title="Delete">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -658,7 +744,6 @@ export default function Sales() {
                 <button
                   onClick={() => {
                     setCreateType('coupon');
-                    setActiveTab('coupons');
                     setShowCreateModal(false);
                   }}
                   className="w-full p-4 border border-gray-200 rounded-lg hover:border-yellow-300 hover:bg-yellow-50 transition-all text-left"
@@ -675,7 +760,6 @@ export default function Sales() {
                 <button
                   onClick={() => {
                     setCreateType('contact');
-                    setActiveTab('contacts');
                     setShowCreateModal(false);
                   }}
                   className="w-full p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all text-left"
