@@ -1,126 +1,122 @@
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import AuthForm from './components/auth/AuthForm';
-import StudentAuth from './components/auth/StudentAuth';
-import AfterLogin from './components/auth/AfterLogin';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Hero from './components/Hero';
 import InstructorDashboard from './components/InstructorDashboard';
 import StudentDashboard from './components/StudentDashboard';
-import Hero from './components/Hero';
-import { AuthProvider, useAuth } from './hooks/useAuth';
 
 function App() {
-  const { user, profile, role, isLoading } = useAuth();
+  // Mock instructor data
+  const mockInstructorData = {
+    id: 'instructor-1',
+    email: 'instructor@example.com',
+    full_name: 'Sarah Johnson',
+    business_name: 'Web Development Academy',
+    logo_url: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=200',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  // Mock student data
+  const mockStudentData = {
+    id: 'student-1',
+    email: 'student@example.com',
+    full_name: 'John Doe',
+    instructor_id: 'instructor-1',
+    avatar_url: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=200',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
 
   return (
     <Router>
-      <Routes>
-        {/* Landing Page */}
-        <Route path="/" element={
-          <Hero
-            onLogin={() => window.location.href = '/login/instructor'}
-            onShowEducatorSignup={() => window.location.href = '/login/instructor'}
-          />
-        } />
-        
-        {/* Login Pages */}
-        <Route path="/login/instructor" element={
-          <AuthForm 
-            onSuccess={() => window.location.href = '/after-login'}
-            mode="login"
-            setMode={() => {}}
-          />
-        } />
-        
-        <Route path="/login/student" element={
-          <StudentAuth onSuccess={() => {
-            console.log('App: Student auth success, redirecting to after-login');
-            window.location.href = '/after-login';
-          }} />
-        } />
-        
-        <Route path="/login/student/:instructorId" element={
-          <StudentAuth onSuccess={() => {
-            console.log('App: Student auth success (with instructorId), redirecting to after-login');
-            window.location.href = '/after-login';
-          }} />
-        } />
-        
-        {/* After Login Handler */}
-        <Route path="/after-login" element={
-          !user ? (
-            <Navigate to="/login/instructor" replace />
-          ) : (
-            <AfterLogin />
-          )
-        } />
-        
-        {/* Direct Dashboard Access */}
-        <Route path="/dashboard-instructor" element={
-          !user ? (
-            <Navigate to="/login/instructor" replace />
-          ) : role !== 'instructor' ? (
-            <Navigate to="/login/instructor" replace />
-          ) : !profile ? (
+      <div className="min-h-screen bg-gray-50">
+        <Routes>
+          {/* Landing Page */}
+          <Route path="/" element={
+            <Hero
+              onLogin={() => {}}
+              onShowEducatorSignup={() => {}}
+            />
+          } />
+          
+          {/* Direct Dashboard Access - No Auth Required */}
+          <Route path="/dashboard-instructor" element={
+            <InstructorDashboard instructorData={mockInstructorData} />
+          } />
+          
+          <Route path="/dashboard-student" element={
+            <StudentDashboard studentData={mockStudentData} />
+          } />
+          
+          {/* Legacy routes for backward compatibility */}
+          <Route path="/login" element={
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
               <div className="text-center">
-                <div className="animate-spin w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading profile...</p>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Choose Your Dashboard</h2>
+                <div className="space-y-4">
+                  <a
+                    href="/dashboard-instructor"
+                    className="block bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                  >
+                    Go to Instructor Dashboard
+                  </a>
+                  <a
+                    href="/dashboard-student"
+                    className="block bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    Go to Student Dashboard
+                  </a>
+                </div>
               </div>
             </div>
-          ) : (
-            <InstructorDashboard instructorData={profile.data as any} />
-          )
-        } />
-        
-        <Route path="/dashboard-student" element={
-          !user ? (
-            <Navigate to="/login/student" replace />
-          ) : role !== 'student' ? (
-            <Navigate to="/login/student" replace />
-          ) : !profile ? (
+          } />
+          
+          <Route path="/login/instructor" element={
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
               <div className="text-center">
-                <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading profile...</p>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Instructor Access</h2>
+                <a
+                  href="/dashboard-instructor"
+                  className="bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                >
+                  Go to Instructor Dashboard
+                </a>
               </div>
             </div>
-          ) : (
-            <StudentDashboard studentData={profile.data as any} />
-          )
-        } />
-        
-        {/* Legacy routes for backward compatibility */}
-        <Route path="/login" element={<Navigate to="/login/instructor" replace />} />
-        <Route path="/signup" element={<Navigate to="/login/instructor" replace />} />
-        <Route path="/signup/instructor" element={<Navigate to="/login/instructor" replace />} />
-        <Route path="/signup/student" element={<Navigate to="/login/student" replace />} />
-        <Route path="/studio/dashboard" element={<Navigate to="/dashboard-instructor" replace />} />
-        <Route path="/library" element={<Navigate to="/dashboard-student" replace />} />
-        
-        {/* Catch all - redirect to home */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          } />
+          
+          <Route path="/login/student" element={
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Student Access</h2>
+                <a
+                  href="/dashboard-student"
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Go to Student Dashboard
+                </a>
+              </div>
+            </div>
+          } />
+          
+          {/* Catch all - redirect to home */}
+          <Route path="*" element={
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Page Not Found</h2>
+                <a
+                  href="/"
+                  className="bg-gray-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-700 transition-colors"
+                >
+                  Go to Home
+                </a>
+              </div>
+            </div>
+          } />
+        </Routes>
+      </div>
     </Router>
   );
 }
 
-export default function AppWrapper() {
-  return (
-    <AuthProvider>
-      <div className="min-h-screen bg-gray-50">
-        <App />
-      </div>
-    </AuthProvider>
-  );
-}
+export default App;
