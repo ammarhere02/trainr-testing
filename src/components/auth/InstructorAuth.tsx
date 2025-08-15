@@ -119,19 +119,9 @@ export default function InstructorAuth({ onSuccess }: InstructorAuthProps) {
     setIsLoading(true);
     
     try {
-      // Simulate auth process (no actual authentication)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Mock user data
-      const userData = {
-        id: Date.now(),
-        email: formData.email,
-        full_name: mode === 'signup' ? `${formData.firstName} ${formData.lastName}` : 'Test Instructor',
-        business_name: mode === 'signup' ? formData.businessName : 'Test Business',
-        role: 'instructor'
-      };
-
-      onSuccess(userData);
+      // Authentication disabled - direct redirect
+      await new Promise(resolve => setTimeout(resolve, 500));
+      window.location.href = '/dashboard-instructor';
     } catch (error: any) {
       setErrors({ submit: 'Something went wrong. Please try again.' });
     } finally {

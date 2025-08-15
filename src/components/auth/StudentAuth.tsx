@@ -63,36 +63,9 @@ export default function StudentAuth({ onSuccess, instructorId }: StudentAuthProp
     setIsLoading(true);
     
     try {
-      if (mode === 'login') {
-        console.log('StudentAuth: Attempting login for:', formData.email);
-        const { data, error } = await signInEmail(formData.email, formData.password);
-        
-        if (error) {
-          console.error('StudentAuth: Login error:', error);
-          setErrors({ submit: error.message });
-        } else if (data?.user) {
-          console.log('StudentAuth: Login successful, calling onSuccess');
-          onSuccess(data.user);
-        }
-      } else {
-        console.log('StudentAuth: Attempting signup for:', formData.email);
-        const signUpData = {
-          email: formData.email,
-          password: formData.password,
-          fullName: `${formData.firstName} ${formData.lastName}`,
-          instructorId: instructorId || undefined
-        };
-        
-        const { data, error } = await signUp('student', signUpData);
-        
-        if (error) {
-          console.error('StudentAuth: Signup error:', error);
-          setErrors({ submit: error.message });
-        } else if (data?.user) {
-          console.log('StudentAuth: Signup successful, calling onSuccess');
-          onSuccess(data.user);
-        }
-      }
+      // Authentication disabled - direct redirect
+      await new Promise(resolve => setTimeout(resolve, 500));
+      window.location.href = '/dashboard-student';
     } catch (error: any) {
       console.error('StudentAuth: Unexpected error:', error);
       setErrors({ 

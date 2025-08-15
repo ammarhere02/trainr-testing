@@ -52,11 +52,11 @@ function App() {
           
           {/* Auth Pages */}
           <Route path="/login/instructor" element={
-            <InstructorAuth onSuccess={() => window.location.href = '/dashboard-instructor'} />
+            <InstructorAuth onSuccess={() => {}} />
           } />
           
           <Route path="/login/student" element={
-            <StudentAuth onSuccess={() => window.location.href = '/dashboard-student'} />
+            <StudentAuth onSuccess={() => {}} />
           } />
           
           {/* Legacy routes for backward compatibility */}
