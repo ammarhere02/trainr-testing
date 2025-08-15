@@ -4,6 +4,8 @@ import RoleSelection from './components/auth/RoleSelection';
 import InstructorAuth from './components/auth/InstructorAuth';
 import StudentAuth from './components/auth/StudentAuth';
 import AuthDashboard from './components/auth/AuthDashboard';
+import ForgotPassword from './components/auth/ForgotPassword';
+import PasswordReset from './components/auth/PasswordReset';
 import InstructorDashboard from './components/InstructorDashboard';
 import StudentDashboard from './components/StudentDashboard';
 import Hero from './components/Hero';
