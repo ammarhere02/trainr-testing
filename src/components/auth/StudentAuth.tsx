@@ -370,8 +370,8 @@ export default function StudentAuth({ onSuccess, instructorId }: StudentAuthProp
                 <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-blue-800 text-sm font-medium mb-2">🧪 Test Credentials:</p>
                   <div className="text-blue-700 text-xs space-y-1">
-                    <p><strong>Email:</strong> test@student.com</p>
-                    <p><strong>Password:</strong> password123</p>
+                    <p><strong>Note:</strong> You need to create a student account first</p>
+                    <p>Click "Create student account" below to get started</p>
                   </div>
                 </div>
               )}
