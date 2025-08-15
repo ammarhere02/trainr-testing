@@ -1,45 +1,6 @@
 import { supabase } from './supabase'
 import type { User } from '@supabase/supabase-js'
 
-// Create test users in Supabase Auth (for development only)
-export async function createTestUsers() {
-  try {
-    // Create test instructor
-    const { data: instructorAuth, error: instructorError } = await supabase.auth.admin.createUser({
-      email: 'test@instructor.com',
-      password: 'password123',
-      email_confirm: true
-    });
-
-    if (instructorAuth.user && !instructorError) {
-      // Update instructor record with auth user ID
-      await supabase
-        .from('instructors')
-        .update({ id: instructorAuth.user.id })
-        .eq('email', 'test@instructor.com');
-    }
-
-    // Create test student
-    const { data: studentAuth, error: studentError } = await supabase.auth.admin.createUser({
-      email: 'test@student.com',
-      password: 'password123',
-      email_confirm: true
-    });
-
-    if (studentAuth.user && !studentError) {
-      // Update student record with auth user ID
-      await supabase
-        .from('students')
-        .update({ id: studentAuth.user.id })
-        .eq('email', 'test@student.com');
-    }
-
-    console.log('Test users created successfully');
-  } catch (error) {
-    console.error('Error creating test users:', error);
-  }
-}
-
 export interface AuthResult {
   user: User | null
   error: Error | null
@@ -48,27 +9,108 @@ export interface AuthResult {
 export interface Instructor {
   id: string
   email: string
-  full_name: string | null
+  full_name: string
   business_name: string
   subdomain: string
   logo_url: string | null
   color: string | null
   created_at: string
+  updated_at: string
 }
 
 export interface Student {
   id: string
   email: string
-  full_name: string | null
+  full_name: string
   instructor_id: string
   avatar_url: string | null
   created_at: string
+  updated_at: string
 }
 
 export interface Profile {
   id: string
   role: 'instructor' | 'student'
   data: Instructor | Student
+}
+
+// Create test users in Supabase Auth (development only)
+export async function createTestUsers() {
+  try {
+    console.log('Creating test users...')
+    
+    // Check if test instructor already exists
+    const { data: existingInstructor } = await supabase
+      .from('instructors')
+      .select('id')
+      .eq('email', 'test@instructor.com')
+      .single()
+
+    if (!existingInstructor) {
+      // Create test instructor auth user
+      const { data: instructorAuth, error: instructorError } = await supabase.auth.signUp({
+        email: 'test@instructor.com',
+        password: 'password123',
+        options: {
+          data: {
+            full_name: 'Test Instructor',
+            role: 'instructor'
+          }
+        }
+      })
+
+      if (instructorAuth.user && !instructorError) {
+        // Create instructor profile
+        await supabase
+          .from('instructors')
+          .insert([{
+            id: instructorAuth.user.id,
+            email: 'test@instructor.com',
+            full_name: 'Test Instructor',
+            business_name: 'Test Academy',
+            subdomain: 'testacademy',
+            color: '#7c3aed'
+          }])
+      }
+    }
+
+    // Check if test student already exists
+    const { data: existingStudent } = await supabase
+      .from('students')
+      .select('id')
+      .eq('email', 'test@student.com')
+      .single()
+
+    if (!existingStudent && existingInstructor) {
+      // Create test student auth user
+      const { data: studentAuth, error: studentError } = await supabase.auth.signUp({
+        email: 'test@student.com',
+        password: 'password123',
+        options: {
+          data: {
+            full_name: 'Test Student',
+            role: 'student'
+          }
+        }
+      })
+
+      if (studentAuth.user && !studentError) {
+        // Create student profile
+        await supabase
+          .from('students')
+          .insert([{
+            id: studentAuth.user.id,
+            email: 'test@student.com',
+            full_name: 'Test Student',
+            instructor_id: existingInstructor.id
+          }])
+      }
+    }
+
+    console.log('Test users setup completed')
+  } catch (error) {
+    console.error('Error creating test users:', error)
+  }
 }
 
 // Sign in with email and password
@@ -79,94 +121,11 @@ export async function signInEmail(email: string, password: string): Promise<Auth
       password
     })
     
-    return {
-      user: data.user,
-      error: error ? new Error(error.message) : null
-    }
-  } catch (error) {
-    return {
-      user: null,
-      error: error instanceof Error ? error : new Error('Unknown error')
-    }
-  }
-}
-
-// Sign in with Google OAuth
-export async function signInGoogle(redirectTo?: string): Promise<void> {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: redirectTo || `${window.location.origin}/post-login`
-    }
-  })
-  
-  if (error) {
-    throw new Error(error.message)
-  }
-}
-
-// Send magic link
-export async function sendMagicLink(email: string, redirectTo?: string): Promise<void> {
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: redirectTo || `${window.location.origin}/post-login`
-    }
-  })
-  
-  if (error) {
-    throw new Error(error.message)
-  }
-}
-
-// Sign up with email and password (unified function)
-export async function signUpEmail(
-  email: string, 
-  password: string, 
-  fullName: string,
-  role: 'instructor' | 'student',
-  additionalData?: { businessName?: string; subdomain?: string; instructorId?: string }
-): Promise<AuthResult> {
-  try {
-    // Check if Supabase is properly configured
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-    
-    if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('your_supabase_project_url_here')) {
-      throw new Error('Database not configured. Please set up your Supabase credentials in the environment variables.')
-    }
-
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-          role: role,
-          ...additionalData
-        },
-        emailRedirectTo: `${window.location.origin}/post-login`
-      }
-    })
-    
     if (error) {
-      console.error('Supabase signup error:', error)
-      
-      // Provide more specific error messages
-      if (error.message.includes('User already registered') || error.message.includes('already been registered')) {
-        throw new Error('An account with this email already exists. Please sign in instead.')
-      } else if (error.message.includes('Invalid API key') || error.message.includes('Invalid JWT')) {
-        throw new Error('Database configuration error. Please check your Supabase setup.')
-      } else if (error.message.includes('relation') && error.message.includes('does not exist')) {
-        throw new Error('Database tables not found. Please run the SQL migration in your Supabase dashboard.')
-      } else if (error.message.includes('Invalid email')) {
-        throw new Error('Please enter a valid email address.')
-      } else if (error.message.includes('Password')) {
-        throw new Error('Password must be at least 6 characters long.')
-      } else if (error.message.includes('Database error')) {
-        throw new Error('Database connection failed. Please check your Supabase configuration and try again.')
-      } else {
-        throw new Error(`Account creation failed: ${error.message}`)
+      console.error('Sign in error:', error)
+      return {
+        user: null,
+        error: new Error(error.message)
       }
     }
     
@@ -175,7 +134,7 @@ export async function signUpEmail(
       error: null
     }
   } catch (error) {
-    console.error('SignUp error:', error)
+    console.error('Sign in exception:', error)
     return {
       user: null,
       error: error instanceof Error ? error : new Error('Unknown error')
@@ -197,41 +156,62 @@ export async function signUpInstructor(
     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
     
     if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('your_supabase_project_url_here')) {
-      throw new Error('Database not configured. Please set up your Supabase credentials in the environment variables.')
+      throw new Error('Database not configured. Please set up your Supabase credentials.')
     }
 
+    // Create auth user
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
-          business_name: businessName,
-          subdomain: subdomain,
           role: 'instructor'
-        },
-        emailRedirectTo: `${window.location.origin}/post-login`
+        }
       }
     })
     
     if (error) {
       console.error('Supabase signup error:', error)
       
-      // Provide more specific error messages
-      if (error.message.includes('User already registered') || error.message.includes('already been registered')) {
+      if (error.message.includes('User already registered')) {
         throw new Error('An account with this email already exists. Please sign in instead.')
-      } else if (error.message.includes('Invalid API key') || error.message.includes('Invalid JWT')) {
-        throw new Error('Database configuration error. Please check your Supabase setup.')
-      } else if (error.message.includes('relation') && error.message.includes('does not exist')) {
-        throw new Error('Database tables not found. Please run the SQL migration in your Supabase dashboard.')
       } else if (error.message.includes('Invalid email')) {
         throw new Error('Please enter a valid email address.')
       } else if (error.message.includes('Password')) {
         throw new Error('Password must be at least 6 characters long.')
-      } else if (error.message.includes('Database error')) {
-        throw new Error('Database connection failed. Please check your Supabase configuration and try again.')
       } else {
         throw new Error(`Account creation failed: ${error.message}`)
+      }
+    }
+
+    if (data.user) {
+      // Create instructor profile in database
+      try {
+        const { data: instructor, error: instructorError } = await supabase
+          .from('instructors')
+          .insert([{
+            id: data.user.id,
+            email: email,
+            full_name: fullName,
+            business_name: businessName,
+            subdomain: subdomain,
+            color: '#7c3aed'
+          }])
+          .select()
+          .single()
+
+        if (instructorError) {
+          console.error('Error creating instructor profile:', instructorError)
+          
+          if (instructorError.code === '23505') {
+            console.log('Instructor profile already exists')
+          } else {
+            throw new Error(`Failed to create instructor profile: ${instructorError.message}`)
+          }
+        }
+      } catch (profileError) {
+        console.error('Error in instructor profile creation:', profileError)
       }
     }
     
@@ -256,12 +236,11 @@ export async function signUpStudent(
   instructorId: string
 ): Promise<AuthResult> {
   try {
-    // Check if Supabase is configured
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
     
     if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('your_supabase_project_url_here')) {
-      throw new Error('Database not configured. Please set up your Supabase credentials in the environment variables.')
+      throw new Error('Database not configured. Please set up your Supabase credentials.')
     }
 
     const { data, error } = await supabase.auth.signUp({
@@ -270,7 +249,6 @@ export async function signUpStudent(
       options: {
         data: {
           full_name: fullName,
-          instructor_id: instructorId,
           role: 'student'
         }
       }
@@ -279,8 +257,7 @@ export async function signUpStudent(
     if (error) {
       console.error('Supabase signup error:', error)
       
-      // Provide more specific error messages
-      if (error.message.includes('User already registered') || error.message.includes('already been registered')) {
+      if (error.message.includes('User already registered')) {
         throw new Error('An account with this email already exists. Please sign in instead.')
       } else {
         throw new Error(`Account creation failed: ${error.message}`)
@@ -288,7 +265,6 @@ export async function signUpStudent(
     }
 
     if (data.user) {
-      // Create student profile in database
       try {
         const { data: student, error: studentError } = await supabase
           .from('students')
@@ -305,7 +281,6 @@ export async function signUpStudent(
           console.error('Error creating student profile:', studentError)
           
           if (studentError.code === '23505') {
-            // Duplicate key - student already exists
             console.log('Student profile already exists')
           } else {
             throw new Error(`Failed to create student profile: ${studentError.message}`)
@@ -313,7 +288,6 @@ export async function signUpStudent(
         }
       } catch (profileError) {
         console.error('Error in student profile creation:', profileError)
-        // Don't fail the signup if profile creation fails - user can try logging in
       }
     }
     
@@ -366,7 +340,7 @@ export async function getProfile(userId?: string): Promise<Profile | null> {
       }
     }
     
-    console.log('Profile not found for user:', id, 'Instructor error:', instructorError, 'Student error:', studentError)
+    console.log('Profile not found for user:', id)
     return null
   } catch (error) {
     console.error('Error in getProfile:', error)
@@ -444,5 +418,48 @@ export async function resetPassword(email: string): Promise<void> {
   
   if (error) {
     throw new Error(error.message)
+  }
+}
+
+// Check if user has specific role
+export async function checkUserRole(userId: string): Promise<'instructor' | 'student' | null> {
+  try {
+    // Check instructor table first
+    const { data: instructor } = await supabase
+      .from('instructors')
+      .select('id')
+      .eq('id', userId)
+      .single()
+    
+    if (instructor) return 'instructor'
+    
+    // Check student table
+    const { data: student } = await supabase
+      .from('students')
+      .select('id')
+      .eq('id', userId)
+      .single()
+    
+    if (student) return 'student'
+    
+    return null
+  } catch (error) {
+    console.error('Error checking user role:', error)
+    return null
+  }
+}
+
+// Validate subdomain availability
+export async function validateSubdomain(subdomain: string): Promise<boolean> {
+  try {
+    const { data } = await supabase
+      .from('instructors')
+      .select('id')
+      .eq('subdomain', subdomain)
+      .single()
+    
+    return !data // Available if no data found
+  } catch (error) {
+    return true // Assume available on error
   }
 }

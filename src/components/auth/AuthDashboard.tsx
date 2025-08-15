@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, GraduationCap, ArrowRight, LogOut, Settings, Users, BookOpen } from 'lucide-react';
+import { User, GraduationCap, ArrowRight, LogOut, Settings, Users, BookOpen, Loader, AlertCircle } from 'lucide-react';
 import { getCurrentUser, getProfile, signOut } from '../../lib/auth';
 import type { Profile } from '../../lib/auth';
 
@@ -45,7 +45,7 @@ export default function AuthDashboard({ onRoleSelect }: AuthDashboardProps) {
   const handleSignOut = async () => {
     try {
       await signOut();
-      window.location.href = '/login';
+      window.location.href = '/';
     } catch (error) {
       console.error('Sign out error:', error);
     }
@@ -74,7 +74,7 @@ export default function AuthDashboard({ onRoleSelect }: AuthDashboardProps) {
         <div className="max-w-md w-full">
           <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
             <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <div className="animate-spin w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full"></div>
+              <Loader className="w-8 h-8 text-purple-600 animate-spin" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading...</h1>
             <p className="text-gray-600">Setting up your dashboard</p>
@@ -90,7 +90,7 @@ export default function AuthDashboard({ onRoleSelect }: AuthDashboardProps) {
         <div className="max-w-md w-full">
           <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
             <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-red-600 font-bold text-2xl">!</span>
+              <AlertCircle className="w-8 h-8 text-red-600" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Error</h1>
             <p className="text-gray-600 mb-6">{error}</p>
@@ -138,14 +138,14 @@ export default function AuthDashboard({ onRoleSelect }: AuthDashboardProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full">
+      <div className="max-w-4xl w-full">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <span className="text-white font-bold text-3xl">T</span>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Trainr!</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back!</h1>
             <p className="text-gray-600">Choose how you want to access the platform</p>
           </div>
 
@@ -180,19 +180,19 @@ export default function AuthDashboard({ onRoleSelect }: AuthDashboardProps) {
             </div>
           </div>
 
-          {/* Role Selection */}
-          <div className="space-y-4 mb-8">
-            {/* Instructor Access */}
+          {/* Dashboard Options */}
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            {/* Instructor Dashboard */}
             <button
               onClick={() => handleRoleAccess('instructor')}
               disabled={currentProfile.role !== 'instructor'}
-              className={`w-full p-6 border-2 rounded-xl text-left transition-all ${
+              className={`p-6 border-2 rounded-xl text-left transition-all ${
                 currentProfile.role === 'instructor'
                   ? 'border-purple-300 bg-purple-50 hover:border-purple-400 hover:bg-purple-100'
                   : 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed'
               }`}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-4">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                     currentProfile.role === 'instructor' 
@@ -204,22 +204,23 @@ export default function AuthDashboard({ onRoleSelect }: AuthDashboardProps) {
                   <div>
                     <h3 className="text-xl font-bold text-gray-900">Instructor Dashboard</h3>
                     <p className="text-gray-600">Manage courses, students, and content</p>
-                    {instructorData && (
-                      <div className="mt-2 space-y-1">
-                        <p className="text-sm text-purple-600 font-medium">
-                          🏢 {instructorData.business_name}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          🌐 trytrainr.com/{instructorData.subdomain}
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </div>
                 {currentProfile.role === 'instructor' && (
                   <ArrowRight className="w-6 h-6 text-purple-600" />
                 )}
               </div>
+              
+              {instructorData && (
+                <div className="space-y-2">
+                  <p className="text-sm text-purple-600 font-medium">
+                    🏢 {instructorData.business_name}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    🌐 trytrainr.com/{instructorData.subdomain}
+                  </p>
+                </div>
+              )}
               
               {currentProfile.role === 'instructor' && (
                 <div className="mt-4 grid grid-cols-3 gap-4 text-center">
@@ -239,17 +240,17 @@ export default function AuthDashboard({ onRoleSelect }: AuthDashboardProps) {
               )}
             </button>
 
-            {/* Student Access */}
+            {/* Student Dashboard */}
             <button
               onClick={() => handleRoleAccess('student')}
               disabled={currentProfile.role !== 'student'}
-              className={`w-full p-6 border-2 rounded-xl text-left transition-all ${
+              className={`p-6 border-2 rounded-xl text-left transition-all ${
                 currentProfile.role === 'student'
                   ? 'border-blue-300 bg-blue-50 hover:border-blue-400 hover:bg-blue-100'
                   : 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed'
               }`}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-4">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                     currentProfile.role === 'student' 
@@ -261,19 +262,20 @@ export default function AuthDashboard({ onRoleSelect }: AuthDashboardProps) {
                   <div>
                     <h3 className="text-xl font-bold text-gray-900">Student Dashboard</h3>
                     <p className="text-gray-600">Access courses and community</p>
-                    {studentData && (
-                      <div className="mt-2">
-                        <p className="text-sm text-blue-600 font-medium">
-                          📚 Learning with instructor
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </div>
                 {currentProfile.role === 'student' && (
                   <ArrowRight className="w-6 h-6 text-blue-600" />
                 )}
               </div>
+              
+              {studentData && (
+                <div className="space-y-2">
+                  <p className="text-sm text-blue-600 font-medium">
+                    📚 Learning with instructor
+                  </p>
+                </div>
+              )}
               
               {currentProfile.role === 'student' && (
                 <div className="mt-4 grid grid-cols-3 gap-4 text-center">
