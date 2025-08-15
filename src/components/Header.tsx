@@ -138,6 +138,16 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
 
               {/* Search and Actions */}
               <div className="flex items-center space-x-4 relative">
+                {/* Back to Home Button - Show when not on home page */}
+                {window.location.pathname !== '/' && (
+                  <button
+                    onClick={() => window.location.href = '/'}
+                    className="text-gray-300 hover:text-white font-medium transition-colors"
+                  >
+                    ← Home
+                  </button>
+                )}
+                
                 <button className="md:hidden p-2 text-gray-300 hover:text-white transition-colors">
                   <Menu className="w-5 h-5" />
                 </button>

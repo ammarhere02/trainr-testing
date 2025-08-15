@@ -27,53 +27,33 @@ function App() {
       <Routes>
         {/* Landing Page */}
         <Route path="/" element={
-          !user ? (
-            <Hero
-              onLogin={() => window.location.href = '/login/instructor'}
-              onShowEducatorSignup={() => window.location.href = '/login/instructor'}
-            />
-          ) : role === 'instructor' ? (
-            <Navigate to="/dashboard-instructor" replace />
-          ) : role === 'student' ? (
-            <Navigate to="/dashboard-student" replace />
-          ) : (
-            <Navigate to="/login/instructor" replace />
-          )
+          <Hero
+            onLogin={() => window.location.href = '/login/instructor'}
+            onShowEducatorSignup={() => window.location.href = '/login/instructor'}
+          />
         } />
         
         {/* Login Pages */}
         <Route path="/login/instructor" element={
-          user && role === 'instructor' ? (
-            <Navigate to="/dashboard-instructor" replace />
-          ) : (
-            <AuthForm 
-              onSuccess={() => window.location.href = '/after-login'}
-              mode="login"
-              setMode={() => {}}
-            />
-          )
+          <AuthForm 
+            onSuccess={() => window.location.href = '/after-login'}
+            mode="login"
+            setMode={() => {}}
+          />
         } />
         
         <Route path="/login/student" element={
-          user && role === 'student' ? (
-            <Navigate to="/dashboard-student" replace />
-          ) : (
-            <StudentAuth onSuccess={() => {
-              console.log('App: Student auth success, redirecting to after-login');
-              window.location.href = '/after-login';
-            }} />
-          )
+          <StudentAuth onSuccess={() => {
+            console.log('App: Student auth success, redirecting to after-login');
+            window.location.href = '/after-login';
+          }} />
         } />
         
         <Route path="/login/student/:instructorId" element={
-          user && role === 'student' ? (
-            <Navigate to="/dashboard-student" replace />
-          ) : (
-            <StudentAuth onSuccess={() => {
-              console.log('App: Student auth success (with instructorId), redirecting to after-login');
-              window.location.href = '/after-login';
-            }} />
-          )
+          <StudentAuth onSuccess={() => {
+            console.log('App: Student auth success (with instructorId), redirecting to after-login');
+            window.location.href = '/after-login';
+          }} />
         } />
         
         {/* After Login Handler */}

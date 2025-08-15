@@ -493,6 +493,16 @@ export default function AuthForm({ onSuccess, mode, setMode }: AuthFormProps) {
                 {mode === 'login' ? 'Create instructor account' : 'Sign in instead'}
               </button>
             </p>
+            
+            {/* Back to Home */}
+            <div className="mt-4">
+              <button
+                onClick={() => window.location.href = '/'}
+                className="text-gray-500 hover:text-gray-700 text-sm font-medium"
+              >
+                ← Back to Home
+              </button>
+            </div>
           </div>
 
           {/* Test Credentials Helper */}

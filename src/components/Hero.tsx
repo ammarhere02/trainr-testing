@@ -128,7 +128,12 @@ export default function Hero({ onLogin, onShowEducatorSignup }: HeroProps) {
             <div className="group relative">
               <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-3xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
               <button
-                onClick={() => window.location.href = '/login/instructor'}
+                onClick={() => {
+                  // Sign out current user if any, then go to instructor login
+                  if (window.location.pathname !== '/login/instructor') {
+                    window.location.href = '/login/instructor';
+                  }
+                }}
                 className="relative bg-gradient-to-r from-purple-600 to-blue-600 text-white px-12 py-8 rounded-2xl font-bold text-xl hover:shadow-2xl transform hover:-translate-y-3 hover:scale-105 transition-all duration-500 flex flex-col items-center space-y-4 min-w-[280px] group-hover:from-purple-700 group-hover:to-blue-700"
               >
                 <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -155,7 +160,12 @@ export default function Hero({ onLogin, onShowEducatorSignup }: HeroProps) {
             <div className="group relative">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-teal-500 to-green-500 rounded-3xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
               <button
-                onClick={() => window.location.href = '/login/student'}
+                onClick={() => {
+                  // Sign out current user if any, then go to student login
+                  if (window.location.pathname !== '/login/student') {
+                    window.location.href = '/login/student';
+                  }
+                }}
                 className="relative bg-gradient-to-r from-blue-500 to-green-500 text-white px-12 py-8 rounded-2xl font-bold text-xl hover:shadow-2xl transform hover:-translate-y-3 hover:scale-105 transition-all duration-500 flex flex-col items-center space-y-4 min-w-[280px] group-hover:from-blue-600 group-hover:to-green-600"
               >
                 <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
