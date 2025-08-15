@@ -113,14 +113,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (userProfile) {
         setProfile(userProfile);
         setRole(userProfile.role);
-        console.log('useAuth: Profile and role set:', userProfile.role);
-      } else {
-        // Profile not found - this could happen if user was created but profile insert failed
         console.warn('useAuth: User profile not found in database for user:', authUser.id);
-        // Don't set error immediately - give it a moment for database consistency
-        setTimeout(() => {
-          setError('User profile not found. Please try refreshing the page.');
-        }, 2000);
+        setError('User profile not found. Please try refreshing the page.');
         setProfile(null);
         setRole(null);
       }
@@ -134,22 +128,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let mounted = true;
+    let authListenerSetup = false;
     
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('useAuth: Auth state change event:', event, 'session:', !!session);
-      if (mounted) {
+    const setupAuthListener = () => {
+      if (authListenerSetup) return;
+      authListenerSetup = true;
+      
+      const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log('useAuth: Auth state change event:', event, 'session:', !!session);
+        if (!mounted) return;
+        
         setIsLoading(true);
         setError(null);
-      }
-      const currentUser = session?.user || null;
-      console.log('useAuth: Setting user from auth state change:', !!currentUser);
-      if (mounted) {
+        
+        const currentUser = session?.user || null;
+        console.log('useAuth: Setting user from auth state change:', !!currentUser);
+        
         setUser(currentUser);
-        await fetchAndSetProfile(currentUser);
+        
+        if (currentUser) {
+          await fetchAndSetProfile(currentUser);
+        } else {
+          setProfile(null);
+          setRole(null);
+        }
+        
         setIsLoading(false);
-      }
-      console.log('useAuth: Auth state change processing complete');
-    });
+        console.log('useAuth: Auth state change processing complete');
+      });
+      
+      return authListener;
+    };
 
     // Initial load
     console.log('useAuth: Starting initial user fetch');
@@ -157,8 +166,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('useAuth: Initial user fetch result:', !!currentUser);
       if (mounted) {
         setUser(currentUser);
-        await fetchAndSetProfile(currentUser);
+        if (currentUser) {
+          await fetchAndSetProfile(currentUser);
+        }
         setIsLoading(false);
+        
+        // Set up auth listener after initial load
+        setupAuthListener();
       }
       console.log('useAuth: Initial load complete');
     }).catch((err) => {
@@ -171,9 +185,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       mounted = false;
-      authListener.subscription.unsubscribe();
     };
-  }, [fetchAndSetProfile]);
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     console.log('useAuth: Starting sign in for:', email);
@@ -191,8 +204,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     console.log('useAuth: Sign in successful, setting user');
     setUser(data?.user);
-    if (authData?.user) {
-      await fetchAndSetProfile(authData.user);
+    if (data?.user) {
+      await fetchAndSetProfile(data.user);
     }
     setIsLoading(false);
     console.log('useAuth: Sign in process complete');
