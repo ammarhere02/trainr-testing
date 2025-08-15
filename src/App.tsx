@@ -83,6 +83,8 @@ function App() {
           } />
           
           <Route path="/login/instructor" element={
+            <InstructorAuth onSuccess={() => window.location.href = '/dashboard-instructor'} />
+          } />
           
           {/* Catch all - redirect to home */}
           <Route path="*" element={
