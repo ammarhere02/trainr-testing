@@ -23,6 +23,8 @@ import {
   Trash2,
   ExternalLink
 } from 'lucide-react';
+import { getCourse, updateLesson, createLesson, deleteLesson } from '../lib/api/courses';
+import type { CourseWithLessons } from '../lib/api/courses';
 
 interface CourseLearningProps {
   courseId: number | null;
@@ -33,6 +35,8 @@ export default function CourseLearning({ courseId, onBack }: CourseLearningProps
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
   const [isEditingLesson, setIsEditingLesson] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [editingLessonData, setEditingLessonData] = useState({
     title: '',
     content: '',
@@ -41,74 +45,62 @@ export default function CourseLearning({ courseId, onBack }: CourseLearningProps
     duration: ''
   });
 
-  // Mock course data - in real app this would be fetched based on courseId
-  const [courseData, setCourseData] = useState({
-    id: courseId,
-    title: 'Complete Web Development Bootcamp',
-    description: 'Learn full-stack web development from scratch',
-    instructor: 'Dr. Angela Yu',
-    totalLessons: 12,
-    completedLessons: 4,
-    lessons: [
-      {
-        id: 1,
-        title: 'Introduction to Web Development',
-        content: 'Welcome to the complete web development bootcamp! In this lesson, we\'ll cover what you\'ll learn throughout the course and set up your development environment.',
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        videoSource: 'youtube',
-        duration: '15:30',
-        completed: true
-      },
-      {
-        id: 2,
-        title: 'HTML Fundamentals',
-        content: 'Learn the building blocks of web pages with HTML. We\'ll cover semantic markup, forms, and best practices.',
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        videoSource: 'youtube',
-        duration: '22:45',
-        completed: true
-      },
-      {
-        id: 3,
-        title: 'CSS Styling and Layout',
-        content: 'Master CSS to create beautiful and responsive designs. Learn Flexbox, Grid, and modern CSS techniques.',
-        videoUrl: 'https://vimeo.com/123456789',
-        videoSource: 'vimeo',
-        duration: '28:15',
-        completed: true
-      },
-      {
-        id: 4,
-        title: 'JavaScript Basics',
-        content: 'Dive into JavaScript programming. Learn variables, functions, DOM manipulation, and event handling.',
-        videoUrl: 'https://www.loom.com/share/abc123def456',
-        videoSource: 'loom',
-        duration: '35:20',
-        completed: true
-      },
-      {
-        id: 5,
-        title: 'Advanced JavaScript',
-        content: 'Explore advanced JavaScript concepts including async/await, promises, and ES6+ features.',
-        videoUrl: '',
-        videoSource: 'youtube',
-        duration: '42:10',
-        completed: false
-      },
-      {
-        id: 6,
-        title: 'React Introduction',
-        content: 'Get started with React, the popular JavaScript library for building user interfaces.',
-        videoUrl: '',
-        videoSource: 'youtube',
-        duration: '38:30',
-        completed: false
-      }
-    ]
-  });
+  const [courseData, setCourseData] = useState<CourseWithLessons | null>(null);
 
-  const currentLesson = courseData.lessons[currentLessonIndex];
-  const progress = (courseData.completedLessons / courseData.totalLessons) * 100;
+  // Load course data on component mount
+  React.useEffect(() => {
+    if (courseId) {
+      loadCourseData();
+    }
+  }, [courseId]);
+
+  const loadCourseData = async () => {
+    if (!courseId) return;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      const course = await getCourse(courseId.toString());
+      setCourseData(course);
+    } catch (err) {
+      console.error('Error loading course:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load course');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!courseData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          {isLoading ? (
+            <>
+              <div className="animate-spin w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading course...</p>
+            </>
+          ) : error ? (
+            <>
+              <p className="text-red-600 mb-4">{error}</p>
+              <button
+                onClick={loadCourseData}
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                Try Again
+              </button>
+            </>
+          ) : (
+            <p className="text-gray-600">Course not found</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const currentLesson = courseData.lessons?.[currentLessonIndex];
+  const totalLessons = courseData.lessons?.length || 0;
+  const completedLessons = 0; // This would be calculated from student progress
+  const progress = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
 
   const getYouTubeVideoId = (url: string) => {
     const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
@@ -165,36 +157,54 @@ export default function CourseLearning({ courseId, onBack }: CourseLearningProps
   };
 
   const handleEditLesson = () => {
+    if (!currentLesson) return;
+
     setEditingLessonData({
       title: currentLesson.title,
-      content: currentLesson.content,
-      videoUrl: currentLesson.videoUrl,
-      videoSource: currentLesson.videoSource,
-      duration: currentLesson.duration
+      content: currentLesson.content || '',
+      videoUrl: currentLesson.video_url || '',
+      videoSource: currentLesson.video_source || 'youtube',
+      duration: currentLesson.duration || ''
     });
     setIsEditingLesson(true);
   };
 
   const handleSaveLesson = () => {
-    const updatedLessons = courseData.lessons.map((lesson, index) => 
-      index === currentLessonIndex 
-        ? {
-            ...lesson,
-            title: editingLessonData.title,
-            content: editingLessonData.content,
-            videoUrl: editingLessonData.videoUrl,
-            videoSource: editingLessonData.videoSource,
-            duration: editingLessonData.duration
-          }
-        : lesson
-    );
+    if (!currentLesson) return;
 
-    setCourseData(prev => ({
-      ...prev,
-      lessons: updatedLessons
-    }));
+    const updateLessonAsync = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-    setIsEditingLesson(false);
+        const updates = {
+          title: editingLessonData.title,
+          content: editingLessonData.content,
+          video_url: editingLessonData.videoUrl,
+          video_source: editingLessonData.videoSource,
+          duration: editingLessonData.duration
+        };
+
+        const updatedLesson = await updateLesson(currentLesson.id, updates);
+        
+        // Optimistic update
+        setCourseData(prev => prev ? {
+          ...prev,
+          lessons: prev.lessons?.map(lesson => 
+            lesson.id === currentLesson.id ? { ...lesson, ...updatedLesson } : lesson
+          )
+        } : null);
+
+        setIsEditingLesson(false);
+      } catch (err) {
+        console.error('Error updating lesson:', err);
+        setError(err instanceof Error ? err.message : 'Failed to update lesson');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    updateLessonAsync();
   };
 
   const handleCancelEdit = () => {
@@ -229,17 +239,8 @@ export default function CourseLearning({ courseId, onBack }: CourseLearningProps
   };
 
   const markAsComplete = () => {
-    if (!currentLesson.completed) {
-      const updatedLessons = courseData.lessons.map((lesson, index) => 
-        index === currentLessonIndex ? { ...lesson, completed: true } : lesson
-      );
-      
-      setCourseData(prev => ({
-        ...prev,
-        lessons: updatedLessons,
-        completedLessons: prev.completedLessons + 1
-      }));
-    }
+    // This would update student progress in a real implementation
+    console.log('Mark lesson as complete:', currentLesson?.id);
   };
 
   return (
@@ -257,13 +258,13 @@ export default function CourseLearning({ courseId, onBack }: CourseLearningProps
             </button>
             <div>
               <h1 className="text-xl font-bold text-gray-900">{courseData.title}</h1>
-              <p className="text-sm text-gray-600">by {courseData.instructor}</p>
+              <p className="text-sm text-gray-600">by Instructor</p>
             </div>
           </div>
           
           <div className="flex items-center space-x-4">
             <div className="text-sm text-gray-600">
-              Lesson {currentLessonIndex + 1} of {courseData.totalLessons}
+              Lesson {currentLessonIndex + 1} of {totalLessons}
             </div>
             <div className="w-32 bg-gray-200 rounded-full h-2">
               <div 
@@ -282,7 +283,7 @@ export default function CourseLearning({ courseId, onBack }: CourseLearningProps
           <div className="p-6">
             <h2 className="font-semibold text-gray-900 mb-4">Course Content</h2>
             <div className="space-y-2">
-              {courseData.lessons.map((lesson, index) => (
+              {courseData.lessons?.map((lesson, index) => (
                 <button
                   key={lesson.id}
                   onClick={() => setCurrentLessonIndex(index)}
@@ -294,13 +295,13 @@ export default function CourseLearning({ courseId, onBack }: CourseLearningProps
                 >
                   <div className="flex items-center space-x-3">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      lesson.completed 
+                      false // lesson.completed - would be calculated from student progress
                         ? 'bg-green-100 text-green-600' 
                         : index === currentLessonIndex
                           ? 'bg-purple-100 text-purple-600'
                           : 'bg-gray-100 text-gray-600'
                     }`}>
-                      {lesson.completed ? (
+                      {false ? ( // lesson.completed
                         <CheckCircle className="w-5 h-5" />
                       ) : (
                         <span className="text-sm font-medium">{index + 1}</span>
@@ -315,8 +316,8 @@ export default function CourseLearning({ courseId, onBack }: CourseLearningProps
                       <div className="flex items-center space-x-2 mt-1">
                         <Clock className="w-3 h-3 text-gray-500" />
                         <span className="text-xs text-gray-600">{lesson.duration}</span>
-                        {lesson.videoSource && (
-                          <span className="text-xs">{getVideoSourceIcon(lesson.videoSource)}</span>
+                        {lesson.video_source && (
+                          <span className="text-xs">{getVideoSourceIcon(lesson.video_source)}</span>
                         )}
                       </div>
                     </div>
@@ -330,6 +331,14 @@ export default function CourseLearning({ courseId, onBack }: CourseLearningProps
         {/* Main Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-4xl mx-auto p-8">
+            {!currentLesson ? (
+              <div className="text-center py-12">
+                <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">No Lessons Available</h2>
+                <p className="text-gray-600">This course doesn't have any lessons yet.</p>
+              </div>
+            ) : (
+              <>
             {/* Lesson Header */}
             <div className="flex items-center justify-between mb-8">
               <div>
@@ -338,8 +347,12 @@ export default function CourseLearning({ courseId, onBack }: CourseLearningProps
                   <span>Lesson {currentLessonIndex + 1}</span>
                   <span>•</span>
                   <span>{currentLesson.duration}</span>
-                  <span>•</span>
-                  <span>{getVideoSourceIcon(currentLesson.videoSource)} {currentLesson.videoSource}</span>
+                  {currentLesson.video_source && (
+                    <>
+                      <span>•</span>
+                      <span>{getVideoSourceIcon(currentLesson.video_source)} {currentLesson.video_source}</span>
+                    </>
+                  )}
                 </div>
               </div>
               
@@ -356,9 +369,9 @@ export default function CourseLearning({ courseId, onBack }: CourseLearningProps
             {/* Video Player */}
             <div className="bg-black rounded-xl overflow-hidden mb-8 shadow-xl">
               <div className="aspect-video">
-                {currentLesson.videoUrl && getEmbedUrl(currentLesson.videoUrl, currentLesson.videoSource) ? (
+                {currentLesson.video_url && getEmbedUrl(currentLesson.video_url, currentLesson.video_source || 'youtube') ? (
                   <iframe
-                    src={getEmbedUrl(currentLesson.videoUrl, currentLesson.videoSource)}
+                    src={getEmbedUrl(currentLesson.video_url, currentLesson.video_source || 'youtube')}
                     className="w-full h-full"
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -383,9 +396,11 @@ export default function CourseLearning({ courseId, onBack }: CourseLearningProps
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Lesson Overview</h2>
               <div className="prose prose-lg max-w-none">
-                <p className="text-gray-700 leading-relaxed">{currentLesson.content}</p>
+                <p className="text-gray-700 leading-relaxed">{currentLesson.content || 'No lesson content available.'}</p>
               </div>
             </div>
+              </>
+            )}
 
             {/* Navigation */}
             <div className="flex items-center justify-between">
@@ -399,7 +414,7 @@ export default function CourseLearning({ courseId, onBack }: CourseLearningProps
               </button>
 
               <div className="flex items-center space-x-4">
-                {!currentLesson.completed && (
+                {currentLesson && false && ( // !currentLesson.completed
                   <button
                     onClick={markAsComplete}
                     className="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center"
@@ -411,7 +426,7 @@ export default function CourseLearning({ courseId, onBack }: CourseLearningProps
 
                 <button
                   onClick={nextLesson}
-                  disabled={currentLessonIndex === courseData.lessons.length - 1}
+                  disabled={currentLessonIndex === totalLessons - 1}
                   className="flex items-center px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next Lesson

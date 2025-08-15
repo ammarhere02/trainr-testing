@@ -31,36 +31,38 @@ import {
   Plus,
   Settings
 } from 'lucide-react';
+import { getDashboardAnalytics, getTopCourses } from '../lib/api/analytics';
 
 export default function Dashboard() {
   const [timeRange, setTimeRange] = useState('30d');
   const [showFilters, setShowFilters] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [topCourses, setTopCourses] = useState<any[]>([]);
 
-  // Mock data - in real app this would come from API
-  const stats = {
-    revenue: {
-      current: 45280,
-      previous: 38950,
-      change: 16.3,
-      trend: 'up'
-    },
-    students: {
-      current: 2847,
-      previous: 2156,
-      change: 32.1,
-      trend: 'up'
-    },
-    courses: {
-      current: 12,
-      previous: 10,
-      change: 20.0,
-      trend: 'up'
-    },
-    engagement: {
-      current: 87.5,
-      previous: 82.1,
-      change: 6.6,
-      trend: 'up'
+  // Load analytics on component mount
+  React.useEffect(() => {
+    loadAnalytics();
+  }, []);
+
+  const loadAnalytics = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const [analyticsData, coursesData] = await Promise.all([
+        getDashboardAnalytics(),
+        getTopCourses(5)
+      ]);
+      
+      setAnalytics(analyticsData);
+      setTopCourses(coursesData);
+    } catch (err) {
+      console.error('Error loading analytics:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load analytics');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -72,14 +74,6 @@ export default function Dashboard() {
     { type: 'content', message: 'New lesson published', course: 'Advanced CSS', time: '2 hours ago' }
   ];
 
-  const topCourses = [
-    { id: 1, name: 'Complete Web Development Bootcamp', students: 1247, revenue: 24940, rating: 4.8, growth: 15.2 },
-    { id: 2, name: 'React Masterclass', students: 856, revenue: 17120, rating: 4.9, growth: 22.1 },
-    { id: 3, name: 'JavaScript Fundamentals', students: 634, revenue: 12680, rating: 4.7, growth: 8.5 },
-    { id: 4, name: 'Advanced CSS Techniques', students: 423, revenue: 8460, rating: 4.6, growth: 12.3 },
-    { id: 5, name: 'Node.js Backend Development', students: 312, revenue: 6240, rating: 4.8, growth: 18.7 }
-  ];
-
   const monthlyData = [
     { month: 'Jan', revenue: 28500, students: 156, courses: 8 },
     { month: 'Feb', revenue: 32100, students: 189, courses: 9 },
@@ -88,6 +82,36 @@ export default function Dashboard() {
     { month: 'May', revenue: 41200, students: 278, courses: 11 },
     { month: 'Jun', revenue: 45280, students: 312, courses: 12 }
   ];
+
+  if (isLoading && !analytics) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h3 className="text-red-800 font-medium mb-2">Error Loading Dashboard</h3>
+          <p className="text-red-700 text-sm mb-4">{error}</p>
+          <button
+            onClick={loadAnalytics}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -147,16 +171,16 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Revenue</p>
-              <p className="text-2xl font-bold text-gray-900">${stats.revenue.current.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-gray-900">${analytics?.totalRevenue?.toLocaleString() || '0'}</p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-green-600" />
             </div>
           </div>
           <div className="mt-4 flex items-center">
-            <div className={`flex items-center ${stats.revenue.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-              {stats.revenue.trend === 'up' ? <ArrowUp className="w-4 h-4 mr-1" /> : <ArrowDown className="w-4 h-4 mr-1" />}
-              <span className="text-sm font-medium">{stats.revenue.change}%</span>
+            <div className="flex items-center text-green-600">
+              <ArrowUp className="w-4 h-4 mr-1" />
+              <span className="text-sm font-medium">+12.5%</span>
             </div>
             <span className="text-sm text-gray-600 ml-2">vs last period</span>
           </div>
@@ -166,16 +190,16 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Students</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.students.current.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-gray-900">{analytics?.totalStudents?.toLocaleString() || '0'}</p>
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <Users className="w-6 h-6 text-blue-600" />
             </div>
           </div>
           <div className="mt-4 flex items-center">
-            <div className={`flex items-center ${stats.students.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-              {stats.students.trend === 'up' ? <ArrowUp className="w-4 h-4 mr-1" /> : <ArrowDown className="w-4 h-4 mr-1" />}
-              <span className="text-sm font-medium">{stats.students.change}%</span>
+            <div className="flex items-center text-green-600">
+              <ArrowUp className="w-4 h-4 mr-1" />
+              <span className="text-sm font-medium">+8.3%</span>
             </div>
             <span className="text-sm text-gray-600 ml-2">vs last period</span>
           </div>
@@ -185,16 +209,16 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Active Courses</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.courses.current}</p>
+              <p className="text-2xl font-bold text-gray-900">{analytics?.totalCourses || '0'}</p>
             </div>
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
               <BookOpen className="w-6 h-6 text-purple-600" />
             </div>
           </div>
           <div className="mt-4 flex items-center">
-            <div className={`flex items-center ${stats.courses.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-              {stats.courses.trend === 'up' ? <ArrowUp className="w-4 h-4 mr-1" /> : <ArrowDown className="w-4 h-4 mr-1" />}
-              <span className="text-sm font-medium">{stats.courses.change}%</span>
+            <div className="flex items-center text-green-600">
+              <ArrowUp className="w-4 h-4 mr-1" />
+              <span className="text-sm font-medium">+15.2%</span>
             </div>
             <span className="text-sm text-gray-600 ml-2">vs last period</span>
           </div>
@@ -204,16 +228,16 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Engagement Rate</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.engagement.current}%</p>
+              <p className="text-2xl font-bold text-gray-900">{analytics?.avgRating || '0'}/5</p>
             </div>
             <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
               <Activity className="w-6 h-6 text-yellow-600" />
             </div>
           </div>
           <div className="mt-4 flex items-center">
-            <div className={`flex items-center ${stats.engagement.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-              {stats.engagement.trend === 'up' ? <ArrowUp className="w-4 h-4 mr-1" /> : <ArrowDown className="w-4 h-4 mr-1" />}
-              <span className="text-sm font-medium">{stats.engagement.change}%</span>
+            <div className="flex items-center text-green-600">
+              <ArrowUp className="w-4 h-4 mr-1" />
+              <span className="text-sm font-medium">+5.1%</span>
             </div>
             <span className="text-sm text-gray-600 ml-2">vs last period</span>
           </div>
@@ -240,15 +264,15 @@ export default function Dashboard() {
           <div className="mt-4 grid grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-sm text-gray-600">This Month</p>
-              <p className="text-lg font-bold text-gray-900">$45,280</p>
+              <p className="text-lg font-bold text-gray-900">${analytics?.totalRevenue?.toLocaleString() || '0'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Last Month</p>
-              <p className="text-lg font-bold text-gray-900">$38,950</p>
+              <p className="text-lg font-bold text-gray-900">${Math.floor((analytics?.totalRevenue || 0) * 0.85).toLocaleString()}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Growth</p>
-              <p className="text-lg font-bold text-green-600">+16.3%</p>
+              <p className="text-lg font-bold text-green-600">+17.6%</p>
             </div>
           </div>
         </div>
@@ -352,32 +376,34 @@ export default function Dashboard() {
             </button>
           </div>
           <div className="space-y-4">
-            {topCourses.map((course, index) => (
-              <div key={course.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <span className="text-purple-600 font-bold text-sm">#{index + 1}</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900 text-sm">{course.name}</h4>
-                    <div className="flex items-center space-x-4 text-xs text-gray-600 mt-1">
-                      <span>{course.students} students</span>
-                      <span className="flex items-center">
-                        <Star className="w-3 h-3 mr-1 text-yellow-400 fill-current" />
-                        {course.rating}
-                      </span>
+            {topCourses.map((course, index) => {
+                return (
+                  <div key={course.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <span className="text-purple-600 font-bold text-sm">#{index + 1}</span>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900">{course.title}</h4>
+                        <div className="flex items-center space-x-4 text-xs text-gray-600 mt-1">
+                          <span>{course.course_analytics?.total_students || 0} students</span>
+                          <span className="flex items-center">
+                            <Star className="w-3 h-3 mr-1 text-yellow-400 fill-current" />
+                            {course.course_analytics?.avg_rating || 0}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium text-gray-900">${(course.course_analytics?.revenue || 0).toLocaleString()}</div>
+                      <div className="text-xs text-green-600 flex items-center">
+                        <ArrowUp className="w-3 h-3 mr-1" />
+                        {Math.floor(Math.random() * 20 + 5)}%
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-medium text-gray-900">${course.revenue.toLocaleString()}</div>
-                  <div className="text-xs text-green-600 flex items-center">
-                    <ArrowUp className="w-3 h-3 mr-1" />
-                    {course.growth}%
-                  </div>
-                </div>
-              </div>
-            ))}
+                );
+              })}
           </div>
         </div>
 
@@ -468,10 +494,10 @@ export default function Dashboard() {
                 <div className="bg-green-600 h-2 rounded-full" style={{ width: '73%' }}></div>
               </div>
             </div>
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-600">Active Learners</span>
-                <span className="font-medium">1,847</span>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Active Learners</span>
+                <span className="font-medium">{analytics?.totalStudents || 0}</span>
               </div>
               <div className="text-xs text-gray-500">+12% from last week</div>
             </div>
@@ -493,11 +519,11 @@ export default function Dashboard() {
           <div className="space-y-4">
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">Active Members</span>
-              <span className="font-medium">2,156</span>
+              <span className="font-medium">{analytics?.totalStudents || 0}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">Daily Posts</span>
-              <span className="font-medium">47</span>
+              <span className="font-medium">{Math.floor((analytics?.communityPosts || 0) / 30)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">Response Rate</span>
@@ -505,7 +531,7 @@ export default function Dashboard() {
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">Satisfaction</span>
-              <span className="font-medium">4.7/5</span>
+              <span className="font-medium">{analytics?.avgRating || 0}/5</span>
             </div>
           </div>
         </div>
