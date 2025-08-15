@@ -255,17 +255,17 @@ export async function getProfile(userId?: string): Promise<Profile | null> {
     if (!id) return null
     
     // Check if user is instructor
-    const { data, error } = await supabase
+    const { data: instructorData, error: instructorError } = await supabase
       .from('instructors')
       .select('*')
       .eq('id', id)
       .single()
     
-    if (data) {
+    if (instructorData && !instructorError) {
       return {
-        id: data.id,
+        id: instructorData.id,
         role: 'instructor',
-        data: data
+        data: instructorData
       }
     }
     
@@ -276,7 +276,7 @@ export async function getProfile(userId?: string): Promise<Profile | null> {
       .eq('id', id)
       .single()
     
-    if (studentData) {
+    if (studentData && !studentError) {
       return {
         id: studentData.id,
         role: 'student',
@@ -284,7 +284,7 @@ export async function getProfile(userId?: string): Promise<Profile | null> {
       }
     }
     
-    console.error('Profile not found for user:', id)
+    console.log('Profile not found for user:', id, 'Instructor error:', instructorError, 'Student error:', studentError)
     return null
   } catch (error) {
     console.error('Error in getProfile:', error)

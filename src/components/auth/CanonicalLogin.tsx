@@ -147,6 +147,20 @@ export default function CanonicalLogin() {
         try {
           // Create instructor record
           const { supabase } = await import('../../lib/supabase')
+          
+          // First check if instructor already exists
+          const { data: existingInstructor } = await supabase
+            .from('instructors')
+            .select('id')
+            .eq('id', user.id)
+            .single()
+          
+          if (existingInstructor) {
+            // Instructor already exists, proceed to login
+            window.location.href = '/post-login'
+            return
+          }
+          
           const { data: instructor, error: instructorError } = await supabase
             .from('instructors')
             .insert([{
@@ -162,7 +176,14 @@ export default function CanonicalLogin() {
 
           if (instructorError) {
             console.error('Error creating instructor:', instructorError)
-            throw new Error(`Failed to create instructor profile: ${instructorError.message}`)
+            // If it's a duplicate key error, the user might already exist
+            if (instructorError.code === '23505') {
+              console.log('Instructor already exists, proceeding to login')
+              window.location.href = '/post-login'
+              return
+            } else {
+              throw new Error(`Failed to create instructor profile: ${instructorError.message}`)
+            }
           }
 
           // For backward compatibility, also create organization if needed

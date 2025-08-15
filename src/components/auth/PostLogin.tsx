@@ -22,9 +22,9 @@ export default function PostLogin() {
         const profile = await getProfile(user.id)
         
         if (!profile) {
-          // Profile not found, might be a new user
-          console.error('Profile not found for user:', user.id)
-          setError('Profile not found. Please contact support.')
+          // Profile not found, redirect to create profile or main login
+          console.log('Profile not found for user:', user.id, 'redirecting to main login')
+          window.location.href = '/login'
           return
         }
 
