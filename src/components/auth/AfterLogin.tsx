@@ -3,23 +3,33 @@ import { Loader } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 
 export default function AfterLogin() {
-  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { user, profile, role } = useAuth()
+  const { user, profile, role, isLoading: authLoading } = useAuth()
 
   useEffect(() => {
     const handleAfterLogin = async () => {
       try {
+      console.log('AfterLogin: handleAfterLogin triggered. authLoading:', authLoading, 'user:', user, 'profile:', profile, 'role:', role);
+
+      // Wait until authentication state is fully loaded
+      if (authLoading) {
+        console.log('AfterLogin: Still loading auth state, returning.');
+        return;
+      }
+
         if (!user) {
-          window.location.href = '/login/instructor'
-          return
+          console.log('AfterLogin: No user found, redirecting to login.');
+          window.location.href = '/login/instructor';
+          return;
         }
 
         if (!profile || !role) {
-          // Wait for profile to load
-          return
+          console.log('AfterLogin: User present but profile/role not determined. Profile:', profile, 'Role:', role);
+          setError('User profile or role could not be determined. Please try logging in again.');
+          return;
         }
 
+        console.log('AfterLogin: All data loaded, redirecting to dashboard:', role);
         // Route based on user role
         if (role === 'instructor') {
           window.location.href = '/dashboard-instructor'
@@ -31,14 +41,14 @@ export default function AfterLogin() {
         console.error('After-login error:', error)
         setError('An error occurred. Please try again.')
       } finally {
-        setIsLoading(false)
+        // setIsLoading(false) // This state is no longer needed as we use authLoading from useAuth
       }
     }
 
     handleAfterLogin()
-  }, [user, profile, role])
+  }, [user, profile, role, authLoading])
 
-  if (error) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full">
@@ -60,7 +70,7 @@ export default function AfterLogin() {
     )
   }
 
-  return (
+  return null; // Should ideally not be reached if redirection works
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
