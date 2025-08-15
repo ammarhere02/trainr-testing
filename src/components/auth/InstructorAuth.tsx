@@ -52,8 +52,10 @@ export default function InstructorAuth({ onLoginSuccess }: InstructorAuthProps) 
       }
       
       if (!formData.businessName.trim()) newErrors.businessName = 'Business name is required';
-    }
-
+      // Subdomain is optional, but if provided, it must be valid
+      if (formData.subdomain.trim() && subdomainStatus !== 'available') {
+        newErrors.subdomain = 'Please choose an available subdomain';
+      }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -325,6 +327,45 @@ export default function InstructorAuth({ onLoginSuccess }: InstructorAuthProps) 
                 {errors.businessName && <p className="text-red-500 text-xs mt-1">{errors.businessName}</p>}
               </div>
 
+              {/* Subdomain (Optional) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Subdomain (Optional)
+                </label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <span className="absolute left-10 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+                    trytrainr.com/
+                  </span>
+                  <input
+                    type="text"
+                    value={formData.subdomain}
+                    onChange={(e) => handleSubdomainChange(e.target.value)}
+                    className={`w-full pl-32 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                      errors.subdomain ? 'border-red-300' : 
+                      subdomainStatus === 'available' ? 'border-green-300' :
+                      subdomainStatus === 'taken' || subdomainStatus === 'invalid' ? 'border-red-300' :
+                      'border-gray-300'
+                    }`}
+                    placeholder="johndoe (optional)"
+                  />
+                  {getSubdomainStatusIcon() && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      {getSubdomainStatusIcon()}
+                    </div>
+                  )}
+                </div>
+                {subdomainStatus && formData.subdomain && (
+                  <p className={`text-xs mt-1 ${
+                    subdomainStatus === 'available' ? 'text-green-600' : 
+                    subdomainStatus === 'checking' ? 'text-blue-600' : 'text-red-600'
+                  }`}>
+                    {getSubdomainStatusMessage()}
+                  </p>
+                )}
+                {errors.subdomain && <p className="text-red-500 text-xs mt-1">{errors.subdomain}</p>}
+                <p className="text-xs text-gray-500 mt-1">Leave empty if you don't need a custom subdomain</p>
+              </div>
               {/* Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

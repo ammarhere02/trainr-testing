@@ -44,7 +44,7 @@ export async function createTestUsers() {
       .from('instructors')
       .select('id')
       .eq('email', 'test@instructor.com')
-      .single()
+      .maybeSingle()
 
     if (!existingInstructor) {
       // Create test instructor auth user
@@ -79,7 +79,7 @@ export async function createTestUsers() {
       .from('students')
       .select('id')
       .eq('email', 'test@student.com')
-      .single()
+      .maybeSingle()
 
     if (!existingStudent && existingInstructor) {
       // Create test student auth user
@@ -358,7 +358,7 @@ export async function getInstructorProfile(userId?: string): Promise<Instructor 
       .from('instructors')
       .select('*')
       .eq('id', id)
-      .single()
+      .maybeSingle()
     
     if (error) {
       console.error('Error fetching instructor profile:', error)
@@ -382,7 +382,7 @@ export async function getStudentProfile(userId?: string): Promise<Student | null
       .from('students')
       .select('*')
       .eq('id', id)
-      .single()
+      .maybeSingle()
     
     if (error) {
       console.error('Error fetching student profile:', error)
@@ -429,7 +429,7 @@ export async function checkUserRole(userId: string): Promise<'instructor' | 'stu
       .from('instructors')
       .select('id')
       .eq('id', userId)
-      .single()
+      .maybeSingle()
     
     if (instructor) return 'instructor'
     
@@ -438,7 +438,7 @@ export async function checkUserRole(userId: string): Promise<'instructor' | 'stu
       .from('students')
       .select('id')
       .eq('id', userId)
-      .single()
+      .maybeSingle()
     
     if (student) return 'student'
     
