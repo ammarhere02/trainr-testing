@@ -121,10 +121,3 @@ export default function AppWrapper() {
     </div>
   );
 }
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default App;
