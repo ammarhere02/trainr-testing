@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, User, Mail, Lock, Building, Globe, Eye, EyeOff, Loader, CheckCircle, X } from 'lucide-react';
-import { signInEmail, signUpInstructor, signUpStudent } from '../../lib/auth.tsx';
+import { signInData, signUpInstructor, signUpStudent } from '../../lib/auth.tsx';
 import { checkSubdomainAvailability, getOrganizationBySubdomain } from '../../lib/org';
 import type { Organization } from '../../lib/org';
 
