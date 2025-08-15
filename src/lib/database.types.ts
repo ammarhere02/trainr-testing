@@ -45,6 +45,7 @@ export interface Database {
           logo_url: string | null
           color: string | null
           created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
@@ -55,6 +56,7 @@ export interface Database {
           logo_url?: string | null
           color?: string | null
           created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
@@ -65,6 +67,7 @@ export interface Database {
           logo_url?: string | null
           color?: string | null
           created_at?: string
+          updated_at?: string
         }
       }
       students: {
@@ -75,6 +78,7 @@ export interface Database {
           instructor_id: string
           avatar_url: string | null
           created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
@@ -83,6 +87,7 @@ export interface Database {
           instructor_id: string
           avatar_url?: string | null
           created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
@@ -91,6 +96,7 @@ export interface Database {
           instructor_id?: string
           avatar_url?: string | null
           created_at?: string
+          updated_at?: string
         }
       }
       courses: {
