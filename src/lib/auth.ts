@@ -1,172 +1,250 @@
-                    placeholder="john@example.com"
-                  />
-                </div>
-                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-              </div>
+import { supabase } from './supabase'
+import type { Database } from './database.types'
 
-              {/* Business Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Business/Course Name
-                </label>
-                <div className="relative">
-                  <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    value={formData.businessName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, businessName: e.target.value }))}
-                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                      errors.businessName ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    placeholder="John's Web Development Academy"
-                  />
-                </div>
-                {errors.businessName && <p className="text-red-500 text-xs mt-1">{errors.businessName}</p>}
-              </div>
+// Type definitions
+export type Instructor = Database['public']['Tables']['instructors']['Row']
+export type Student = Database['public']['Tables']['students']['Row']
 
-              {/* Subdomain */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Your Subdomain
-                </label>
-                <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <span className="absolute left-10 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-                    trytrainr.com/
-                  </span>
-                  <input
-                    type="text"
-                    value={formData.subdomain}
-                    onChange={(e) => handleSubdomainChange(e.target.value)}
-                    className={`w-full pl-32 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                      errors.subdomain ? 'border-red-300' : 
-                      subdomainStatus === 'available' ? 'border-green-300' :
-                      subdomainStatus === 'taken' || subdomainStatus === 'invalid' ? 'border-red-300' :
-                      'border-gray-300'
-                    }`}
-                    placeholder="johndoe"
-                  />
-                  {getSubdomainStatusIcon() && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      {getSubdomainStatusIcon()}
-                    </div>
-                  )}
-                </div>
-                {subdomainStatus && (
-                  <p className={`text-xs mt-1 ${
-                    subdomainStatus === 'available' ? 'text-green-600' : 
-                    subdomainStatus === 'checking' ? 'text-blue-600' : 'text-red-600'
-                  }`}>
-                    {getSubdomainStatusMessage()}
-                  </p>
-                )}
-                {errors.subdomain && <p className="text-red-500 text-xs mt-1">{errors.subdomain}</p>}
-              </div>
+export interface Profile {
+  id: string
+  role: 'instructor' | 'student'
+  data: Instructor | Student
+}
 
-              {/* Password */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={formData.password}
-                    onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                    className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                      errors.password ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    placeholder="••••••••"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
-              </div>
+export interface AuthResult {
+  user: any | null
+  error: any | null
+}
 
-              {/* Confirm Password */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                      errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    placeholder="••••••••"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
-              </div>
+// Get current authenticated user
+export async function getCurrentUser() {
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error) throw error
+    return user
+  } catch (error) {
+    console.error('Error getting current user:', error)
+    return null
+  }
+}
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={isLoading || (mode === 'signup' && subdomainStatus !== 'available')}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader className="w-4 h-4 mr-2 animate-spin" />
-                    Creating Account...
-                  </>
-                ) : (
-                  <>
-                    Create Instructor Account
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </>
-                )}
-              </button>
-            </form>
-          )}
+// Sign in with email and password
+export async function signInEmail(email: string, password: string): Promise<AuthResult> {
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
 
-          {/* Toggle between login and signup */}
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 text-sm">
-              {mode === 'login' ? "Don't have an account?" : "Already have an account?"}{' '}
-              <button
-                onClick={() => {
-                  setMode(mode === 'login' ? 'signup' : 'login');
-                  setErrors({});
-                  setSubdomainStatus(null);
-                }}
-                className="text-purple-600 hover:text-purple-700 font-medium"
-              >
-                {mode === 'login' ? 'Create instructor account' : 'Sign in instead'}
-              </button>
-            </p>
-          </div>
+    if (error) {
+      return { user: null, error }
+    }
 
-          {/* Test Credentials Helper */}
-          {mode === 'login' && (
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-blue-800 text-sm font-medium mb-2">🧪 Test Credentials:</p>
-              <div className="text-blue-700 text-xs space-y-1">
-                <p><strong>Email:</strong> test@instructor.com</p>
-                <p><strong>Password:</strong> password123</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+    // Check if email is verified
+    if (!data.user?.email_confirmed_at) {
+      await supabase.auth.signOut()
+      return { 
+        user: null, 
+        error: { message: 'Please verify your email before signing in. Check your inbox for a verification link.' }
+      }
+    }
+
+    return { user: data.user, error: null }
+  } catch (error) {
+    console.error('Sign in error:', error)
+    return { user: null, error }
+  }
+}
+
+// Sign up instructor
+export async function signUpInstructor(
+  email: string, 
+  password: string, 
+  fullName: string, 
+  businessName: string, 
+  subdomain?: string
+): Promise<AuthResult> {
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+          business_name: businessName,
+          subdomain: subdomain || '',
+          role: 'instructor'
+        }
+      }
+    })
+
+    if (error) {
+      return { user: null, error }
+    }
+
+    return { user: data.user, error: null }
+  } catch (error) {
+    console.error('Instructor signup error:', error)
+    return { user: null, error }
+  }
+}
+
+// Sign up student
+export async function signUpStudent(
+  email: string, 
+  password: string, 
+  fullName: string, 
+  instructorId: string
+): Promise<AuthResult> {
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+          instructor_id: instructorId,
+          role: 'student'
+        }
+      }
+    })
+
+    if (error) {
+      return { user: null, error }
+    }
+
+    return { user: data.user, error: null }
+  } catch (error) {
+    console.error('Student signup error:', error)
+    return { user: null, error }
+  }
+}
+
+// Get user profile from appropriate table
+export async function getProfile(userId: string): Promise<Profile | null> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || user.id !== userId) {
+      throw new Error('User not authenticated')
+    }
+
+    const role = user.user_metadata?.role
+
+    if (role === 'instructor') {
+      const { data, error } = await supabase
+        .from('instructors')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      if (error) throw error
+      return { id: userId, role: 'instructor', data }
+    } else if (role === 'student') {
+      const { data, error } = await supabase
+        .from('students')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      if (error) throw error
+      return { id: userId, role: 'student', data }
+    }
+
+    return null
+  } catch (error) {
+    console.error('Error getting profile:', error)
+    return null
+  }
+}
+
+// Get instructor profile
+export async function getInstructorProfile(userId: string): Promise<Instructor | null> {
+  try {
+    const { data, error } = await supabase
+      .from('instructors')
+      .select('*')
+      .eq('id', userId)
+      .single()
+
+    if (error) throw error
+    return data
+  } catch (error) {
+    console.error('Error getting instructor profile:', error)
+    return null
+  }
+}
+
+// Get student profile
+export async function getStudentProfile(userId: string): Promise<Student | null> {
+  try {
+    const { data, error } = await supabase
+      .from('students')
+      .select('*')
+      .eq('id', userId)
+      .single()
+
+    if (error) throw error
+    return data
+  } catch (error) {
+    console.error('Error getting student profile:', error)
+    return null
+  }
+}
+
+// Sign out
+export async function signOut() {
+  try {
+    const { error } = await supabase.auth.signOut()
+    if (error) throw error
+  } catch (error) {
+    console.error('Sign out error:', error)
+    throw error
+  }
+}
+
+// Reset password
+export async function resetPassword(email: string) {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`
+    })
+    if (error) throw error
+  } catch (error) {
+    console.error('Password reset error:', error)
+    throw error
+  }
+}
+
+// Update password
+export async function updatePassword(accessToken: string, refreshToken: string, newPassword: string) {
+  try {
+    // Set the session with the tokens from the reset link
+    const { error: sessionError } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken
+    })
+
+    if (sessionError) throw sessionError
+
+    // Update the password
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    })
+
+    if (error) throw error
+  } catch (error) {
+    console.error('Password update error:', error)
+    throw error
+  }
+}
+
+// Create test users for development
+export async function createTestUsers() {
+  try {
+    // This would typically be done through your admin interface
+    // For development purposes only
+    console.log('Test users should be created through Supabase dashboard')
+  } catch (error) {
+    console.error('Error creating test users:', error)
+  }
 }
