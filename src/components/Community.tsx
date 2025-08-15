@@ -263,7 +263,7 @@ export default function Community({ userRole = 'student' }: CommunityProps) {
           />
           <div className="flex-1">
             <button
-              type="text"
+              type="button"
               onClick={() => setShowPostModal(true)}
               className="w-full px-4 py-3 bg-gray-50 rounded-full border-0 hover:bg-gray-100 transition-colors text-gray-600 text-left cursor-pointer"
             >
@@ -536,12 +536,7 @@ export default function Community({ userRole = 'student' }: CommunityProps) {
                         </div>
                       </div>
                     )}
-                    <span className="font-medium">0</span>
-
-                  {/* GIF */}
-                  <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                    <span className="font-medium">{post.comments_count || 0}</span>
-                  </button>
+                  </div>
                 </div>
 
                 {/* Category Selector */}
@@ -615,14 +610,7 @@ export default function Community({ userRole = 'student' }: CommunityProps) {
                     'POST'
                   )}
                 </button>
-                  className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                    canSubmitPost
-                      ? 'bg-gray-800 text-white hover:bg-gray-900'
-                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                <div className="text-sm text-gray-600">
-                  {formatTimeAgo(post.created_at)}
-                </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
