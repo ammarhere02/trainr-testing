@@ -87,10 +87,16 @@ export default function Hero({ onLogin, onShowEducatorSignup }: HeroProps) {
             {/* Auth Buttons */}
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => window.location.href = '/login'}
+                onClick={() => window.location.href = '/login/instructor'}
                 className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
               >
-                Sign In
+                Instructor Login
+              </button>
+              <button
+                onClick={() => window.location.href = '/login/student'}
+                className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+              >
+                Student Login
               </button>
               <button 
                 onClick={handleGetStarted}

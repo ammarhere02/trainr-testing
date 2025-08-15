@@ -217,6 +217,14 @@ export async function signUpStudent(
   instructorId: string
 ): Promise<AuthResult> {
   try {
+    // Check if Supabase is configured
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+    
+    if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('your_supabase_project_url_here')) {
+      throw new Error('Database not configured. Please set up your Supabase credentials in the environment variables.')
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -225,14 +233,49 @@ export async function signUpStudent(
           full_name: fullName,
           instructor_id: instructorId,
           role: 'student'
-        },
-        emailRedirectTo: `${window.location.origin}/post-login`
+        }
       }
     })
 
     if (error) {
       console.error('Supabase signup error:', error)
-      throw new Error(`Account creation failed: ${error.message}`)
+      
+      // Provide more specific error messages
+      if (error.message.includes('User already registered') || error.message.includes('already been registered')) {
+        throw new Error('An account with this email already exists. Please sign in instead.')
+      } else {
+        throw new Error(`Account creation failed: ${error.message}`)
+      }
+    }
+
+    if (data.user) {
+      // Create student profile in database
+      try {
+        const { data: student, error: studentError } = await supabase
+          .from('students')
+          .insert([{
+            id: data.user.id,
+            email: email,
+            full_name: fullName,
+            instructor_id: instructorId
+          }])
+          .select()
+          .single()
+
+        if (studentError) {
+          console.error('Error creating student profile:', studentError)
+          
+          if (studentError.code === '23505') {
+            // Duplicate key - student already exists
+            console.log('Student profile already exists')
+          } else {
+            throw new Error(`Failed to create student profile: ${studentError.message}`)
+          }
+        }
+      } catch (profileError) {
+        console.error('Error in student profile creation:', profileError)
+        // Don't fail the signup if profile creation fails - user can try logging in
+      }
     }
     
     return {
