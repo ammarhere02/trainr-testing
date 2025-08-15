@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Hero from './components/Hero';
 import InstructorDashboard from './components/InstructorDashboard';
 import StudentDashboard from './components/StudentDashboard';
+import InstructorAuth from './components/auth/InstructorAuth';
+import StudentAuth from './components/auth/StudentAuth';
 
 function App() {
   // Mock instructor data
@@ -48,6 +50,15 @@ function App() {
             <StudentDashboard studentData={mockStudentData} />
           } />
           
+          {/* Auth Pages */}
+          <Route path="/login/instructor" element={
+            <InstructorAuth onSuccess={() => window.location.href = '/dashboard-instructor'} />
+          } />
+          
+          <Route path="/login/student" element={
+            <StudentAuth onSuccess={() => window.location.href = '/dashboard-student'} />
+          } />
+          
           {/* Legacy routes for backward compatibility */}
           <Route path="/login" element={
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -72,32 +83,6 @@ function App() {
           } />
           
           <Route path="/login/instructor" element={
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Instructor Access</h2>
-                <a
-                  href="/dashboard-instructor"
-                  className="bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
-                >
-                  Go to Instructor Dashboard
-                </a>
-              </div>
-            </div>
-          } />
-          
-          <Route path="/login/student" element={
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Student Access</h2>
-                <a
-                  href="/dashboard-student"
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                >
-                  Go to Student Dashboard
-                </a>
-              </div>
-            </div>
-          } />
           
           {/* Catch all - redirect to home */}
           <Route path="*" element={
