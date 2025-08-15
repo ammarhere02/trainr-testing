@@ -1,6 +1,5 @@
                     placeholder="john@example.com"
-                  /
-                </div>
+             
                 {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
               </div>
 
