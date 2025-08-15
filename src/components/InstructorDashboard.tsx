@@ -258,6 +258,7 @@ export default function InstructorDashboard({ instructorData }: InstructorDashbo
                         <h4 className="font-semibold text-gray-900 mb-2">View Analytics</h4>
                         <p className="text-sm text-gray-600">Check performance</p>
                       </div>
+                    </button>
                     </div>
                   </div>
 
