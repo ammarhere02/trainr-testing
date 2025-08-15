@@ -1,6 +1,45 @@
 import { supabase } from './supabase'
 import type { User } from '@supabase/supabase-js'
 
+// Create test users in Supabase Auth (for development only)
+export async function createTestUsers() {
+  try {
+    // Create test instructor
+    const { data: instructorAuth, error: instructorError } = await supabase.auth.admin.createUser({
+      email: 'test@instructor.com',
+      password: 'password123',
+      email_confirm: true
+    });
+
+    if (instructorAuth.user && !instructorError) {
+      // Update instructor record with auth user ID
+      await supabase
+        .from('instructors')
+        .update({ id: instructorAuth.user.id })
+        .eq('email', 'test@instructor.com');
+    }
+
+    // Create test student
+    const { data: studentAuth, error: studentError } = await supabase.auth.admin.createUser({
+      email: 'test@student.com',
+      password: 'password123',
+      email_confirm: true
+    });
+
+    if (studentAuth.user && !studentError) {
+      // Update student record with auth user ID
+      await supabase
+        .from('students')
+        .update({ id: studentAuth.user.id })
+        .eq('email', 'test@student.com');
+    }
+
+    console.log('Test users created successfully');
+  } catch (error) {
+    console.error('Error creating test users:', error);
+  }
+}
+
 export interface AuthResult {
   user: User | null
   error: Error | null

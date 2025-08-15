@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, Loader, ArrowRight, User, Building, Globe, CheckCircle, X } from 'lucide-react';
 import { signInEmail, signUpInstructor } from '../../lib/auth';
 import { checkSubdomainAvailability } from '../../lib/org';
+import { createTestUsers } from '../../lib/auth';
 
 interface InstructorLoginProps {
   onLoginSuccess: (userData: any) => void;
@@ -25,6 +26,13 @@ export default function InstructorLogin({ onLoginSuccess }: InstructorLoginProps
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<any>({});
   const [subdomainStatus, setSubdomainStatus] = useState<'checking' | 'available' | 'taken' | 'invalid' | null>(null);
+
+  // Create test users on component mount (development only)
+  React.useEffect(() => {
+    if (import.meta.env.DEV) {
+      createTestUsers();
+    }
+  }, []);
 
   // Check subdomain availability
   const checkSubdomain = async (subdomain: string) => {
