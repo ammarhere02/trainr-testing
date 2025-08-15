@@ -117,28 +117,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         // Profile not found - this could happen if user was created but profile insert failed
         console.warn('useAuth: User profile not found in database for user:', authUser.id);
-        setError('User profile not found. Please contact support.');
+        // Don't set error immediately - give it a moment for database consistency
+        setTimeout(() => {
+          setError('User profile not found. Please try refreshing the page.');
+        }, 2000);
         setProfile(null);
         setRole(null);
       }
     } catch (err) {
       console.error('useAuth: Error fetching profile:', err);
-      setError('Failed to load user profile.');
+      setError('Failed to load user profile. Please try refreshing the page.');
       setProfile(null);
       setRole(null);
     }
   }, []);
 
   useEffect(() => {
+    let mounted = true;
+    
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('useAuth: Auth state change event:', event, 'session:', !!session);
-      setIsLoading(true);
-      setError(null);
+      if (mounted) {
+        setIsLoading(true);
+        setError(null);
+      }
       const currentUser = session?.user || null;
       console.log('useAuth: Setting user from auth state change:', !!currentUser);
-      setUser(currentUser);
-      await fetchAndSetProfile(currentUser);
-      setIsLoading(false);
+      if (mounted) {
+        setUser(currentUser);
+        await fetchAndSetProfile(currentUser);
+        setIsLoading(false);
+      }
       console.log('useAuth: Auth state change processing complete');
     });
 
@@ -146,17 +155,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('useAuth: Starting initial user fetch');
     getCurrentUser().then(async ({ user: currentUser }) => {
       console.log('useAuth: Initial user fetch result:', !!currentUser);
-      setUser(currentUser);
-      await fetchAndSetProfile(currentUser);
-      setIsLoading(false);
+      if (mounted) {
+        setUser(currentUser);
+        await fetchAndSetProfile(currentUser);
+        setIsLoading(false);
+      }
       console.log('useAuth: Initial load complete');
     }).catch((err) => {
       console.error('useAuth: Initial user fetch error:', err);
-      setError('Failed to initialize authentication.');
-      setIsLoading(false);
+      if (mounted) {
+        setError('Failed to initialize authentication.');
+        setIsLoading(false);
+      }
     });
 
     return () => {
+      mounted = false;
       authListener.subscription.unsubscribe();
     };
   }, [fetchAndSetProfile]);
@@ -177,7 +191,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     console.log('useAuth: Sign in successful, setting user');
     setUser(data?.user);
-    await fetchAndSetProfile(data?.user); // Fetch profile after successful sign-in
+    if (authData?.user) {
+      await fetchAndSetProfile(authData.user);
+    }
     setIsLoading(false);
     console.log('useAuth: Sign in process complete');
     return { success: true };

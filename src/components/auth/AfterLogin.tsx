@@ -9,23 +9,16 @@ export default function AfterLogin() {
   useEffect(() => {
     const handleAfterLogin = async () => {
       try {
-        console.log('AfterLogin: handleAfterLogin triggered. authLoading:', authLoading, 'user:', user, 'profile:', profile, 'role:', role);
+        console.log('AfterLogin: handleAfterLogin triggered. authLoading:', authLoading, 'user:', !!user, 'profile:', !!profile, 'role:', role);
 
         // Wait until authentication state is fully loaded
         if (authLoading) {
           console.log('AfterLogin: Still loading auth state, returning.');
           return;
         }
-      console.log('AfterLogin: handleAfterLogin triggered. authLoading:', authLoading, 'user:', user, 'profile:', profile, 'role:', role);
 
-      // Wait until authentication state is fully loaded
-      if (authLoading) {
-        console.log('AfterLogin: Still loading auth state, returning.');
-        return;
-      }
 
         if (!user) {
-          console.log('AfterLogin: No user found, redirecting to login.');
           console.log('AfterLogin: No user found, redirecting to login.');
           window.location.href = '/login/instructor';
           return;
@@ -33,12 +26,15 @@ export default function AfterLogin() {
 
         if (!profile || !role) {
           console.log('AfterLogin: User present but profile/role not determined. Profile:', profile, 'Role:', role);
-          console.log('AfterLogin: User present but profile/role not determined. Profile:', profile, 'Role:', role);
-          setError('User profile or role could not be determined. Please try logging in again.');
+          // Give it a moment for the profile to load
+          setTimeout(() => {
+            if (!profile || !role) {
+              setError('User profile or role could not be determined. Please try logging in again.');
+            }
+          }, 3000);
           return;
         }
 
-        console.log('AfterLogin: All data loaded, redirecting to dashboard:', role);
         console.log('AfterLogin: All data loaded, redirecting to dashboard:', role);
         // Route based on user role
         if (role === 'instructor') {
@@ -50,8 +46,6 @@ export default function AfterLogin() {
       } catch (error) {
         console.error('After-login error:', error)
         setError('An error occurred. Please try again.')
-      } finally {
-        // No need to set loading state as we use authLoading from useAuth
       }
     }
 
