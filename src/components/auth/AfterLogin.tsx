@@ -4,9 +4,12 @@ import { useAuth } from '../../hooks/useAuth'
 
 export default function AfterLogin() {
   const [error, setError] = useState<string | null>(null)
+  const [redirecting, setRedirecting] = useState(false)
   const { user, profile, role, isLoading: authLoading } = useAuth()
 
   useEffect(() => {
+    if (redirecting) return; // Prevent multiple redirects
+    
     const handleAfterLogin = async () => {
       try {
         console.log('AfterLogin: handleAfterLogin triggered. authLoading:', authLoading, 'user:', !!user, 'profile:', !!profile, 'role:', role);
@@ -20,22 +23,20 @@ export default function AfterLogin() {
 
         if (!user) {
           console.log('AfterLogin: No user found, redirecting to login.');
+          setRedirecting(true);
           window.location.href = '/login/instructor';
           return;
         }
 
         if (!profile || !role) {
           console.log('AfterLogin: User present but profile/role not determined. Profile:', profile, 'Role:', role);
-          // Give it a moment for the profile to load
-          setTimeout(() => {
-            if (!profile || !role) {
-              setError('User profile or role could not be determined. Please try logging in again.');
-            }
-          }, 3000);
+          setError('User profile or role could not be determined. Please try logging in again.');
           return;
         }
 
         console.log('AfterLogin: All data loaded, redirecting to dashboard:', role);
+        setRedirecting(true);
+        
         // Route based on user role
         if (role === 'instructor') {
           window.location.href = '/dashboard-instructor'
@@ -50,7 +51,7 @@ export default function AfterLogin() {
     }
 
     handleAfterLogin()
-  }, [user, profile, role, authLoading])
+  }, [user, profile, role, authLoading, redirecting])
 
   if (error) {
     return (
