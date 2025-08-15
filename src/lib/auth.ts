@@ -26,6 +26,15 @@ export interface AuthResult {
   error: Error | null
 }
 
+export interface Profile {
+  id: string
+  role: string | null
+  org_id: string | null
+  full_name: string | null
+  avatar_url: string | null
+  created_at: string
+}
+
 // Sign in with email and password
 export async function signInEmail(email: string, password: string): Promise<AuthResult> {
   try {
@@ -248,5 +257,28 @@ export async function resetPassword(email: string): Promise<void> {
   
   if (error) {
     throw new Error(error.message)
+  }
+}
+// Get user profile
+export async function getProfile(userId?: string): Promise<Profile | null> {
+  try {
+    const id = userId || (await getCurrentUser())?.id
+    if (!id) return null
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (error) {
+      console.error('Error fetching profile:', error)
+      return null
+    }
+    
+    return data
+  } catch (error) {
+    console.error('Error in getProfile:', error)
+    return null
   }
 }
