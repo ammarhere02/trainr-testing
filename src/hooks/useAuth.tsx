@@ -10,7 +10,7 @@ import {
   Profile,
   Instructor,
   Student
-} from '../lib/auth';
+} from '../lib/auth.tsx';
 
 interface AuthContextType {
   user: any | null;
