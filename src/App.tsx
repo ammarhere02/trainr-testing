@@ -52,6 +52,12 @@ function App() {
           }} />
         } />
         
+        <Route path="/login/student" element={
+          <StudentLogin onLoginSuccess={() => {
+            window.location.href = '/dashboard-student';
+          }} />
+        } />
+        
         {/* Direct Dashboard Access */}
         <Route path="/dashboard-instructor" element={
           <InstructorDashboard instructorData={mockInstructorData} />
@@ -63,6 +69,8 @@ function App() {
         
         {/* Legacy routes for backward compatibility */}
         <Route path="/signup" element={<Navigate to="/login/instructor" replace />} />
+        <Route path="/signup/instructor" element={<Navigate to="/login/instructor" replace />} />
+        <Route path="/signup/student" element={<Navigate to="/login/student" replace />} />
         <Route path="/login-instructor" element={<Navigate to="/dashboard-instructor" replace />} />
         <Route path="/login-student" element={<Navigate to="/dashboard-student" replace />} />
         <Route path="/login" element={<Navigate to="/login/instructor" replace />} />
