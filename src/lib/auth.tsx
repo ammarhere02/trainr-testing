@@ -97,14 +97,49 @@ export const signUp = async (
     } else if (role === 'student') {
       console.log('Creating student profile...');
       
-      // Create student record with null instructor_id (assigned later during enrollment)
+      // For student signup, we need a valid instructor_id
+      // If no instructorId provided, we'll use a default or create a temporary one
+      let validInstructorId = instructorId;
+      
+      if (!validInstructorId) {
+        // Check if there's at least one instructor in the system
+        const { data: existingInstructor } = await supabase
+          .from('instructors')
+          .select('id')
+          .limit(1)
+          .single();
+        
+        if (existingInstructor) {
+          validInstructorId = existingInstructor.id;
+        } else {
+          // Create a default instructor if none exists
+          const { data: defaultInstructor, error: defaultInstructorError } = await supabase
+            .from('instructors')
+            .insert({
+              id: crypto.randomUUID(),
+              email: 'default@trainr.app',
+              full_name: 'Default Instructor',
+              business_name: 'Trainr Academy'
+            })
+            .select()
+            .single();
+          
+          if (defaultInstructorError) {
+            console.error('Failed to create default instructor:', defaultInstructorError);
+            throw new Error('Failed to set up student account. Please contact support.');
+          }
+          
+          validInstructorId = defaultInstructor.id;
+        }
+      }
+      
       const { error: studentError } = await supabase
         .from('students')
         .insert({
           id: authData.user.id,
           email,
           full_name: fullName,
-          instructor_id: instructorId || authData.user.id // Use provided instructorId or fallback
+          instructor_id: validInstructorId
         });
 
       if (studentError) {
