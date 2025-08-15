@@ -15,7 +15,6 @@ export default function InstructorAuth({ onLoginSuccess }: InstructorAuthProps) 
     firstName: '',
     lastName: '',
     businessName: '',
-    subdomain: '',
     rememberMe: false
   });
   
@@ -23,7 +22,6 @@ export default function InstructorAuth({ onLoginSuccess }: InstructorAuthProps) 
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<any>({});
-  const [subdomainStatus, setSubdomainStatus] = useState<'checking' | 'available' | 'taken' | 'invalid' | null>(null);
 
   // Create test users on component mount (development only)
   React.useEffect(() => {
@@ -31,45 +29,6 @@ export default function InstructorAuth({ onLoginSuccess }: InstructorAuthProps) 
       createTestUsers();
     }
   }, []);
-
-  // Check subdomain availability
-  const checkSubdomain = async (subdomain: string) => {
-    if (!subdomain || subdomain.length < 3) {
-      setSubdomainStatus('invalid');
-      return;
-    }
-
-    const subdomainRegex = /^[a-z0-9-]+$/;
-    if (!subdomainRegex.test(subdomain)) {
-      setSubdomainStatus('invalid');
-      return;
-    }
-
-    setSubdomainStatus('checking');
-    
-    try {
-      const isAvailable = await validateSubdomain(subdomain);
-      setSubdomainStatus(isAvailable ? 'available' : 'taken');
-    } catch (error) {
-      console.error('Error checking subdomain:', error);
-      setSubdomainStatus('available');
-    }
-  };
-
-  const handleSubdomainChange = (value: string) => {
-    const cleanValue = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
-    setFormData(prev => ({ ...prev, subdomain: cleanValue }));
-    
-    if (cleanValue) {
-      const timeoutId = setTimeout(() => {
-        checkSubdomain(cleanValue);
-      }, 300);
-      
-      return () => clearTimeout(timeoutId);
-    } else {
-      setSubdomainStatus(null);
-    }
-  };
 
   const validateForm = () => {
     const newErrors: any = {};
@@ -93,8 +52,6 @@ export default function InstructorAuth({ onLoginSuccess }: InstructorAuthProps) 
       }
       
       if (!formData.businessName.trim()) newErrors.businessName = 'Business name is required';
-      if (!formData.subdomain.trim()) newErrors.subdomain = 'Subdomain is required';
-      else if (subdomainStatus !== 'available') newErrors.subdomain = 'Please choose an available subdomain';
     }
 
     setErrors(newErrors);
@@ -147,8 +104,7 @@ export default function InstructorAuth({ onLoginSuccess }: InstructorAuthProps) 
         formData.email,
         formData.password,
         `${formData.firstName} ${formData.lastName}`,
-        formData.businessName,
-        formData.subdomain
+        formData.businessName
       );
       
       if (error) {
@@ -172,35 +128,6 @@ export default function InstructorAuth({ onLoginSuccess }: InstructorAuthProps) 
       setErrors({ general: 'Account creation failed. Please try again.' });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const getSubdomainStatusIcon = () => {
-    switch (subdomainStatus) {
-      case 'checking':
-        return <Loader className="w-4 h-4 text-blue-500 animate-spin" />;
-      case 'available':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'taken':
-      case 'invalid':
-        return <X className="w-4 h-4 text-red-500" />;
-      default:
-        return null;
-    }
-  };
-
-  const getSubdomainStatusMessage = () => {
-    switch (subdomainStatus) {
-      case 'checking':
-        return 'Checking availability...';
-      case 'available':
-        return `trytrainr.com/${formData.subdomain} is available!`;
-      case 'taken':
-        return 'This subdomain is already taken';
-      case 'invalid':
-        return 'Invalid subdomain format (3+ chars, letters, numbers, hyphens only)';
-      default:
-        return '';
     }
   };
 
@@ -397,45 +324,6 @@ export default function InstructorAuth({ onLoginSuccess }: InstructorAuthProps) 
                 {errors.businessName && <p className="text-red-500 text-xs mt-1">{errors.businessName}</p>}
               </div>
 
-              {/* Subdomain */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Your Subdomain
-                </label>
-                <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <span className="absolute left-10 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-                    trytrainr.com/
-                  </span>
-                  <input
-                    type="text"
-                    value={formData.subdomain}
-                    onChange={(e) => handleSubdomainChange(e.target.value)}
-                    className={`w-full pl-32 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                      errors.subdomain ? 'border-red-300' : 
-                      subdomainStatus === 'available' ? 'border-green-300' :
-                      subdomainStatus === 'taken' || subdomainStatus === 'invalid' ? 'border-red-300' :
-                      'border-gray-300'
-                    }`}
-                    placeholder="johndoe"
-                  />
-                  {getSubdomainStatusIcon() && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      {getSubdomainStatusIcon()}
-                    </div>
-                  )}
-                </div>
-                {subdomainStatus && (
-                  <p className={`text-xs mt-1 ${
-                    subdomainStatus === 'available' ? 'text-green-600' : 
-                    subdomainStatus === 'checking' ? 'text-blue-600' : 'text-red-600'
-                  }`}>
-                    {getSubdomainStatusMessage()}
-                  </p>
-                )}
-                {errors.subdomain && <p className="text-red-500 text-xs mt-1">{errors.subdomain}</p>}
-              </div>
-
               {/* Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -493,7 +381,7 @@ export default function InstructorAuth({ onLoginSuccess }: InstructorAuthProps) 
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={isLoading || (mode === 'signup' && subdomainStatus !== 'available')}
+                disabled={isLoading}
                 className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center"
               >
                 {isLoading ? (
@@ -519,7 +407,6 @@ export default function InstructorAuth({ onLoginSuccess }: InstructorAuthProps) 
                 onClick={() => {
                   setMode(mode === 'login' ? 'signup' : 'login');
                   setErrors({});
-                  setSubdomainStatus(null);
                 }}
                 className="text-purple-600 hover:text-purple-700 font-medium"
               >
