@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, Loader, ArrowRight, User, Building, Globe, CheckCircle, X } from 'lucide-react';
-import { signInEmail, signUpInstructor } from '../../lib/auth';
+import { signInEmail, signUpInstructor } from '../../lib/auth.tsx';
 import { checkSubdomainAvailability } from '../../lib/org';
-import { createTestUsers } from '../../lib/auth';
+import { createTestUsers } from '../../lib/auth.tsx';
 
 interface InstructorLoginProps {
   onLoginSuccess: (userData: any) => void;

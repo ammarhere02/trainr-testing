@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, Loader, ArrowRight, User } from 'lucide-react';
-import { signInEmail, signUpStudent } from '../../lib/auth';
+import { signInEmail, signUpStudent } from '../../lib/auth.tsx';
 
 interface StudentLoginProps {
   onLoginSuccess: (userData: any) => void;

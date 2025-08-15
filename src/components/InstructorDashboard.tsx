@@ -16,7 +16,7 @@ import {
   ArrowRight,
   LogOut
 } from 'lucide-react';
-import { signOut, getInstructorProfile } from '../lib/auth';
+import { signOut, getInstructorProfile } from '../lib/auth.tsx';
 import type { Instructor } from '../lib/auth';
 
 interface InstructorDashboardProps {

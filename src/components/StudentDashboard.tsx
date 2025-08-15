@@ -14,7 +14,7 @@ import {
   LogOut,
   Settings
 } from 'lucide-react';
-import { signOut, getStudentProfile } from '../lib/auth';
+import { signOut, getStudentProfile } from '../lib/auth.tsx';
 import type { Student } from '../lib/auth';
 
 interface StudentDashboardProps {

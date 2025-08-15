@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, Eye, EyeOff, Loader, CheckCircle, ArrowRight } from 'lucide-react';
-import { updatePassword } from '../../lib/auth';
+import { updatePassword } from '../../lib/auth.tsx';
 
 export default function PasswordReset() {
   const [formData, setFormData] = useState({

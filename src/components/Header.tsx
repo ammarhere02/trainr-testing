@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Bell, User, Menu, LogOut, Video, FileText, UserPlus, ArrowRight, ChevronDown, Settings, CreditCard, HelpCircle } from 'lucide-react';
-import { signOut } from '../lib/auth';
+import { signOut } from '../lib/auth.tsx';
 
 interface HeaderProps {
   currentView: string;

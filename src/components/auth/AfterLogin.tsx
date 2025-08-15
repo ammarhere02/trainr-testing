@@ -53,7 +53,8 @@ export default function AfterLogin() {
         console.error('After-login error:', error)
         setError('An error occurred. Please try again.')
       } finally {
-        setIsLoading(false)
+        window.location.href = '/login'
+        return
       }
     }
 

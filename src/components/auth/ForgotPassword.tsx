@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, ArrowRight, Loader, CheckCircle } from 'lucide-react';
-import { resetPassword } from '../../lib/auth';
+import { resetPassword } from '../../lib/auth.tsx';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
