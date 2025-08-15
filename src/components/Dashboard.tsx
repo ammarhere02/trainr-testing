@@ -33,7 +33,6 @@ import {
 } from 'lucide-react';
 import { getDashboardAnalytics, getTopCourses } from '../lib/api/analytics';
 
-export default function Dashboard() {
 interface DashboardProps {
   userRole?: 'educator' | 'student' | null;
 }
