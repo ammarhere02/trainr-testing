@@ -34,6 +34,11 @@ import {
 import { getDashboardAnalytics, getTopCourses } from '../lib/api/analytics';
 
 export default function Dashboard() {
+interface DashboardProps {
+  userRole?: 'educator' | 'student' | null;
+}
+
+export default function Dashboard({ userRole }: DashboardProps) {
   const [timeRange, setTimeRange] = useState('30d');
   const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +48,9 @@ export default function Dashboard() {
 
   // Load analytics on component mount
   React.useEffect(() => {
-    loadAnalytics();
+    if (userRole === 'educator') {
+      loadAnalytics();
+    }
   }, []);
 
   const loadAnalytics = async () => {
@@ -84,6 +91,18 @@ export default function Dashboard() {
   ];
 
   if (isLoading && !analytics) {
+    // Show different loading message based on user role
+    if (userRole !== 'educator') {
+      return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+            <h3 className="text-blue-800 font-medium mb-2">Analytics Dashboard</h3>
+            <p className="text-blue-700">Analytics are only available for educators. Please sign in as an educator to view dashboard analytics.</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-center items-center h-64">
