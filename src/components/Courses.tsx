@@ -154,8 +154,7 @@ export default function Courses({ onStartLearning }: CoursesProps) {
         </div>
       </div>
     );
-    }
-  };
+  }
 
   const cancelVideoEdit = () => {
     setShowVideoModal(false);
@@ -238,7 +237,6 @@ export default function Courses({ onStartLearning }: CoursesProps) {
     };
 
     updateCourseAsync();
-    }
   };
 
   const cancelEditCourse = () => {
