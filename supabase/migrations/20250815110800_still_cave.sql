@@ -398,3 +398,52 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+
+
+CREATE TABLE IF NOT EXISTS meetings (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  instructor_id uuid NOT NULL REFERENCES instructors(id) ON DELETE CASCADE,
+  title text NOT NULL,
+  description text,
+  meeting_url text NOT NULL,
+  start_time timestamptz NOT NULL,
+  end_time timestamptz NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_meetings_instructor_id ON meetings(instructor_id);
+ALTER TABLE meetings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Instructors can manage own meetings"
+  ON meetings
+  FOR ALL
+  TO authenticated
+  USING (instructor_id IN (SELECT id FROM instructors WHERE auth.uid() = id));
+
+CREATE POLICY "Students can view meetings of their instructor"
+  ON meetings
+  FOR SELECT
+  TO authenticated
+  USING (instructor_id IN (SELECT instructor_id FROM students WHERE auth.uid() = id));
+
+
+CREATE TABLE IF NOT EXISTS course_analytics (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  course_id uuid NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  total_students integer DEFAULT 0,
+  average_rating numeric(3,2) DEFAULT 0,
+  total_reviews integer DEFAULT 0,
+  last_updated timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_course_analytics_course_id ON course_analytics(course_id);
+ALTER TABLE course_analytics ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Instructors can view own course analytics"
+  ON course_analytics
+  FOR SELECT
+  TO authenticated
+  USING (course_id IN (
+    SELECT id FROM courses WHERE instructor_id IN (SELECT id FROM instructors WHERE auth.uid() = id)
+  ));
