@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Bell, User, Menu, LogOut, Video, FileText, UserPlus, ArrowRight, ChevronDown, Settings, CreditCard, HelpCircle } from 'lucide-react';
+import { signOut } from '../lib/auth';
 
 interface HeaderProps {
   currentView: string;
@@ -15,6 +16,15 @@ interface HeaderProps {
 export default function Header({ currentView, onViewChange, onShowLogin, isLoggedIn, userRole, onLogout, onLogin, showFullNavigation = false }: HeaderProps) {
   const [showProductsDropdown, setShowProductsDropdown] = useState(false);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  };
 
   const handleJoinClick = () => {
     if (onLogin) {
@@ -58,6 +68,18 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
 
             {/* Navigation and Actions */}
             <div className="flex-1 flex justify-end items-center">
+             {/* Sign Out Button - Show when logged in */}
+             {isLoggedIn && (
+               <button
+                 onClick={handleSignOut}
+                 className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors mr-4 text-sm font-medium flex items-center"
+                 title="Sign Out"
+               >
+                 <LogOut className="w-4 h-4 mr-2" />
+                 Sign Out
+               </button>
+             )}
+
              {/* Admin Button - Always Visible */}
              <button
                onClick={() => window.location.href = '/studio/dashboard'}

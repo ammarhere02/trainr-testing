@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import { Calendar, Clock, MapPin, Users, Video, ExternalLink, Plus, ChevronLeft, ChevronRight, Link } from 'lucide-react';
+import { getMeetings, createMeeting, updateMeeting, deleteMeeting } from '../lib/api/meetings';
+import type { Database } from '../lib/database.types';
 
+type Meeting = Database['public']['Tables']['meetings']['Row'];
 export default function Events() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showAddCall, setShowAddCall] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [newCall, setNewCall] = useState({
     title: '',
     date: '',
@@ -15,47 +20,26 @@ export default function Events() {
     maxAttendees: '100'
   });
 
-  // Mock scheduled calls data
-  const [scheduledCalls, setScheduledCalls] = useState(() => {
-    const saved = localStorage.getItem('scheduled-calls');
-    return saved ? JSON.parse(saved) : [
-    {
-      id: 1,
-      title: 'Web Development Q&A Session',
-      date: '2024-01-15',
-      time: '14:00',
-      duration: 60,
-      url: 'https://zoom.us/j/123456789',
-      attendees: 156,
-      maxAttendees: 200,
-      host: 'Dr. Angela Yu',
-      description: 'Weekly Q&A session for web development topics'
-    },
-    {
-      id: 2,
-      title: 'React Best Practices Workshop',
-      date: '2024-01-18',
-      time: '11:00',
-      duration: 120,
-      url: 'https://meet.google.com/abc-defg-hij',
-      attendees: 89,
-      maxAttendees: 100,
-      host: 'Sarah Johnson',
-      description: 'Deep dive into React best practices and patterns'
-    },
-    {
-      id: 3,
-      title: 'Community Networking Call',
-      date: '2024-01-22',
-      time: '18:00',
-      duration: 90,
-      url: 'https://teams.microsoft.com/l/meetup-join/xyz',
-      attendees: 234,
-      maxAttendees: 300,
-      host: 'Mike Chen',
-      description: 'Monthly community networking and collaboration session'
+  const [scheduledCalls, setScheduledCalls] = useState<Meeting[]>([]);
+
+  // Load meetings on component mount
+  React.useEffect(() => {
+    loadMeetings();
+  }, []);
+
+  const loadMeetings = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const meetingsData = await getMeetings();
+      setScheduledCalls(meetingsData);
+    } catch (err) {
+      console.error('Error loading meetings:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load meetings');
+    } finally {
+      setIsLoading(false);
     }
-  ]});
+  };
 
   // Generate calendar days
   const generateCalendarDays = () => {
@@ -82,7 +66,10 @@ export default function Events() {
   
   const getCallsForDate = (date: Date) => {
     const dateStr = date.toISOString().split('T')[0];
-    return scheduledCalls.filter(call => call.date === dateStr);
+    return scheduledCalls.filter(call => {
+      const callDate = new Date(call.scheduled_at).toISOString().split('T')[0];
+      return callDate === dateStr;
+    });
   };
 
   const handlePrevMonth = () => {
@@ -93,37 +80,55 @@ export default function Events() {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   };
 
-  const formatTime = (time: string) => {
-    return time;
+  const formatTime = (dateTimeString: string) => {
+    const date = new Date(dateTimeString);
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false 
+    });
   };
 
-  const handleAddCall = () => {
-    const newCall = {
-      id: Date.now(),
-      title: newCall.title,
-      date: newCall.date,
-      time: newCall.time,
-      duration: parseInt(newCall.duration),
-      url: newCall.url,
-      attendees: 0,
-      maxAttendees: parseInt(newCall.maxAttendees),
-      host: 'You',
-      description: newCall.description
-    };
-    
-    const updatedCalls = [...scheduledCalls, newCall];
-    setScheduledCalls(updatedCalls);
-    localStorage.setItem('scheduled-calls', JSON.stringify(updatedCalls));
-    setShowAddCall(false);
-    setNewCall({
-      title: '',
-      date: '',
-      time: '',
-      duration: '60',
-      url: '',
-      description: '',
-      maxAttendees: '100'
-    });
+  const handleAddCall = async () => {
+    if (!newCall.title || !newCall.date || !newCall.time || !newCall.url) return;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Combine date and time into ISO string
+      const scheduledAt = new Date(`${newCall.date}T${newCall.time}`).toISOString();
+
+      const meetingData = {
+        title: newCall.title,
+        description: newCall.description || null,
+        meeting_url: newCall.url,
+        scheduled_at: scheduledAt,
+        duration_minutes: parseInt(newCall.duration),
+        max_attendees: parseInt(newCall.maxAttendees)
+      };
+
+      const createdMeeting = await createMeeting(meetingData);
+      
+      // Optimistic update
+      setScheduledCalls(prev => [...prev, createdMeeting]);
+      
+      setShowAddCall(false);
+      setNewCall({
+        title: '',
+        date: '',
+        time: '',
+        duration: '60',
+        url: '',
+        description: '',
+        maxAttendees: '100'
+      });
+    } catch (err) {
+      console.error('Error creating meeting:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create meeting');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -206,7 +211,7 @@ export default function Events() {
                             key={call.id}
                             className="text-xs bg-purple-600 text-white px-1 py-0.5 rounded truncate"
                           >
-                            {formatTime(call.time)} {call.title}
+                            {formatTime(call.scheduled_at)} {call.title}
                           </div>
                         ))}
                         {callsForDay.length > 2 && (
@@ -244,16 +249,16 @@ export default function Events() {
                       <div className="text-sm text-gray-600 space-y-1">
                         <div className="flex items-center">
                           <Clock className="w-3 h-3 mr-1" />
-                          {formatTime(call.time)} ({call.duration}min)
+                          {formatTime(call.scheduled_at)} ({call.duration_minutes}min)
                         </div>
                         <div className="flex items-center">
                           <Users className="w-3 h-3 mr-1" />
-                          {call.attendees}/{call.maxAttendees}
+                          0/{call.max_attendees}
                         </div>
                         <div className="flex items-center">
                           <Link className="w-3 h-3 mr-1" />
                           <a 
-                            href={call.url} 
+                            href={call.meeting_url} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="text-purple-600 hover:underline truncate"
@@ -407,9 +412,10 @@ export default function Events() {
                 </button>
                 <button
                   onClick={handleAddCall}
+                  disabled={isLoading || !newCall.title || !newCall.date || !newCall.time || !newCall.url}
                   className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors"
                 >
-                  Schedule Call
+                  {isLoading ? 'Creating...' : 'Schedule Call'}
                 </button>
               </div>
             </div>

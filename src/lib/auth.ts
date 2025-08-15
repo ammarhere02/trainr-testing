@@ -1,11 +1,22 @@
 import { supabase } from './supabase'
 import type { User } from '@supabase/supabase-js'
 
-export interface Profile {
+export interface Instructor {
   id: string
-  role: string
-  org_id: string | null
-  full_name: string | null
+  email: string
+  full_name: string
+  business_name: string
+  subdomain: string
+  logo_url: string | null
+  color: string | null
+  created_at: string
+}
+
+export interface Student {
+  id: string
+  email: string
+  full_name: string
+  instructor_id: string
   avatar_url: string | null
   created_at: string
 }
@@ -63,8 +74,14 @@ export async function sendMagicLink(email: string, redirectTo?: string): Promise
   }
 }
 
-// Sign up with email and password
-export async function signUpEmail(email: string, password: string, fullName: string, role: string = 'student'): Promise<AuthResult> {
+// Sign up instructor with email and password
+export async function signUpInstructor(
+  email: string, 
+  password: string, 
+  fullName: string, 
+  businessName: string, 
+  subdomain: string
+): Promise<AuthResult> {
   try {
     // Check if Supabase is properly configured
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -80,7 +97,9 @@ export async function signUpEmail(email: string, password: string, fullName: str
       options: {
         data: {
           full_name: fullName,
-          role
+          business_name: businessName,
+          subdomain: subdomain,
+          role: 'instructor'
         },
         emailRedirectTo: `${window.location.origin}/post-login`
       }
@@ -120,27 +139,89 @@ export async function signUpEmail(email: string, password: string, fullName: str
   }
 }
 
-// Get current user profile
-export async function getProfile(userId?: string): Promise<Profile | null> {
+// Sign up student with email and password
+export async function signUpStudent(
+  email: string, 
+  password: string, 
+  fullName: string, 
+  instructorId: string
+): Promise<AuthResult> {
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+          instructor_id: instructorId,
+          role: 'student'
+        },
+        emailRedirectTo: `${window.location.origin}/post-login`
+      }
+    })
+
+    if (error) {
+      console.error('Supabase signup error:', error)
+      throw new Error(`Account creation failed: ${error.message}`)
+    }
+    
+    return {
+      user: data.user,
+      error: null
+    }
+  } catch (error) {
+    console.error('SignUp error:', error)
+    return {
+      user: null,
+      error: error instanceof Error ? error : new Error('Unknown error')
+    }
+  }
+}
+
+// Get current instructor profile
+export async function getInstructorProfile(userId?: string): Promise<Instructor | null> {
   try {
     const id = userId || (await getCurrentUser())?.id
-    
     if (!id) return null
     
     const { data, error } = await supabase
-      .from('profiles')
+      .from('instructors')
       .select('*')
       .eq('id', id)
       .single()
     
     if (error) {
-      console.error('Error fetching profile:', error)
+      console.error('Error fetching instructor profile:', error)
       return null
     }
     
     return data
   } catch (error) {
-    console.error('Error in getProfile:', error)
+    console.error('Error in getInstructorProfile:', error)
+    return null
+  }
+}
+
+// Get current student profile
+export async function getStudentProfile(userId?: string): Promise<Student | null> {
+  try {
+    const id = userId || (await getCurrentUser())?.id
+    if (!id) return null
+    
+    const { data, error } = await supabase
+      .from('students')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (error) {
+      console.error('Error fetching student profile:', error)
+      return null
+    }
+    
+    return data
+  } catch (error) {
+    console.error('Error in getStudentProfile:', error)
     return null
   }
 }

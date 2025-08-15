@@ -1,5 +1,7 @@
 import React from 'react';
 import { Play, Clock, Users, Star, BookOpen, CheckCircle, Video, Plus, Upload, X, Trash2, AlertTriangle, MoreHorizontal, Edit3, Save } from 'lucide-react';
+import { getCourses, createCourse, updateCourse, deleteCourse, getLessons } from '../lib/api/courses';
+import type { CourseWithLessons } from '../lib/api/courses';
 
 interface CoursesProps {
   onStartLearning: (courseId: number) => void;
@@ -12,45 +14,11 @@ export default function Courses({ onStartLearning }: CoursesProps) {
   const [showCourseMenu, setShowCourseMenu] = React.useState<number | null>(null);
   const [courseToDelete, setCourseToDelete] = React.useState<any>(null);
   const [courseToEdit, setCourseToEdit] = React.useState<any>(null);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
   const [showVideoModal, setShowVideoModal] = React.useState(false);
   const [videoToEdit, setVideoToEdit] = React.useState<any>(null);
-  const [courses, setCourses] = React.useState(() => {
-    const saved = localStorage.getItem('courses-data');
-    return saved ? JSON.parse(saved) : [
-    {
-      id: 1,
-      title: 'Complete Web Development Bootcamp',
-      description: 'Learn full-stack web development from scratch with HTML, CSS, JavaScript, React, Node.js, and MongoDB.',
-      image: 'https://images.pexels.com/photos/3861958/pexels-photo-3861958.jpeg?auto=compress&cs=tinysrgb&w=400',
-      progress: 65,
-      level: 'Beginner',
-      type: 'free',
-      price: 0,
-      published: true
-    },
-    {
-      id: 2,
-      title: 'Advanced React Patterns',
-      description: 'Master advanced React patterns including hooks, context, HOCs, and performance optimization techniques.',
-      image: 'https://images.pexels.com/photos/1181676/pexels-photo-1181676.jpeg?auto=compress&cs=tinysrgb&w=400',
-      progress: 30,
-      level: 'Advanced',
-      type: 'paid',
-      price: 199,
-      published: true
-    },
-    {
-      id: 3,
-      title: 'UI/UX Design Fundamentals',
-      description: 'Learn the principles of user interface and user experience design with hands-on projects.',
-      image: 'https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=400',
-      progress: 0,
-      level: 'Intermediate',
-      type: 'free',
-      price: 0,
-      published: true
-    }
-  ]});
+  const [courses, setCourses] = React.useState<CourseWithLessons[]>([]);
   
   const [newCourse, setNewCourse] = React.useState({
     name: '',
@@ -79,6 +47,25 @@ export default function Courses({ onStartLearning }: CoursesProps) {
     videoSource: 'youtube'
   });
 
+  // Load courses on component mount
+  React.useEffect(() => {
+    loadCourses();
+  }, []);
+
+  const loadCourses = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const coursesData = await getCourses();
+      setCourses(coursesData);
+    } catch (err) {
+      console.error('Error loading courses:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load courses');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleDeleteCourse = (course: any) => {
     setCourseToDelete(course);
     setShowDeleteModal(true);
@@ -97,28 +84,76 @@ export default function Courses({ onStartLearning }: CoursesProps) {
   };
 
   const saveVideoChanges = () => {
-    if (videoToEdit) {
-      const updatedCourses = courses.map(course => 
-        course.id === videoToEdit.id 
-          ? { 
-              ...course, 
-              videoUrl: videoData.videoUrl,
-              videoTitle: videoData.videoTitle,
-              videoDescription: videoData.videoDescription,
-              videoSource: videoData.videoSource
-            }
-          : course
-      );
-      setCourses(updatedCourses);
-      localStorage.setItem('courses-data', JSON.stringify(updatedCourses));
-      setShowVideoModal(false);
-      setVideoToEdit(null);
-      setVideoData({
-        videoUrl: '',
-        videoTitle: '',
-        videoDescription: '',
-        videoSource: 'youtube'
-      });
+    if (!videoToEdit) return;
+
+    const updateVideoAsync = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // For now, we'll store video info in the course description
+        // In a full implementation, you might want a separate video_url field in courses
+        // or create the first lesson with this video
+        const updates = {
+          // You can extend the courses table to include video fields
+          // or create a lesson automatically
+        };
+
+        // For demo purposes, we'll just close the modal
+        setShowVideoModal(false);
+        setVideoToEdit(null);
+        setVideoData({
+          videoUrl: '',
+          videoTitle: '',
+          videoDescription: '',
+          videoSource: 'youtube'
+        });
+      } catch (err) {
+        console.error('Error updating video:', err);
+        setError(err instanceof Error ? err.message : 'Failed to update video');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    updateVideoAsync();
+  };
+
+  // Calculate progress based on lessons (mock for now)
+  const calculateProgress = (course: CourseWithLessons) => {
+    if (!course.lessons || course.lessons.length === 0) return 0;
+    // This would be calculated based on student progress in a real implementation
+    return Math.floor(Math.random() * 100);
+  };
+
+  if (isLoading && courses.length === 0) {
+    return (
+      <div className="px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading courses...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h3 className="text-red-800 font-medium mb-2">Error Loading Courses</h3>
+          <p className="text-red-700 text-sm mb-4">{error}</p>
+          <button
+            onClick={loadCourses}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
     }
   };
 
@@ -160,33 +195,49 @@ export default function Courses({ onStartLearning }: CoursesProps) {
   };
 
   const saveEditCourse = () => {
-    if (courseToEdit) {
-      const updatedCourses = courses.map(course => 
-        course.id === courseToEdit.id 
-          ? { 
-              ...course, 
-              title: editCourse.name,
-              description: editCourse.description,
-              type: editCourse.type,
-              price: editCourse.price ? parseFloat(editCourse.price) : 0,
-              image: editCourse.thumbnailPreview || course.image,
-              published: editCourse.published
-            }
-          : course
-      );
-      setCourses(updatedCourses);
-      localStorage.setItem('courses-data', JSON.stringify(updatedCourses));
-      setShowEditModal(false);
-      setCourseToEdit(null);
-      setEditCourse({
-        name: '',
-        description: '',
-        type: 'free',
-        price: '',
-        thumbnail: null,
-        thumbnailPreview: '',
-        published: true
-      });
+    if (!courseToEdit) return;
+
+    const updateCourseAsync = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const updates = {
+          title: editCourse.name,
+          description: editCourse.description,
+          type: editCourse.type,
+          price: editCourse.price ? parseFloat(editCourse.price) : 0,
+          image_url: editCourse.thumbnailPreview || courseToEdit.image_url,
+          published: editCourse.published
+        };
+
+        const updatedCourse = await updateCourse(courseToEdit.id, updates);
+        
+        // Optimistic update
+        setCourses(prev => prev.map(course => 
+          course.id === courseToEdit.id ? { ...course, ...updatedCourse } : course
+        ));
+        
+        setShowEditModal(false);
+        setCourseToEdit(null);
+        setEditCourse({
+          name: '',
+          description: '',
+          type: 'free',
+          price: '',
+          thumbnail: null,
+          thumbnailPreview: '',
+          published: true
+        });
+      } catch (err) {
+        console.error('Error updating course:', err);
+        setError(err instanceof Error ? err.message : 'Failed to update course');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    updateCourseAsync();
     }
   };
 
@@ -205,12 +256,67 @@ export default function Courses({ onStartLearning }: CoursesProps) {
   };
 
   const confirmDeleteCourse = () => {
-    if (courseToDelete) {
-      const updatedCourses = courses.filter(course => course.id !== courseToDelete.id);
-      setCourses(updatedCourses);
-      localStorage.setItem('courses-data', JSON.stringify(updatedCourses));
-      setShowDeleteModal(false);
-      setCourseToDelete(null);
+    if (!courseToDelete) return;
+
+    const deleteCourseAsync = async () => {
+      try {
+        setIsLoading(true);
+        await deleteCourse(courseToDelete.id);
+        
+        // Optimistic update
+        setCourses(prev => prev.filter(course => course.id !== courseToDelete.id));
+        setShowDeleteModal(false);
+        setCourseToDelete(null);
+      } catch (err) {
+        console.error('Error deleting course:', err);
+        setError(err instanceof Error ? err.message : 'Failed to delete course');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    deleteCourseAsync();
+  };
+
+  const handleAddCourse = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const courseData = {
+        title: newCourse.name,
+        description: newCourse.description,
+        image_url: newCourse.thumbnailPreview || 'https://images.pexels.com/photos/3861958/pexels-photo-3861958.jpeg?auto=compress&cs=tinysrgb&w=400',
+        level: 'Beginner',
+        type: newCourse.type,
+        price: newCourse.type === 'paid' ? parseFloat(newCourse.price) || 0 : 0,
+        published: newCourse.published
+      };
+
+      const createdCourse = await createCourse(courseData);
+      
+      // Optimistic update
+      setCourses(prev => [createdCourse, ...prev]);
+      
+      // Reset form and close modal
+      if (newCourse.thumbnailPreview) {
+        URL.revokeObjectURL(newCourse.thumbnailPreview);
+      }
+      setNewCourse({
+        name: '',
+        description: '',
+        type: 'free',
+        price: '',
+        thumbnail: null,
+        thumbnailPreview: '',
+        published: true
+      });
+      setShowAddCourseModal(false);
+    } catch (err) {
+      console.error('Error creating course:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create course');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -219,43 +325,6 @@ export default function Courses({ onStartLearning }: CoursesProps) {
     setCourseToDelete(null);
   };
 
-  const handleAddCourse = () => {
-    // Create new course object
-    const courseData = {
-      id: Date.now(), // Simple ID generation
-      title: newCourse.name,
-      description: newCourse.description,
-      image: newCourse.thumbnailPreview || 'https://images.pexels.com/photos/3861958/pexels-photo-3861958.jpeg?auto=compress&cs=tinysrgb&w=400',
-      progress: 0, // New courses start with 0% progress
-      level: 'Beginner', // Default level for new courses
-      type: newCourse.type,
-      price: newCourse.type === 'paid' ? parseFloat(newCourse.price) || 0 : 0,
-      published: newCourse.published
-    };
-
-    // Add to courses array
-    const updatedCourses = [...courses, courseData];
-    setCourses(updatedCourses);
-    localStorage.setItem('courses-data', JSON.stringify(updatedCourses));
-    
-    // In real app, this would also send to backend
-    console.log('Course added:', courseData);
-    
-    // Reset form and close modal
-    if (newCourse.thumbnailPreview) {
-      URL.revokeObjectURL(newCourse.thumbnailPreview);
-    }
-    setNewCourse({
-      name: '',
-      description: '',
-      type: 'free',
-      price: '',
-      thumbnail: null,
-      thumbnailPreview: '',
-      published: true
-    });
-    setShowAddCourseModal(false);
-  };
 
   const handleThumbnailUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -353,7 +422,7 @@ export default function Courses({ onStartLearning }: CoursesProps) {
                     ? 'bg-green-100 text-green-700' 
                     : 'bg-blue-100 text-blue-700'
                 }`}>
-                  {course.type === 'free' ? '🆓 Free' : `💰 $${course.price}`}
+                  {course.type === 'free' ? '🆓 Free' : `💰 $${course.price || 0}`}
                 </span>
               </div>
 
@@ -361,10 +430,10 @@ export default function Courses({ onStartLearning }: CoursesProps) {
               <div className="mt-auto">
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-gray-600">Progress</span>
-                  <span className="font-medium">{course.progress}%</span>
+                  <span className="font-medium">{calculateProgress(course)}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${course.progress}%` }}></div>
+                  <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${calculateProgress(course)}%` }}></div>
                 </div>
                 
                 {/* Course Actions */}

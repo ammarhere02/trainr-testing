@@ -29,6 +29,8 @@ import {
   FileText,
   AlertCircle
 } from 'lucide-react';
+import { getCommunityPosts, createCommunityPost, togglePinPost } from '../lib/api/community';
+import type { CommunityPostWithAuthor } from '../lib/api/community';
 
 interface CommunityProps {
   userRole?: 'educator' | 'student';
@@ -37,6 +39,8 @@ interface CommunityProps {
 export default function Community({ userRole = 'student' }: CommunityProps) {
   const [activeFilter, setActiveFilter] = useState('All');
   const [showPostModal, setShowPostModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const [postTitle, setPostTitle] = useState('');
   const [postBody, setPostBody] = useState('');
@@ -45,16 +49,42 @@ export default function Community({ userRole = 'student' }: CommunityProps) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [attachedMedia, setAttachedMedia] = useState<any[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [posts, setPosts] = useState<CommunityPostWithAuthor[]>([]);
   
+  // Load posts on component mount
+  React.useEffect(() => {
+    loadPosts();
+  }, []);
+
+  const loadPosts = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const postsData = await getCommunityPosts();
+      setPosts(postsData);
+    } catch (err) {
+      console.error('Error loading posts:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load posts');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Pin/unpin post functionality (educators only)
-  const togglePinPost = (postId: number) => {
+  const handleTogglePin = async (postId: string) => {
     if (userRole !== 'educator') return;
     
-    const updatedPosts = posts.map(post => 
-      post.id === postId ? { ...post, isPinned: !post.isPinned } : post
-    );
-    setPosts(updatedPosts);
-    localStorage.setItem('community-posts', JSON.stringify(updatedPosts));
+    try {
+      const updatedPost = await togglePinPost(postId);
+      
+      // Optimistic update
+      setPosts(prev => prev.map(post => 
+        post.id === postId ? { ...post, is_pinned: updatedPost.is_pinned } : post
+      ));
+    } catch (err) {
+      console.error('Error toggling pin:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update post');
+    }
   };
 
   const filters = [
@@ -76,98 +106,41 @@ export default function Community({ userRole = 'student' }: CommunityProps) {
 
   const selectedCategoryData = categories.find(cat => cat.id === selectedCategory);
 
-  // Update posts state
-  const [posts, setPosts] = useState(() => {
-    const saved = localStorage.getItem('community-posts');
-    return saved ? JSON.parse(saved) : [
-    {
-      id: 1,
-      author: 'John Smith',
-      avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=60',
-      time: '20h',
-      category: '🏆 #Wins',
-      title: 'From $200K in Debt to $400K in Sales at 19',
-      content: '1 year ago, Alessandro was just a teenager in Italy with over $200,000 in debt. He was desperate to make his first $1 online. When Alessandro found me it was: "It was the',
-      likes: 93,
-      comments: 45,
-      isPinned: true,
-      hasImage: true,
-      image: 'https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=300',
-      badges: ['💎', '⭐'],
-      level: 9,
-      commentAvatars: [
-        'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=40',
-        'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=40',
-        'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=40',
-        'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=40',
-        'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=40'
-      ],
-      lastComment: 'New comment 2m ago'
-    },
-    {
-      id: 2,
-      author: 'John Smith',
-      avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=60',
-      time: '4d',
-      category: '🏆 #Wins',
-      title: 'How a new entrepreneur just did $22k/month using just Skool',
-      content: 'Here\'s a story that shows what happens when you stop overcomplicating it. At first, this guy, @Matthew Mitten was stuck in his online business. He was trying a million',
-      likes: 122,
-      comments: 84,
-      isPinned: true,
-      hasImage: true,
-      image: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300',
-      badges: ['💎', '⭐'],
-      level: 9,
-      commentAvatars: [
-        'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=40',
-        'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=40',
-        'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=40',
-        'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=40'
-      ],
-      lastComment: 'New comment 1h ago'
-    },
-    {
-      id: 3,
-      author: 'Sarah Johnson',
-      avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=60',
-      time: '1d',
-      category: '💬 General',
-      title: 'Just completed my first course milestone! 🎉',
-      content: 'I can\'t believe I actually finished the React fundamentals section. The way everything clicked together in the final project was amazing. Thank you to everyone who helped me in the Q&A sessions!',
-      likes: 45,
-      comments: 12,
-      isPinned: false,
-      hasImage: false,
-      badges: [],
-      level: 3,
-      commentAvatars: [
-        'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=40',
-        'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=40'
-      ],
-      lastComment: 'New comment 3h ago'
-    }
-  ]});
 
   // Handle post creation
-  const handleCreatePost = () => {
+  const handleCreatePost = async () => {
     if (!selectedCategory || !postBody.trim()) return;
     
-    // In real app, this would send to backend
-    console.log('Creating post:', {
-      title: postTitle,
-      body: postBody,
-      category: selectedCategory,
-      media: attachedMedia
-    });
-    
-    // Reset form
-    setPostTitle('');
-    setPostBody('');
-    setSelectedCategory('');
-    setAttachedMedia([]);
-    setShowPostModal(false);
-    setShowCategoryDropdown(false);
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const postData = {
+        title: postTitle || 'Community Post',
+        content: postBody,
+        category: selectedCategory,
+        image_url: attachedMedia.find(m => m.type === 'image')?.url || null,
+        video_url: attachedMedia.find(m => m.type === 'video')?.url || null
+      };
+
+      const newPost = await createCommunityPost(postData);
+      
+      // Optimistic update - reload posts to get full data with author
+      await loadPosts();
+      
+      // Reset form
+      setPostTitle('');
+      setPostBody('');
+      setSelectedCategory('');
+      setAttachedMedia([]);
+      setShowPostModal(false);
+      setShowCategoryDropdown(false);
+    } catch (err) {
+      console.error('Error creating post:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create post');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Handle file upload
@@ -220,6 +193,47 @@ export default function Community({ userRole = 'student' }: CommunityProps) {
   // Check if post can be submitted
   const canSubmitPost = selectedCategory && postBody.trim().length > 0;
 
+  // Format time ago
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'now';
+    if (diffInHours < 24) return `${diffInHours}h`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays}d`;
+  };
+
+  if (isLoading && posts.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 mt-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading community posts...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 mt-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h3 className="text-red-800 font-medium mb-2">Error Loading Community</h3>
+          <p className="text-red-700 text-sm mb-4">{error}</p>
+          <button
+            onClick={loadPosts}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
   // Handle category selection
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategory(categoryId);
@@ -287,18 +301,18 @@ export default function Community({ userRole = 'student' }: CommunityProps) {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
                 <img
-                  src={post.avatar}
-                  alt={post.author}
+                  src={post.author?.avatar_url || 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=60'}
+                  alt={post.author?.full_name || 'User'}
                   className="w-12 h-12 rounded-full object-cover bg-gray-200"
                 />
                 <div className="flex items-center space-x-3 text-gray-600">
-                  <span className="font-medium text-gray-900">{post.author}</span>
+                  <span className="font-medium text-gray-900">{post.author?.full_name || 'Unknown User'}</span>
                   <span className="text-gray-500">{post.category}</span>
-                  <span className="text-gray-500">{post.time}</span>
+                  <span className="text-gray-500">{formatTimeAgo(post.created_at)}</span>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                {post.isPinned && (
+                {post.is_pinned && (
                   <div className="flex items-center space-x-1 text-gray-500">
                     <Pin className="w-4 h-4" />
                     <span className="text-sm">Pinned</span>
@@ -306,13 +320,13 @@ export default function Community({ userRole = 'student' }: CommunityProps) {
                 )}
                 {userRole === 'educator' && (
                   <button
-                    onClick={() => togglePinPost(post.id)}
+                    onClick={() => handleTogglePin(post.id)}
                     className={`p-2 rounded-lg transition-colors ${
-                      post.isPinned 
+                      post.is_pinned 
                         ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200' 
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
-                    title={post.isPinned ? 'Unpin post' : 'Pin post'}
+                    title={post.is_pinned ? 'Unpin post' : 'Pin post'}
                   >
                     <Pin className="w-4 h-4" />
                   </button>
@@ -326,14 +340,11 @@ export default function Community({ userRole = 'student' }: CommunityProps) {
               <div className="flex items-start justify-between">
                 <div className="flex-1 pr-6">
                   <p className="text-gray-700 leading-relaxed mb-3">{post.content}</p>
-                  <button className="text-gray-500 hover:text-gray-700 transition-colors">
-                    Read more
-                  </button>
                 </div>
-                {post.hasImage && (
+                {post.image_url && (
                   <div className="flex-shrink-0">
                     <img
-                      src={post.image}
+                      src={post.image_url}
                       alt="Post content"
                       className="w-24 h-24 object-cover rounded-lg bg-gray-100"
                     />
@@ -525,11 +536,11 @@ export default function Community({ userRole = 'student' }: CommunityProps) {
                         </div>
                       </div>
                     )}
-                  </div>
+                    <span className="font-medium">0</span>
 
                   {/* GIF */}
                   <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                    <span className="text-sm font-bold text-gray-600">GIF</span>
+                    <span className="font-medium">{post.comments_count || 0}</span>
                   </button>
                 </div>
 
@@ -589,22 +600,27 @@ export default function Community({ userRole = 'student' }: CommunityProps) {
                 <button
                   onClick={handleCreatePost}
                   disabled={!canSubmitPost}
-                  className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                  className={`px-6 py-2 rounded-lg font-medium transition-colors flex items-center ${
                     canSubmitPost
                       ? 'bg-gray-800 text-white hover:bg-gray-900'
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
                 >
-                  POST
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                      POSTING...
+                    </>
+                  ) : (
+                    'POST'
+                  )}
                 </button>
-              </div>
-
-              {/* Validation Message */}
-              {!canSubmitPost && (postBody.trim().length > 0 || selectedCategory) && (
-                <div className="mt-3 text-sm text-gray-500 text-center">
-                  {!selectedCategory && "Please select a category"}
-                  {!postBody.trim() && selectedCategory && "Please add some content to your post"}
-                  {!selectedCategory && !postBody.trim() && "Please select a category and add content"}
+                  className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                    canSubmitPost
+                      ? 'bg-gray-800 text-white hover:bg-gray-900'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                <div className="text-sm text-gray-600">
+                  {formatTimeAgo(post.created_at)}
                 </div>
               )}
             </div>
