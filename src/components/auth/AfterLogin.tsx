@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Loader } from 'lucide-react'
 import { getProfile, getCurrentUser } from '../../lib/auth'
-import { getSubdomain } from '../../lib/org'
+import { getSubdirectory } from '../../utils/subdomain'
 
 export default function AfterLogin() {
   const [isLoading, setIsLoading] = useState(true)
@@ -15,7 +15,7 @@ export default function AfterLogin() {
         
         if (!user) {
           // No user found, redirect to subdomain login
-          const subdomain = getSubdomain()
+          const subdomain = getSubdirectory()
           if (subdomain) {
             window.location.href = `/${subdomain}/login`
           } else {
@@ -32,7 +32,7 @@ export default function AfterLogin() {
           return
         }
 
-        const subdomain = getSubdomain()
+        const subdomain = getSubdirectory()
 
         // Route based on role and subdomain
         if (profile.role === 'instructor') {
