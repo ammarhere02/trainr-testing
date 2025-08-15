@@ -39,7 +39,7 @@ export default function PostLogin() {
         }
 
         // Route by role
-        if (profile.role === 'educator') {
+        if (profile.role === 'instructor') {
           window.location.href = '/studio/dashboard'
         } else {
           // Student - redirect to library

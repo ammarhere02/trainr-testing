@@ -35,7 +35,7 @@ export default function AfterLogin() {
         const subdomain = getSubdomain()
 
         // Route based on role and subdomain
-        if (profile.role === 'educator') {
+        if (profile.role === 'instructor') {
           // Educators should go to studio dashboard regardless of subdomain
           window.location.href = '/studio/dashboard'
         } else {

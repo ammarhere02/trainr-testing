@@ -447,3 +447,14 @@ CREATE POLICY "Instructors can view own course analytics"
   USING (course_id IN (
     SELECT id FROM courses WHERE instructor_id IN (SELECT id FROM instructors WHERE auth.uid() = id)
   ));
+
+
+CREATE TABLE users (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at timestamptz DEFAULT now(),
+    role text NOT NULL CHECK (role IN ('instructor', 'student')),
+    email text UNIQUE NOT NULL,
+    password_hash text NOT NULL,
+    full_name text NOT NULL,
+    avatar_url text
+);
