@@ -116,30 +116,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         // Profile missing, attempt to recreate (e.g., if manually deleted from DB)
         console.warn('User profile missing, attempting to recreate...');
-        const newProfileData: Partial<Instructor | Student> = {
-          id: authUser.id,
-          email: authUser.email,
-          full_name: authUser.user_metadata.full_name,
-        };
+        
+        // Check if user_metadata exists
+        if (!authUser.user_metadata) {
+          console.error('User metadata is missing, cannot recreate profile');
+          setError('User profile data is incomplete. Please contact support.');
+          setProfile(null);
+          setRole(null);
+          await signOut();
+          return;
+        }
 
         let recreatedProfile: Profile | null = null;
-        if (authUser.user_metadata.role === 'instructor') {
+        const userRole = authUser.user_metadata.role;
+        const fullName = authUser.user_metadata.full_name || 'Unknown User';
+        
+        if (userRole === 'instructor') {
+          const businessName = authUser.user_metadata.business_name || 'My Business';
           const { data, error } = await supabase.from('instructors').insert([
             {
               id: authUser.id,
               email: authUser.email,
-              full_name: authUser.user_metadata.full_name,
-              business_name: authUser.user_metadata.business_name || 'My Business',
+              full_name: fullName,
+              business_name: businessName,
             }
           ]).select().single();
           if (data) recreatedProfile = { id: data.id, role: 'instructor', data: data as Instructor };
-        } else if (authUser.user_metadata.role === 'student') {
+        } else if (userRole === 'student') {
+          const instructorId = authUser.user_metadata.instructor_id;
+          if (!instructorId) {
+            console.error('Student missing instructor_id in metadata');
+            setError('Student profile is incomplete. Please contact support.');
+            setProfile(null);
+            setRole(null);
+            await signOut();
+            return;
+          }
+          
           const { data, error } = await supabase.from('students').insert([
             {
               id: authUser.id,
               email: authUser.email,
-              full_name: authUser.user_metadata.full_name,
-              instructor_id: authUser.user_metadata.instructor_id // Assuming instructor_id is in metadata
+              full_name: fullName,
+              instructor_id: instructorId
             }
           ]).select().single();
           if (data) recreatedProfile = { id: data.id, role: 'student', data: data as Student };
@@ -176,7 +195,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     // Initial load
-    getCurrentUser().then(async (currentUser) => {
+    getCurrentUser().then(async ({ user: currentUser }) => {
       setUser(currentUser);
       await fetchAndSetProfile(currentUser);
       setIsLoading(false);
@@ -187,7 +206,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => {
-      authListener.unsubscribe();
+      authListener.subscription.unsubscribe();
     };
   }, [fetchAndSetProfile]);
 
