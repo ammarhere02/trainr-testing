@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import {
-  signInEmail,
+  signInEmail, SignInData,
   signUpInstructor,
   signUpStudent,
   signOut,
