@@ -115,6 +115,75 @@ export default function Hero({ onLogin, onShowEducatorSignup }: HeroProps) {
           </p>
         </div>
 
+        {/* Centered Login Buttons */}
+        <div className="text-center mb-20">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Choose Your Path</h2>
+          <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
+            Join thousands of educators and students transforming education together
+          </p>
+          
+          {/* Two Cool Centered Buttons */}
+          <div className="flex flex-col md:flex-row items-center justify-center gap-8 max-w-4xl mx-auto">
+            {/* Instructor Button */}
+            <div className="group relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-3xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
+              <button
+                onClick={() => window.location.href = '/login/instructor'}
+                className="relative bg-gradient-to-r from-purple-600 to-blue-600 text-white px-12 py-8 rounded-2xl font-bold text-xl hover:shadow-2xl transform hover:-translate-y-3 hover:scale-105 transition-all duration-500 flex flex-col items-center space-y-4 min-w-[280px] group-hover:from-purple-700 group-hover:to-blue-700"
+              >
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-4xl">👨‍🏫</span>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold mb-2">I'm an Instructor</div>
+                  <div className="text-purple-100 text-sm">
+                    Create courses, build community, grow your business
+                  </div>
+                </div>
+                <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" />
+              </button>
+            </div>
+
+            {/* VS Divider */}
+            <div className="flex items-center justify-center">
+              <div className="w-12 h-12 bg-white/80 backdrop-blur-sm rounded-full border-2 border-gray-200 flex items-center justify-center shadow-lg">
+                <span className="text-gray-600 font-bold">OR</span>
+              </div>
+            </div>
+
+            {/* Student Button */}
+            <div className="group relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-teal-500 to-green-500 rounded-3xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
+              <button
+                onClick={() => window.location.href = '/login/student'}
+                className="relative bg-gradient-to-r from-blue-500 to-green-500 text-white px-12 py-8 rounded-2xl font-bold text-xl hover:shadow-2xl transform hover:-translate-y-3 hover:scale-105 transition-all duration-500 flex flex-col items-center space-y-4 min-w-[280px] group-hover:from-blue-600 group-hover:to-green-600"
+              >
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-4xl">👨‍🎓</span>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold mb-2">I'm a Student</div>
+                  <div className="text-blue-100 text-sm">
+                    Access courses, join community, accelerate learning
+                  </div>
+                </div>
+                <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" />
+              </button>
+            </div>
+          </div>
+
+          {/* Floating Animation Elements */}
+          <div className="relative mt-16">
+            <div className="absolute -top-20 left-1/4 w-20 h-20 bg-purple-200 rounded-full opacity-20 animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }}></div>
+            <div className="absolute -top-16 right-1/4 w-16 h-16 bg-blue-200 rounded-full opacity-30 animate-bounce" style={{ animationDelay: '1s', animationDuration: '4s' }}></div>
+            <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-green-200 rounded-full opacity-25 animate-bounce" style={{ animationDelay: '2s', animationDuration: '3.5s' }}></div>
+          </div>
+        </div>
+          
+        <p className="text-sm text-gray-600">
+          Join 10,000+ educators building successful online teaching businesses
+        </p>
+
         {/* Visual Replacement Graphic */}
         <div className="relative mb-16">
           {/* Before Section - Multiple Tools */}
@@ -209,76 +278,6 @@ export default function Hero({ onLogin, onShowEducatorSignup }: HeroProps) {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* CTA Section */}
-        <div className="text-center mb-20">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Choose Your Path</h2>
-          <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
-            Join thousands of educators and students transforming education together
-          </p>
-          
-          {/* Centered Login Buttons */}
-          <div className="flex flex-col md:flex-row items-center justify-center gap-8 max-w-4xl mx-auto">
-            {/* Instructor Button */}
-            <div className="group relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-3xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
-              <button
-                onClick={() => window.location.href = '/login/instructor'}
-                className="relative bg-gradient-to-r from-purple-600 to-blue-600 text-white px-12 py-8 rounded-2xl font-bold text-xl hover:shadow-2xl transform hover:-translate-y-3 hover:scale-105 transition-all duration-500 flex flex-col items-center space-y-4 min-w-[280px] group-hover:from-purple-700 group-hover:to-blue-700"
-              >
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <span className="text-4xl">👨‍🏫</span>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold mb-2">I'm an Instructor</div>
-                  <div className="text-purple-100 text-sm">
-                    Create courses, build community, grow your business
-                  </div>
-                </div>
-                <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" />
-              </button>
-            </div>
-
-            {/* VS Divider */}
-            <div className="flex items-center justify-center">
-              <div className="w-12 h-12 bg-white/80 backdrop-blur-sm rounded-full border-2 border-gray-200 flex items-center justify-center shadow-lg">
-                <span className="text-gray-600 font-bold">OR</span>
-              </div>
-            </div>
-
-            {/* Student Button */}
-            <div className="group relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-teal-500 to-green-500 rounded-3xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
-              <button
-                onClick={() => window.location.href = '/login/student'}
-                className="relative bg-gradient-to-r from-blue-500 to-green-500 text-white px-12 py-8 rounded-2xl font-bold text-xl hover:shadow-2xl transform hover:-translate-y-3 hover:scale-105 transition-all duration-500 flex flex-col items-center space-y-4 min-w-[280px] group-hover:from-blue-600 group-hover:to-green-600"
-              >
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <span className="text-4xl">👨‍🎓</span>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold mb-2">I'm a Student</div>
-                  <div className="text-blue-100 text-sm">
-                    Access courses, join community, accelerate learning
-                  </div>
-                </div>
-                <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" />
-              </button>
-            </div>
-          </div>
-
-          {/* Floating Animation Elements */}
-          <div className="relative mt-16">
-            <div className="absolute -top-20 left-1/4 w-20 h-20 bg-purple-200 rounded-full opacity-20 animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }}></div>
-            <div className="absolute -top-16 right-1/4 w-16 h-16 bg-blue-200 rounded-full opacity-30 animate-bounce" style={{ animationDelay: '1s', animationDuration: '4s' }}></div>
-            <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-green-200 rounded-full opacity-25 animate-bounce" style={{ animationDelay: '2s', animationDuration: '3.5s' }}></div>
-          </div>
-        </div>
-          
-          <p className="text-sm text-gray-600">
-            Join 10,000+ educators building successful online teaching businesses
-          </p>
         </div>
 
         {/* Stats */}
