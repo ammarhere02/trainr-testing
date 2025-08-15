@@ -195,7 +195,7 @@ export async function signUpInstructor(
             email: email,
             full_name: fullName,
             business_name: businessName,
-            subdomain: subdomain || null
+            subdomain: subdomain || null,
             color: '#7c3aed'
           }])
           .select()
