@@ -1,57 +1,42 @@
 import React, { useEffect, useState } from 'react'
 import { Loader } from 'lucide-react'
-import { getCurrentUser } from '../../lib/auth'
-import { getSubdirectory } from '../../utils/subdomain'
+import { useAuth } from '../../hooks/useAuth'
 
 export default function AfterLogin() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { user, profile, role } = useAuth()
 
   useEffect(() => {
     const handleAfterLogin = async () => {
       try {
-        // Get current user
-        const { user } = await getCurrentUser()
-        
         if (!user) {
-          // No user found, redirect to subdomain login
-          const subdomain = getSubdirectory()
-          if (subdomain) {
-            window.location.href = `/${subdomain}/login`
-          } else {
-            window.location.href = '/login'
-          }
+          window.location.href = '/login/instructor'
           return
         }
 
-        const subdomain = getSubdirectory()
+        if (!profile || !role) {
+          // Wait for profile to load
+          return
+        }
 
-        // Route based on user metadata role and subdomain
-        if (user.user_metadata?.role === 'instructor') {
-          // Educators should go to studio dashboard regardless of subdomain
-          window.location.href = '/studio/dashboard'
+        // Route based on user role
+        if (role === 'instructor') {
+          window.location.href = '/dashboard-instructor'
         } else {
-          // Students stay on the subdomain
-          if (subdomain) {
-            // Redirect to subdomain home/courses
-            window.location.href = `/${subdomain}/courses`
-          } else {
-            // Fallback to main library
-            window.location.href = '/library'
-          }
+          window.location.href = '/dashboard-student'
         }
         
       } catch (error) {
         console.error('After-login error:', error)
         setError('An error occurred. Please try again.')
       } finally {
-        window.location.href = '/login'
-        return
+        setIsLoading(false)
       }
     }
 
     handleAfterLogin()
-  }, [])
+  }, [user, profile, role])
 
   if (error) {
     return (
@@ -64,7 +49,7 @@ export default function AfterLogin() {
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Error</h1>
             <p className="text-gray-600 mb-6">{error}</p>
             <a
-              href="/login"
+              href="/login/instructor"
               className="bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors inline-flex items-center"
             >
               Back to Login

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, User, Mail, Lock, Building, Globe, Eye, EyeOff, Loader, CheckCircle, X } from 'lucide-react';
-import { signInEmail, signUp, SignUpData } from '../../lib/auth.tsx';
+import { signInEmail, signUp } from '../../lib/auth.tsx';
 import { checkSubdomainAvailability, getOrganizationBySubdomain } from '../../lib/org';
 import type { Organization } from '../../lib/org';
 
@@ -161,7 +161,7 @@ export default function AuthForm({ onSuccess, mode, setMode }: AuthFormProps) {
           onSuccess(data.user, organization);
         }
       } else {
-        const signUpData: SignUpData = {
+        const signUpData = {
           email: formData.email,
           password: formData.password,
           fullName: `${formData.firstName} ${formData.lastName}`,
@@ -169,7 +169,7 @@ export default function AuthForm({ onSuccess, mode, setMode }: AuthFormProps) {
           subdomain: formData.subdomain
         };
         
-        const { data, error } = await signUp(signUpData);
+        const { data, error } = await signUp('instructor', signUpData);
         
         if (error) {
           setErrors({ submit: error.message });

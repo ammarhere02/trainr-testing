@@ -106,81 +106,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const userProfile = await getProfile(authUser.id);
       if (userProfile) {
-        // Validate role consistency
-        if (authUser.user_metadata.role && authUser.user_metadata.role !== userProfile.role) {
-          console.warn(`Role mismatch: Auth metadata says ${authUser.user_metadata.role}, but profile table says ${userProfile.role}. Prioritizing auth metadata.`);
-          // Optionally, you could force a logout or update the profile table here.
-        }
         setProfile(userProfile);
         setRole(userProfile.role);
       } else {
-        // Profile missing, attempt to recreate (e.g., if manually deleted from DB)
-        console.warn('User profile missing, attempting to recreate...');
-        
-        // Check if user_metadata exists
-        if (!authUser.user_metadata) {
-          console.error('User metadata is missing, cannot recreate profile');
-          setError('User profile data is incomplete. Please contact support.');
-          setProfile(null);
-          setRole(null);
-          await signOut();
-          return;
-        }
-
-        let recreatedProfile: Profile | null = null;
-        const userRole = authUser.user_metadata.role;
-        const fullName = authUser.user_metadata.full_name || 'Unknown User';
-        
-        if (userRole === 'instructor') {
-          const businessName = authUser.user_metadata.business_name || 'My Business';
-          const { data, error } = await supabase.from('instructors').insert([
-            {
-              id: authUser.id,
-              email: authUser.email,
-              full_name: fullName,
-              business_name: businessName,
-            }
-          ]).select().single();
-          if (data) recreatedProfile = { id: data.id, role: 'instructor', data: data as Instructor };
-        } else if (userRole === 'student') {
-          const instructorId = authUser.user_metadata.instructor_id;
-          if (!instructorId) {
-            console.error('Student missing instructor_id in metadata');
-            setError('Student profile is incomplete. Please contact support.');
-            setProfile(null);
-            setRole(null);
-            await signOut();
-            return;
-          }
-          
-          const { data, error } = await supabase.from('students').insert([
-            {
-              id: authUser.id,
-              email: authUser.email,
-              full_name: fullName,
-              instructor_id: instructorId
-            }
-          ]).select().single();
-          if (data) recreatedProfile = { id: data.id, role: 'student', data: data as Student };
-        }
-
-        if (recreatedProfile) {
-          setProfile(recreatedProfile);
-          setRole(recreatedProfile.role);
-          console.log('User profile recreated successfully.');
-        } else {
-          setError('Profile could not be fetched or recreated. Please contact support.');
-          setProfile(null);
-          setRole(null);
-          await signOut(); // Force logout if profile cannot be established
-        }
+        // Profile not found - this could happen if user was created but profile insert failed
+        console.warn('User profile not found in database');
+        setError('User profile not found. Please contact support.');
+        setProfile(null);
+        setRole(null);
       }
     } catch (err) {
-      console.error('Error fetching or recreating profile:', err);
+      console.error('Error fetching profile:', err);
       setError('Failed to load user profile.');
       setProfile(null);
       setRole(null);
-      await signOut(); // Force logout on profile error
     }
   }, []);
 
@@ -239,15 +178,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     setError(null);
     
-    const signUpData: SignUpData = {
-      email: data.email,
-      password: data.password,
-      fullName: data.fullName,
-      businessName: data.businessName || '',
-      subdomain: data.subdomain || ''
-    };
-    
-    const authResult = await signUp(signUpData);
+    const authResult = await signUp(selectedRole, data);
 
     if (authResult.error) {
       setError(authResult.error.message);
