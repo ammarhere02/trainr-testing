@@ -89,7 +89,7 @@ export default function Hero({ onLogin, onShowEducatorSignup }: HeroProps) {
             {/* Auth Buttons */}
             <div className="flex items-center space-x-4">
               <button 
-                onClick={handleGetStarted}
+               onClick={() => scrollToSection('choose-path-section')}
                 className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 flex items-center"
               >
                 Get Started
@@ -116,7 +116,7 @@ export default function Hero({ onLogin, onShowEducatorSignup }: HeroProps) {
         </div>
 
         {/* Centered Login Buttons */}
-        <div className="text-center mb-20">
+       <div id="choose-path-section" className="text-center mb-20 scroll-mt-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Choose Your Path</h2>
           <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
             Join thousands of educators and students transforming education together
