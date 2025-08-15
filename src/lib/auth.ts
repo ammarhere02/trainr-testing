@@ -147,7 +147,8 @@ export async function signUpInstructor(
   email: string, 
   password: string, 
   fullName: string, 
-  businessName: string
+  businessName: string,
+  subdomain?: string
 ): Promise<AuthResult> {
   try {
     // Check if Supabase is properly configured
@@ -194,6 +195,7 @@ export async function signUpInstructor(
             email: email,
             full_name: fullName,
             business_name: businessName,
+            subdomain: subdomain || null
             color: '#7c3aed'
           }])
           .select()

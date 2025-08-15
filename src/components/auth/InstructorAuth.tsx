@@ -104,7 +104,8 @@ export default function InstructorAuth({ onLoginSuccess }: InstructorAuthProps) 
         formData.email,
         formData.password,
         `${formData.firstName} ${formData.lastName}`,
-        formData.businessName
+        formData.businessName,
+        formData.subdomain || undefined
       );
       
       if (error) {
