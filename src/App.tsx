@@ -52,18 +52,26 @@ function App() {
         
         <Route path="/login/student" element={
           user ? <Navigate to="/dashboard-student" replace /> : (
-            <StudentAuth onSuccess={() => window.location.href = '/after-login'} />
+            <StudentAuth onSuccess={() => {
+              console.log('App: Student auth success, redirecting to after-login');
+              window.location.href = '/after-login';
+            }} />
           )
         } />
         
         <Route path="/login/student/:instructorId" element={
           user ? <Navigate to="/dashboard-student" replace /> : (
-            <StudentAuth onSuccess={() => window.location.href = '/after-login'} />
+            <StudentAuth onSuccess={() => {
+              console.log('App: Student auth success (with instructorId), redirecting to after-login');
+              window.location.href = '/after-login';
+            }} />
           )
         } />
         
         {/* After Login Handler */}
-        <Route path="/after-login" element={<AfterLogin />} />
+        <Route path="/after-login" element={
+          user ? <AfterLogin /> : <Navigate to="/login/instructor" replace />
+        } />
         
         {/* Direct Dashboard Access */}
         <Route path="/dashboard-instructor" element={

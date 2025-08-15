@@ -59,18 +59,23 @@ export default function StudentAuth({ onSuccess, instructorId }: StudentAuthProp
     
     if (!validateForm()) return;
 
+    console.log('StudentAuth: Starting form submission, mode:', mode);
     setIsLoading(true);
     
     try {
       if (mode === 'login') {
+        console.log('StudentAuth: Attempting login for:', formData.email);
         const { data, error } = await signInEmail(formData.email, formData.password);
         
         if (error) {
+          console.error('StudentAuth: Login error:', error);
           setErrors({ submit: error.message });
         } else if (data?.user) {
+          console.log('StudentAuth: Login successful, calling onSuccess');
           onSuccess(data.user);
         }
       } else {
+        console.log('StudentAuth: Attempting signup for:', formData.email);
         const signUpData = {
           email: formData.email,
           password: formData.password,
@@ -81,17 +86,20 @@ export default function StudentAuth({ onSuccess, instructorId }: StudentAuthProp
         const { data, error } = await signUp('student', signUpData);
         
         if (error) {
+          console.error('StudentAuth: Signup error:', error);
           setErrors({ submit: error.message });
         } else if (data?.user) {
+          console.log('StudentAuth: Signup successful, calling onSuccess');
           onSuccess(data.user);
         }
       }
     } catch (error: any) {
-      console.error('Student auth error:', error);
+      console.error('StudentAuth: Unexpected error:', error);
       setErrors({ 
         submit: error.message || `Failed to ${mode === 'login' ? 'sign in' : 'create account'}` 
       });
     } finally {
+      console.log('StudentAuth: Form submission complete');
       setIsLoading(false);
     }
   };

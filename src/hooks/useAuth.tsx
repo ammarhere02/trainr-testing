@@ -98,25 +98,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchAndSetProfile = useCallback(async (authUser: any) => {
     if (!authUser) {
+      console.log('useAuth: No auth user, clearing profile');
       setProfile(null);
       setRole(null);
       return;
     }
 
+    console.log('useAuth: Fetching profile for user:', authUser.id);
+    
     try {
       const userProfile = await getProfile(authUser.id);
+      console.log('useAuth: Profile fetched:', userProfile);
+      
       if (userProfile) {
         setProfile(userProfile);
         setRole(userProfile.role);
+        console.log('useAuth: Profile and role set:', userProfile.role);
       } else {
         // Profile not found - this could happen if user was created but profile insert failed
-        console.warn('User profile not found in database');
+        console.warn('useAuth: User profile not found in database for user:', authUser.id);
         setError('User profile not found. Please contact support.');
         setProfile(null);
         setRole(null);
       }
     } catch (err) {
-      console.error('Error fetching profile:', err);
+      console.error('useAuth: Error fetching profile:', err);
       setError('Failed to load user profile.');
       setProfile(null);
       setRole(null);
@@ -125,21 +131,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('useAuth: Auth state change event:', event, 'session:', !!session);
       setIsLoading(true);
       setError(null);
       const currentUser = session?.user || null;
+      console.log('useAuth: Setting user from auth state change:', !!currentUser);
       setUser(currentUser);
       await fetchAndSetProfile(currentUser);
       setIsLoading(false);
+      console.log('useAuth: Auth state change processing complete');
     });
 
     // Initial load
+    console.log('useAuth: Starting initial user fetch');
     getCurrentUser().then(async ({ user: currentUser }) => {
+      console.log('useAuth: Initial user fetch result:', !!currentUser);
       setUser(currentUser);
       await fetchAndSetProfile(currentUser);
       setIsLoading(false);
+      console.log('useAuth: Initial load complete');
     }).catch((err) => {
-      console.error('Initial user fetch error:', err);
+      console.error('useAuth: Initial user fetch error:', err);
       setError('Failed to initialize authentication.');
       setIsLoading(false);
     });
@@ -150,17 +162,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [fetchAndSetProfile]);
 
   const signIn = async (email: string, password: string) => {
+    console.log('useAuth: Starting sign in for:', email);
     setIsLoading(true);
     setError(null);
+    
     const { data, error: authError } = await signInEmail(email, password);
+    
     if (authError) {
+      console.error('useAuth: Sign in error:', authError);
       setError(authError.message);
       setIsLoading(false);
       return { success: false, error: authError.message };
     }
+    
+    console.log('useAuth: Sign in successful, setting user');
     setUser(data?.user);
     await fetchAndSetProfile(data?.user); // Fetch profile after successful sign-in
     setIsLoading(false);
+    console.log('useAuth: Sign in process complete');
     return { success: true };
   };
 
@@ -175,19 +194,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       instructorId?: string;
     }
   ) => {
+    console.log('useAuth: Starting sign up for role:', selectedRole);
     setIsLoading(true);
     setError(null);
     
     const authResult = await signUp(selectedRole, data);
 
     if (authResult.error) {
+      console.error('useAuth: Sign up error:', authResult.error);
       setError(authResult.error.message);
       setIsLoading(false);
       return { success: false, error: authResult.error.message };
     }
+    
+    console.log('useAuth: Sign up successful, setting user');
     setUser(authResult.data?.user);
     await fetchAndSetProfile(authResult.data?.user); // Fetch profile after successful sign-up
     setIsLoading(false);
+    console.log('useAuth: Sign up process complete');
     return { success: true };
   };
 
