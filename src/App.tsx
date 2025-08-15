@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import RoleSelection from './components/auth/RoleSelection';
+import InstructorLogin from './components/auth/InstructorLogin';
+import StudentLogin from './components/auth/StudentLogin';
 import InstructorDashboard from './components/InstructorDashboard';
 import StudentDashboard from './components/StudentDashboard';
 import Hero from './components/Hero';
@@ -33,19 +34,21 @@ function App() {
         {/* Landing Page */}
         <Route path="/" element={
           <Hero
-            onLogin={() => window.location.href = '/signup'}
-            onShowEducatorSignup={() => window.location.href = '/signup'}
+            onLogin={() => window.location.href = '/login/instructor'}
+            onShowEducatorSignup={() => window.location.href = '/login/instructor'}
           />
         } />
         
-        {/* Role Selection */}
-        <Route path="/signup" element={
-          <RoleSelection onRoleSelect={(selectedRole) => {
-            if (selectedRole === 'instructor') {
-              window.location.href = '/dashboard-instructor';
-            } else {
-              window.location.href = '/dashboard-student';
-            }
+        {/* Login Pages */}
+        <Route path="/login/instructor" element={
+          <InstructorLogin onLoginSuccess={() => {
+            window.location.href = '/dashboard-instructor';
+          }} />
+        } />
+        
+        <Route path="/login/student" element={
+          <StudentLogin onLoginSuccess={() => {
+            window.location.href = '/dashboard-student';
           }} />
         } />
         
@@ -59,11 +62,10 @@ function App() {
         } />
         
         {/* Legacy routes for backward compatibility */}
-        <Route path="/login/instructor" element={<Navigate to="/dashboard-instructor" replace />} />
-        <Route path="/login/student" element={<Navigate to="/dashboard-student" replace />} />
+        <Route path="/signup" element={<Navigate to="/login/instructor" replace />} />
         <Route path="/login-instructor" element={<Navigate to="/dashboard-instructor" replace />} />
         <Route path="/login-student" element={<Navigate to="/dashboard-student" replace />} />
-        <Route path="/login" element={<Navigate to="/signup" replace />} />
+        <Route path="/login" element={<Navigate to="/login/instructor" replace />} />
         <Route path="/studio/dashboard" element={<Navigate to="/dashboard-instructor" replace />} />
         <Route path="/library" element={<Navigate to="/dashboard-student" replace />} />
         
