@@ -20,7 +20,7 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
   const handleSignOut = async () => {
     try {
       await signOut();
-      window.location.href = '/';
+      window.location.href = '/login';
     } catch (error) {
       console.error('Sign out error:', error);
     }
