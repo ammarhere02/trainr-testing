@@ -1,16 +1,38 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import {
-  signInEmail, SignInData,
-  signUpInstructor,
-  signUpStudent,
+  signInEmail,
+  signUp,
   signOut,
   getCurrentUser,
-  getProfile,
-  Profile,
-  Instructor,
-  Student
+  SignUpData
 } from '../lib/auth.tsx';
+
+interface Profile {
+  id: string;
+  role: 'instructor' | 'student';
+  data: Instructor | Student;
+}
+
+interface Instructor {
+  id: string;
+  email: string;
+  full_name: string;
+  business_name: string;
+  logo_url?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Student {
+  id: string;
+  email: string;
+  full_name: string;
+  instructor_id: string;
+  avatar_url?: string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface AuthContextType {
   user: any | null;
@@ -42,6 +64,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [role, setRole] = useState<'instructor' | 'student' | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const getProfile = async (userId: string): Promise<Profile | null> => {
+    try {
+      // Check if user is instructor
+      const { data: instructor } = await supabase
+        .from('instructors')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (instructor) {
+        return { id: instructor.id, role: 'instructor', data: instructor as Instructor };
+      }
+
+      // Check if user is student
+      const { data: student } = await supabase
+        .from('students')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (student) {
+        return { id: student.id, role: 'student', data: student as Student };
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      return null;
+    }
+  };
 
   const fetchAndSetProfile = useCallback(async (authUser: any) => {
     if (!authUser) {
@@ -77,8 +130,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               email: authUser.email,
               full_name: authUser.user_metadata.full_name,
               business_name: authUser.user_metadata.business_name || 'My Business',
-              subdomain: authUser.user_metadata.subdomain || null,
-              color: authUser.user_metadata.color || '#7c3aed'
             }
           ]).select().single();
           if (data) recreatedProfile = { id: data.id, role: 'instructor', data: data as Instructor };
@@ -143,19 +194,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
-    const { user, error: authError } = await signInEmail(email, password);
+    const { data, error: authError } = await signInEmail(email, password);
     if (authError) {
       setError(authError.message);
       setIsLoading(false);
       return { success: false, error: authError.message };
     }
-    setUser(user);
-    await fetchAndSetProfile(user); // Fetch profile after successful sign-in
+    setUser(data?.user);
+    await fetchAndSetProfile(data?.user); // Fetch profile after successful sign-in
     setIsLoading(false);
     return { success: true };
   };
 
-  const signUp = async (
+  const signUpUser = async (
     selectedRole: 'instructor' | 'student',
     data: {
       email: string;
@@ -168,31 +219,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ) => {
     setIsLoading(true);
     setError(null);
-    let authResult;
-    if (selectedRole === 'instructor') {
-      authResult = await signUpInstructor(
-        data.email,
-        data.password,
-        data.fullName,
-        data.businessName || '',
-        data.subdomain
-      );
-    } else {
-      authResult = await signUpStudent(
-        data.email,
-        data.password,
-        data.fullName,
-        data.instructorId || ''
-      );
-    }
+    
+    const signUpData: SignUpData = {
+      email: data.email,
+      password: data.password,
+      fullName: data.fullName,
+      businessName: data.businessName || '',
+      subdomain: data.subdomain || ''
+    };
+    
+    const authResult = await signUp(signUpData);
 
     if (authResult.error) {
       setError(authResult.error.message);
       setIsLoading(false);
       return { success: false, error: authResult.error.message };
     }
-    setUser(authResult.user);
-    await fetchAndSetProfile(authResult.user); // Fetch profile after successful sign-up
+    setUser(authResult.data?.user);
+    await fetchAndSetProfile(authResult.data?.user); // Fetch profile after successful sign-up
     setIsLoading(false);
     return { success: true };
   };
@@ -201,7 +245,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     setError(null);
     try {
-      await signOut();
+      const { error } = await signOut();
+      if (error) throw error;
       setUser(null);
       setProfile(null);
       setRole(null);
@@ -229,7 +274,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading,
     error,
     signIn,
-    signUp,
+    signUp: signUpUser,
     signOutUser,
     refreshProfile,
   };

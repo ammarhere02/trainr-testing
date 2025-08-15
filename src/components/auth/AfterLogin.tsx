@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Loader } from 'lucide-react'
-import { getProfile, getCurrentUser } from '../../lib/auth'
+import { getCurrentUser } from '../../lib/auth'
 import { getSubdirectory } from '../../utils/subdomain'
 
 export default function AfterLogin() {
@@ -11,7 +11,7 @@ export default function AfterLogin() {
     const handleAfterLogin = async () => {
       try {
         // Get current user
-        const user = await getCurrentUser()
+        const { user } = await getCurrentUser()
         
         if (!user) {
           // No user found, redirect to subdomain login
@@ -24,18 +24,10 @@ export default function AfterLogin() {
           return
         }
 
-        // Get user profile
-        const profile = await getProfile(user.id)
-        
-        if (!profile) {
-          setError('Profile not found. Please contact support.')
-          return
-        }
-
         const subdomain = getSubdirectory()
 
-        // Route based on role and subdomain
-        if (profile.role === 'instructor') {
+        // Route based on user metadata role and subdomain
+        if (user.user_metadata?.role === 'instructor') {
           // Educators should go to studio dashboard regardless of subdomain
           window.location.href = '/studio/dashboard'
         } else {

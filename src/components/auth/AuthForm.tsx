@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, User, Mail, Lock, Building, Globe, Eye, EyeOff, Loader, CheckCircle, X } from 'lucide-react';
-import { signInData, signUpInstructor, signUpStudent } from '../../lib/auth.tsx';
+import { signInEmail, signUp, SignUpData } from '../../lib/auth.tsx';
 import { checkSubdomainAvailability, getOrganizationBySubdomain } from '../../lib/org';
 import type { Organization } from '../../lib/org';
 
@@ -148,28 +148,35 @@ export default function AuthForm({ onSuccess, mode, setMode }: AuthFormProps) {
     
     try {
       if (mode === 'login') {
-        const result = await signInEmail(formData.email, formData.password);
+        const { data, error } = await signInEmail(formData.email, formData.password);
         
-        if (result.user) {
+        if (error) {
+          setErrors({ submit: error.message });
+        } else if (data?.user) {
           // Check if user has an organization
           let organization = null;
-          if (result.user.user_metadata?.subdomain) {
-            organization = await getOrganizationBySubdomain(result.user.user_metadata.subdomain);
+          if (data.user.user_metadata?.subdomain) {
+            organization = await getOrganizationBySubdomain(data.user.user_metadata.subdomain);
           }
-          onSuccess(result.user, organization);
+          onSuccess(data.user, organization);
         }
       } else {
-        const result = await signUpInstructor({
+        const signUpData: SignUpData = {
           email: formData.email,
           password: formData.password,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
+          fullName: `${formData.firstName} ${formData.lastName}`,
           businessName: formData.businessName,
           subdomain: formData.subdomain
-        });
+        };
         
-        if (result.user && result.organization) {
-          onSuccess(result.user, result.organization);
+        const { data, error } = await signUp(signUpData);
+        
+        if (error) {
+          setErrors({ submit: error.message });
+        } else if (data?.user) {
+          // Get organization by subdomain
+          const organization = await getOrganizationBySubdomain(formData.subdomain);
+          onSuccess(data.user, organization);
         }
       }
     } catch (error: any) {

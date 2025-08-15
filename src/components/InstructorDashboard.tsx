@@ -16,8 +16,17 @@ import {
   ArrowRight,
   LogOut
 } from 'lucide-react';
-import { signOut, getInstructorProfile } from '../lib/auth.tsx';
-import type { Instructor } from '../lib/auth';
+import { signOut } from '../lib/auth';
+
+interface Instructor {
+  id: string;
+  email: string;
+  full_name: string;
+  business_name: string;
+  logo_url?: string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface InstructorDashboardProps {
   instructorData: Instructor;
@@ -54,7 +63,8 @@ export default function InstructorDashboard({ instructorData }: InstructorDashbo
 
   const handleSignOut = async () => {
     try {
-      await signOut();
+      const { error } = await signOut();
+      if (error) throw error;
       window.location.href = '/';
     } catch (error) {
       console.error('Sign out error:', error);

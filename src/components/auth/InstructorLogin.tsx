@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, Loader, ArrowRight, User, Building, Globe, CheckCircle, X } from 'lucide-react';
-import { signInEmail, signUpInstructor } from '../../lib/auth.tsx';
+import { signInEmail, signUp, SignUpData } from '../../lib/auth.tsx';
 import { checkSubdomainAvailability } from '../../lib/org';
-import { createTestUsers } from '../../lib/auth.tsx';
 
 interface InstructorLoginProps {
   onLoginSuccess: (userData: any) => void;
@@ -26,13 +25,6 @@ export default function InstructorLogin({ onLoginSuccess }: InstructorLoginProps
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<any>({});
   const [subdomainStatus, setSubdomainStatus] = useState<'checking' | 'available' | 'taken' | 'invalid' | null>(null);
-
-  // Create test users on component mount (development only)
-  React.useEffect(() => {
-    if (import.meta.env.DEV) {
-      createTestUsers();
-    }
-  }, []);
 
   // Check subdomain availability
   const checkSubdomain = async (subdomain: string) => {
@@ -112,24 +104,15 @@ export default function InstructorLogin({ onLoginSuccess }: InstructorLoginProps
     setIsLoading(true);
 
     try {
-      const { user, error } = await signInEmail(formData.email, formData.password);
+      const { data, error } = await signInEmail(formData.email, formData.password);
       
       if (error) {
         setErrors({ general: error.message });
-      } else if (user) {
-        // Get instructor profile and redirect
-        const { getInstructorProfile } = await import('../../lib/auth');
-        const instructorProfile = await getInstructorProfile(user.id);
-        
-        if (instructorProfile) {
-          onLoginSuccess({
-            user,
-            profile: instructorProfile,
-            role: 'instructor'
-          });
-        } else {
-          setErrors({ general: 'Instructor profile not found. Please contact support.' });
-        }
+      } else if (data?.user) {
+        onLoginSuccess({
+          user: data.user,
+          role: 'instructor'
+        });
       }
     } catch (error) {
       console.error('Login failed:', error);
@@ -147,30 +130,23 @@ export default function InstructorLogin({ onLoginSuccess }: InstructorLoginProps
     setIsLoading(true);
 
     try {
-      const { user, error } = await signUpInstructor(
-        formData.email,
-        formData.password,
-        `${formData.firstName} ${formData.lastName}`,
-        formData.businessName,
-        formData.subdomain
-      );
+      const signUpData: SignUpData = {
+        email: formData.email,
+        password: formData.password,
+        fullName: `${formData.firstName} ${formData.lastName}`,
+        businessName: formData.businessName,
+        subdomain: formData.subdomain
+      };
+      
+      const { data, error } = await signUp(signUpData);
       
       if (error) {
         setErrors({ general: error.message });
-      } else if (user) {
-        // Get the created instructor profile
-        const { getInstructorProfile } = await import('../../lib/auth');
-        const instructorProfile = await getInstructorProfile(user.id);
-        
-        if (instructorProfile) {
-          onLoginSuccess({
-            user,
-            profile: instructorProfile,
-            role: 'instructor'
-          });
-        } else {
-          setErrors({ general: 'Account created but profile not found. Please try logging in.' });
-        }
+      } else if (data?.user) {
+        onLoginSuccess({
+          user: data.user,
+          role: 'instructor'
+        });
       }
     } catch (error) {
       console.error('Signup failed:', error);

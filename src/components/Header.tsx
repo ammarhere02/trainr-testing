@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Bell, User, Menu, LogOut, Video, FileText, UserPlus, ArrowRight, ChevronDown, Settings, CreditCard, HelpCircle } from 'lucide-react';
-import { signOut } from '../lib/auth.tsx';
+import { signOut } from '../lib/auth';
 
 interface HeaderProps {
   currentView: string;
@@ -19,7 +19,8 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
 
   const handleSignOut = async () => {
     try {
-      await signOut();
+      const { error } = await signOut();
+      if (error) throw error;
       window.location.href = '/login';
     } catch (error) {
       console.error('Sign out error:', error);
