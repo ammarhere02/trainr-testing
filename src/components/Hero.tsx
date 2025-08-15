@@ -86,18 +86,6 @@ export default function Hero({ onLogin, onShowEducatorSignup }: HeroProps) {
 
             {/* Auth Buttons */}
             <div className="flex items-center space-x-4">
-              <button
-                onClick={() => window.location.href = '/login/instructor'}
-                className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
-              >
-                Instructor Login
-              </button>
-              <button
-                onClick={() => window.location.href = '/login/student'}
-                className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
-              >
-                Student Login
-              </button>
               <button 
                 onClick={handleGetStarted}
                 className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 flex items-center"
@@ -223,17 +211,58 @@ export default function Hero({ onLogin, onShowEducatorSignup }: HeroProps) {
 
         {/* CTA Section */}
         <div className="text-center">
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-            <button 
-              onClick={handleGetStarted}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 flex items-center"
-            >
-              Start Your Teaching Business
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </button>
-            <button className="text-purple-600 px-8 py-4 rounded-xl font-semibold border-2 border-purple-200 hover:bg-purple-50 transition-colors">
-              See Live Demo
-            </button>
+          {/* Centered Login Buttons with Animations */}
+          <div className="flex flex-col items-center space-y-6 mb-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Choose Your Path</h2>
+            
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+              {/* Instructor Login Button */}
+              <div className="group relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
+                <button
+                  onClick={() => window.location.href = '/login/instructor'}
+                  className="relative bg-gradient-to-r from-purple-600 to-blue-600 text-white px-12 py-6 rounded-xl font-bold text-xl hover:shadow-2xl transform hover:-translate-y-2 hover:scale-105 transition-all duration-500 flex items-center group-hover:from-purple-700 group-hover:to-blue-700"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold">👨‍🏫</span>
+                    </div>
+                    <div className="text-left">
+                      <div className="text-xl font-bold">Instructor Login</div>
+                      <div className="text-purple-100 text-sm">Teach & Build Your Business</div>
+                    </div>
+                  </div>
+                  <ArrowRight className="ml-4 w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
+                </button>
+              </div>
+
+              {/* Student Login Button */}
+              <div className="group relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-green-500 rounded-2xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
+                <button
+                  onClick={() => window.location.href = '/login/student'}
+                  className="relative bg-gradient-to-r from-blue-500 to-green-500 text-white px-12 py-6 rounded-xl font-bold text-xl hover:shadow-2xl transform hover:-translate-y-2 hover:scale-105 transition-all duration-500 flex items-center group-hover:from-blue-600 group-hover:to-green-600"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold">👨‍🎓</span>
+                    </div>
+                    <div className="text-left">
+                      <div className="text-xl font-bold">Student Login</div>
+                      <div className="text-blue-100 text-sm">Learn & Grow Your Skills</div>
+                    </div>
+                  </div>
+                  <ArrowRight className="ml-4 w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
+                </button>
+              </div>
+            </div>
+
+            {/* Floating Animation Elements */}
+            <div className="relative">
+              <div className="absolute -top-20 -left-10 w-20 h-20 bg-purple-200 rounded-full opacity-20 animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }}></div>
+              <div className="absolute -top-16 -right-8 w-16 h-16 bg-blue-200 rounded-full opacity-30 animate-bounce" style={{ animationDelay: '1s', animationDuration: '4s' }}></div>
+              <div className="absolute -bottom-10 left-1/2 w-12 h-12 bg-green-200 rounded-full opacity-25 animate-bounce" style={{ animationDelay: '2s', animationDuration: '3.5s' }}></div>
+            </div>
           </div>
           
           <p className="text-sm text-gray-600">
