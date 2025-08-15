@@ -4,3 +4,5 @@
       case 'dashboard':
         return <Dashboard userRole={userRole} />;
       case 'courses':
+    }
+  }
