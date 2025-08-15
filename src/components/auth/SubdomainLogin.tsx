@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Mail, Lock, Eye, EyeOff, Loader, ArrowRight, Chrome, ExternalLink } from 'lucide-react'
-import { getOrganizationBySubdomain, getSubdomain, buildCanonicalLoginUrl } from '../../lib/org'
+import { getOrganizationBySubdomain, getSubdirectory, buildCanonicalLoginUrl } from '../../lib/org'
 import { signInEmail, signInGoogle, sendMagicLink } from '../../lib/auth'
 import type { Organization } from '../../lib/org'
 
@@ -21,7 +21,7 @@ export default function SubdomainLogin() {
 
   // Get subdomain and load organization
   useEffect(() => {
-    const sub = getSubdomain()
+    const sub = getSubdirectory()
     setSubdomain(sub)
     
     if (sub) {
