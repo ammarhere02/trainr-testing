@@ -68,6 +68,10 @@ function App() {
         <Route path="/login" element={
           <AuthDashboard onRoleSelect={handleRoleSelect} />
         } />
+        
+        {/* Password Reset Routes */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<PasswordReset />} />
 
         {/* Dashboard Routes */}
         <Route path="/dashboard-instructor" element={

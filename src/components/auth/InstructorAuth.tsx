@@ -235,12 +235,12 @@ export default function InstructorAuth({ onLoginSuccess }: InstructorAuthProps) 
                   <label className="block text-sm font-medium text-gray-700">
                     Password
                   </label>
-                  <button
-                    type="button"
+                  <a
+                    href="/forgot-password"
                     className="text-sm text-purple-600 hover:text-purple-700"
                   >
                     Forgot password?
-                  </button>
+                  </a>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
