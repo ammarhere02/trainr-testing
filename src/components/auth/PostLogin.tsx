@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Loader } from 'lucide-react'
-import { getProfile, getCurrentUser } from '../../lib/auth'
+import { useAuth } from '../../hooks/useAuth'
 
 export default function PostLogin() {
   const [isLoading, setIsLoading] = useState(true)
@@ -8,23 +8,13 @@ export default function PostLogin() {
 
   useEffect(() => {
     const handlePostLogin = async () => {
-      try {
-        // Get current user
-        const user = await getCurrentUser()
-        
-        if (!user) {
-          // No user found, redirect to login
-          window.location.href = '/login'
-          return
-        }
+      const { user, profile, role, isLoading: authLoading, error: authError } = useAuth();
 
-        // Get user profile
-        const profile = await getProfile(user.id)
-        
-        if (!profile) {
-          // Profile not found, redirect to create profile or main login
-          console.log('Profile not found for user:', user.id, 'redirecting to main login')
-          window.location.href = '/login'
+      try {
+        if (authLoading) return; // Wait for auth to load
+
+        if (!user || !profile || !role) {
+          // No user found, redirect to login
           return
         }
 
@@ -34,16 +24,16 @@ export default function PostLogin() {
         
         if (redirectTo) {
           // Redirect to the specified URL
-          window.location.href = redirectTo
+          window.location.replace(redirectTo)
           return
         }
 
         // Route by role
-        if (profile.role === 'instructor') {
-          window.location.href = '/studio/dashboard'
+        if (role === 'instructor') {
+          window.location.replace('/dashboard-instructor')
         } else {
           // Student - redirect to library
-          window.location.href = '/library'
+          window.location.replace('/dashboard-student')
         }
         
       } catch (error) {
