@@ -255,10 +255,9 @@ export default function InstructorDashboard({ instructorData }: InstructorDashbo
                         <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mb-4 group-hover:bg-yellow-500 group-hover:scale-110 transition-all duration-300">
                           <BarChart3 className="w-6 h-6 text-yellow-600 group-hover:text-white" />
                         </div>
+                        </div>
                         <h4 className="font-semibold text-gray-900 mb-2">View Analytics</h4>
                         <p className="text-sm text-gray-600">Check performance</p>
-                      </div>
-                    </button>
                     </div>
                   </div>
 
