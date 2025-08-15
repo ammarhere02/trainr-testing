@@ -132,7 +132,6 @@ function App() {
         <Route path="/login/student" element={<Navigate to="/login-student" replace />} />
         <Route path="/studio/dashboard" element={<Navigate to="/dashboard-instructor" replace />} />
         <Route path="/library" element={<Navigate to="/dashboard-student" replace />} />
-        <Route path="/post-login" element={<PostLogin />} /> {/* Handle Supabase auth redirects */}
         
         {/* Catch all - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
