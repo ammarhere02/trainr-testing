@@ -119,7 +119,11 @@ export default function StudentAuth({
 
     try {
       if (mode === "login") {
-        const result = await signIn(formData.email, formData.password);
+        const result = await signIn(
+          formData.email,
+          formData.password,
+          "student"
+        );
         if (result.success) {
           onSuccess({});
         } else {

@@ -11,7 +11,7 @@ import StudentDashboard from "./components/StudentDashboard";
 import InstructorAuth from "./components/auth/InstructorAuth";
 import StudentAuth from "./components/auth/StudentAuth";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import DatabaseTest from "./components/DatabaseTestNew";
+import DatabaseTestNew from "./components/DatabaseTestNew";
 
 function App() {
   const { user, userData, role, isLoading } = useAuth();
@@ -25,22 +25,30 @@ function App() {
         </div>
       </div>
     );
-  }
+   }
 
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
         <Routes>
-          {/* Landing Page */}
+          {/* Landing Page - redirect to dashboard if logged in */}
           <Route
             path="/"
             element={
-              <Hero onLogin={() => {}} onShowEducatorSignup={() => {}} />
+              user ? (
+                role === "instructor" ? (
+                  <Navigate to="/dashboard-instructor" replace />
+                ) : (
+                  <Navigate to="/dashboard-student" replace />
+                )
+              ) : (
+                <Hero onLogin={() => {}} onShowEducatorSignup={() => {}} />
+              )
             }
           />
 
           {/* Database Test Route */}
-          <Route path="/test-db" element={<DatabaseTest />} />
+          <Route path="/test-db" element={<DatabaseTestNew />} />
 
           {/* Protected Dashboard Routes */}
           <Route

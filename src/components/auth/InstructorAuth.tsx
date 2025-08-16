@@ -75,7 +75,11 @@ export default function InstructorAuth({ onSuccess }: InstructorAuthProps) {
 
     try {
       if (mode === "login") {
-        const result = await signIn(formData.email, formData.password);
+        const result = await signIn(
+          formData.email,
+          formData.password,
+          "instructor"
+        );
         if (result.success) {
           onSuccess({});
         } else {
