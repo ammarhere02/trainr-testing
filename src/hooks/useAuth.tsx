@@ -55,7 +55,8 @@ interface AuthContextType {
   error: string | null;
   signIn: (
     email: string,
-    password: string
+    password: string,
+    expectedRole?: "instructor" | "student"
   ) => Promise<{ success: boolean; error?: string }>;
   signUp: (
     role: "instructor" | "student",
@@ -69,6 +70,9 @@ interface AuthContextType {
   ) => Promise<{ success: boolean; error?: string }>;
   signOutUser: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  createMissingStudentRecord: (
+    instructorId: string
+  ) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -88,12 +92,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       console.log("useAuth: Fetching user data for:", userId);
 
-      // Get profile from profiles table
-      const { data: profile, error: profileError } = await supabase
+      // Add timeout to prevent hanging
+      const fetchWithTimeout = (promise: any, timeoutMs: number = 10000) => {
+        return Promise.race([
+          promise,
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Request timeout")), timeoutMs)
+          ),
+        ]);
+      };
+
+      // Get profile from profiles table with timeout
+      console.log("useAuth: Querying profiles table...");
+      const profileQuery = supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
         .single();
+
+      const { data: profile, error: profileError } = (await fetchWithTimeout(
+        profileQuery,
+        8000
+      )) as any;
 
       if (profileError) {
         console.error("useAuth: Error fetching profile:", profileError);
@@ -130,17 +150,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // If user is a student, get student data
       if (profile.role === "student") {
-        const { data: student, error: studentError } = await supabase
-          .from("students")
-          .select("*")
-          .eq("email", profile.email) // Students table uses email to link, not profile id
-          .single();
+        try {
+          const { data: student, error: studentError } = await supabase
+            .from("students")
+            .select("*")
+            .eq("email", profile.email) // Students table uses email to link, not profile id
+            .single();
 
-        if (studentError) {
-          console.warn("useAuth: Error fetching student data:", studentError);
-        } else if (student) {
-          result.student = student;
-          console.log("useAuth: Found student data");
+          if (studentError) {
+            // Don't treat "no rows returned" as an error - just means student record doesn't exist yet
+            if (studentError.code === "PGRST116") {
+              console.log(
+                "useAuth: No student record found - this is OK for existing users"
+              );
+              console.log(
+                "useAuth: To create a student record, the student should sign up properly or ask an instructor to add them"
+              );
+            } else {
+              console.warn(
+                "useAuth: Error fetching student data:",
+                studentError
+              );
+              // For HTTP 406 errors, also treat as "student record not found"
+              if (
+                studentError.message?.includes("406") ||
+                studentError.message?.includes("Not Acceptable")
+              ) {
+                console.log(
+                  "useAuth: HTTP 406 error - treating as missing student record"
+                );
+              }
+            }
+          } else if (student) {
+            result.student = student;
+            console.log("useAuth: Found student data");
+          }
+        } catch (httpError: any) {
+          // Catch any network/HTTP errors and treat as missing student record
+          console.log(
+            "useAuth: HTTP error fetching student data - treating as missing record:",
+            httpError
+          );
         }
       }
 
@@ -182,13 +232,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           );
           setUser(session.user);
 
-          const data = await fetchUserData(session.user.id);
-          if (data) {
-            setUserData(data);
-            setRole(data.profile.role as "instructor" | "student");
-          } else {
-            console.warn("useAuth: No user data found for authenticated user");
-            setError("User profile not found. Please contact support.");
+          try {
+            const data = await fetchUserData(session.user.id);
+            if (data) {
+              console.log(
+                "useAuth: Setting user data and role:",
+                data.profile.role
+              );
+              setUserData(data);
+              setRole(data.profile.role as "instructor" | "student");
+            } else {
+              console.warn(
+                "useAuth: No user data found for authenticated user"
+              );
+              setError("User profile not found. Please contact support.");
+            }
+          } catch (fetchError) {
+            console.error("useAuth: Error fetching user data:", fetchError);
+            setError(
+              "Failed to load user profile. Please try refreshing the page."
+            );
           }
         } else {
           console.log("useAuth: No existing session found");
@@ -216,14 +279,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setIsLoading(true);
         setUser(session.user);
 
-        const data = await fetchUserData(session.user.id);
-        if (data) {
-          setUserData(data);
-          setRole(data.profile.role as "instructor" | "student");
-        } else {
-          setUserData(null);
-          setRole(null);
-          setError("Profile not found after sign in");
+        try {
+          const data = await fetchUserData(session.user.id);
+          if (data) {
+            console.log(
+              "useAuth: Auth listener - Setting user data and role:",
+              data.profile.role
+            );
+            setUserData(data);
+            setRole(data.profile.role as "instructor" | "student");
+          } else {
+            console.warn("useAuth: Auth listener - No user data found");
+            setUserData(null);
+            setRole(null);
+            setError("Profile not found after sign in");
+          }
+        } catch (fetchError) {
+          console.error(
+            "useAuth: Auth listener - Error fetching user data:",
+            fetchError
+          );
+          setError("Failed to load user profile after sign in");
         }
         setIsLoading(false);
       } else if (event === "SIGNED_OUT") {
@@ -241,12 +317,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, [authInitialized]);
 
-  const signIn = async (email: string, password: string) => {
-    console.log("useAuth: Starting sign in for:", email);
+  const signIn = async (
+    email: string,
+    password: string,
+    expectedRole?: "instructor" | "student"
+  ) => {
+    console.log(
+      "useAuth: Starting sign in for:",
+      email,
+      "expected role:",
+      expectedRole
+    );
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -255,6 +340,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         console.error("useAuth: Sign in error:", error);
         setError(error.message);
         return { success: false, error: error.message };
+      }
+
+      // If role validation is required, check user's role
+      if (expectedRole && data.user) {
+        const userData = await fetchUserData(data.user.id);
+        if (userData && userData.profile.role !== expectedRole) {
+          // Sign out the user since they're using wrong login page
+          await supabase.auth.signOut();
+          const errorMessage = `This account is registered as a ${userData.profile.role}. Please use the ${userData.profile.role} login page.`;
+          setError(errorMessage);
+          return { success: false, error: errorMessage };
+        }
       }
 
       console.log("useAuth: Sign in successful");
@@ -337,19 +434,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       // Wait a moment for auth to settle
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Create profile manually
-      console.log("useAuth: Creating profile manually...");
-      const { error: profileError } = await supabase.from("profiles").insert({
-        id: authData.user.id,
-        email: data.email,
-        full_name: data.fullName,
-        role: selectedRole,
-      });
+      // Check if profile already exists
+      console.log("useAuth: Checking if profile already exists...");
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", authData.user.id)
+        .single();
 
-      if (profileError) {
-        console.error("useAuth: Profile creation failed:", profileError);
-        setError(`Failed to create profile: ${profileError.message}`);
-        return { success: false, error: profileError.message };
+      if (existingProfile) {
+        console.log("useAuth: Profile already exists, updating it...");
+        // Update existing profile
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({
+            email: data.email,
+            full_name: data.fullName,
+            role: selectedRole,
+          })
+          .eq("id", authData.user.id);
+
+        if (updateError) {
+          console.error("useAuth: Profile update failed:", updateError);
+          setError(`Failed to update profile: ${updateError.message}`);
+          return { success: false, error: updateError.message };
+        }
+      } else {
+        // Create new profile
+        console.log("useAuth: Creating new profile...");
+        const { error: profileError } = await supabase.from("profiles").insert({
+          id: authData.user.id,
+          email: data.email,
+          full_name: data.fullName,
+          role: selectedRole,
+        });
+
+        if (profileError) {
+          console.error("useAuth: Profile creation failed:", profileError);
+
+          // Check if it's an RLS policy violation
+          if (profileError.message.includes("row-level security policy")) {
+            const rlsError =
+              "RLS Policy Error: Please run the SQL script in supabase/rls_policies.sql in your Supabase dashboard to fix authentication permissions.";
+            setError(rlsError);
+            return { success: false, error: rlsError };
+          }
+
+          // Check if it's a duplicate key error (profile created by trigger)
+          if (profileError.code === "23505") {
+            console.log(
+              "useAuth: Profile was created by database trigger - continuing..."
+            );
+          } else {
+            setError(`Failed to create profile: ${profileError.message}`);
+            return { success: false, error: profileError.message };
+          }
+        }
       }
 
       // Create role-specific records
@@ -401,6 +541,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (error) {
         console.error("useAuth: Sign out error:", error);
         setError(error.message);
+      } else {
+        // Clear local state
+        setUser(null);
+        setUserData(null);
+        setRole(null);
+        setError(null);
+
+        // Redirect to home page
+        window.location.href = "/";
       }
     } catch (error: any) {
       console.error("useAuth: Sign out exception:", error);
@@ -416,6 +565,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // Helper function to create missing student record for existing users
+  const createMissingStudentRecord = async (instructorId: string) => {
+    if (!user || !userData?.profile) {
+      return { success: false, error: "No user or profile data available" };
+    }
+
+    try {
+      const { error: studentError } = await supabase.from("students").insert({
+        email: userData.profile.email,
+        full_name: userData.profile.full_name,
+        instructor_id: instructorId,
+      });
+
+      if (studentError) {
+        console.error(
+          "useAuth: Failed to create student record:",
+          studentError
+        );
+        return { success: false, error: studentError.message };
+      }
+
+      console.log("useAuth: Student record created successfully");
+      // Refresh user data to include the new student record
+      await refreshProfile();
+      return { success: true };
+    } catch (error: any) {
+      console.error("useAuth: Exception creating student record:", error);
+      return { success: false, error: error.message };
+    }
+  };
+
   const value = {
     user,
     userData,
@@ -426,6 +606,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     signUp,
     signOutUser,
     refreshProfile,
+    createMissingStudentRecord,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

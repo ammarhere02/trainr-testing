@@ -6,6 +6,7 @@ import {
   Database,
   AlertCircle,
   RefreshCw,
+  UserPlus,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
@@ -109,8 +110,10 @@ export default function DatabaseTest() {
 
         addTestResult(
           "Signup Endpoint Test",
-          signupError?.message.includes("password") ||
-            signupError?.message.includes("Password"),
+          !!(
+            signupError?.message.includes("password") ||
+            signupError?.message.includes("Password")
+          ),
           signupError
             ? signupError.message.includes("password")
               ? "Endpoint reachable (password validation works)"
@@ -210,6 +213,177 @@ export default function DatabaseTest() {
     }
   };
 
+  const fixRLSPolicies = async () => {
+    setLoading(true);
+    clearTests();
+
+    addTestResult(
+      "RLS Policy Instructions",
+      true,
+      "Follow these steps to fix RLS policies",
+      {}
+    );
+
+    addTestResult(
+      "Step 1: Open Supabase Dashboard",
+      true,
+      "Go to your Supabase project → SQL Editor",
+      { url: "https://supabase.com/dashboard" }
+    );
+
+    addTestResult(
+      "Step 2: Run RLS Policy Script",
+      true,
+      "Copy and run the SQL script from: supabase/rls_policies.sql",
+      { file: "supabase/rls_policies.sql" }
+    );
+
+    addTestResult(
+      "Step 3: Test Student Creation",
+      true,
+      "After running the script, use the 'Create Student Record' button",
+      {}
+    );
+
+    setLoading(false);
+  };
+
+  const createStudentRecord = async () => {
+    setLoading(true);
+    clearTests();
+
+    try {
+      // Check if user is logged in
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      addTestResult(
+        "User Check",
+        !!user && !userError,
+        user ? `Logged in as: ${user.email}` : "Not logged in",
+        { user: !!user, userError }
+      );
+
+      if (!user) {
+        addTestResult(
+          "Create Student Record",
+          false,
+          "Please log in first",
+          {}
+        );
+        return;
+      }
+
+      // Get user profile
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      addTestResult(
+        "Profile Check",
+        !!profile && !profileError,
+        profile
+          ? `Found profile for: ${profile.full_name}`
+          : "No profile found",
+        { profile, profileError }
+      );
+
+      if (!profile || profile.role !== "student") {
+        addTestResult(
+          "Role Check",
+          false,
+          `User role is "${profile?.role || "unknown"}" - must be student`,
+          { role: profile?.role }
+        );
+        return;
+      }
+
+      // Check if student record already exists
+      const { data: existingStudent } = await supabase
+        .from("students")
+        .select("*")
+        .eq("email", profile.email)
+        .single();
+
+      if (existingStudent) {
+        addTestResult(
+          "Student Record Check",
+          true,
+          "Student record already exists!",
+          { student: existingStudent }
+        );
+        return;
+      }
+
+      // Get available instructors
+      const { data: instructors, error: instructorError } = await supabase
+        .from("instructors")
+        .select("id, business_name")
+        .limit(5);
+
+      addTestResult(
+        "Instructors Check",
+        !!instructors && !instructorError,
+        instructors
+          ? `Found ${instructors.length} instructors`
+          : "No instructors found",
+        { instructors, instructorError }
+      );
+
+      if (!instructors || instructors.length === 0) {
+        addTestResult(
+          "Create Student Record",
+          false,
+          "No instructors available - create an instructor first",
+          {}
+        );
+        return;
+      }
+
+      // Use first instructor
+      const instructor = instructors[0];
+
+      // Create student record
+      const { error: studentError } = await supabase.from("students").insert({
+        email: profile.email,
+        full_name: profile.full_name,
+        instructor_id: instructor.id,
+      });
+
+      addTestResult(
+        "Student Record Creation",
+        !studentError,
+        studentError
+          ? `Failed: ${studentError.message}`
+          : `Student record created with instructor: ${instructor.business_name}`,
+        { studentError, instructor }
+      );
+
+      if (!studentError) {
+        addTestResult(
+          "Success",
+          true,
+          "Student record created! Refresh the page to see changes.",
+          {}
+        );
+      }
+    } catch (err: any) {
+      setError(err.message);
+      addTestResult(
+        "Create Student Record",
+        false,
+        `Failed: ${err.message}`,
+        err
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow-lg p-6">
@@ -217,31 +391,57 @@ export default function DatabaseTest() {
           Database & Auth Test
         </h1>
 
-        <div className="grid md:grid-cols-2 gap-4 mb-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <button
             onClick={testBasicConnection}
             disabled={loading}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
               <Loader className="w-4 h-4 animate-spin" />
             ) : (
               <Database className="w-4 h-4" />
             )}
-            {loading ? "Testing..." : "Test Basic Connection"}
+            {loading ? "Testing..." : "Basic Connection"}
           </button>
 
           <button
             onClick={testFullSignup}
             disabled={loading}
-            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
               <Loader className="w-4 h-4 animate-spin" />
             ) : (
               <RefreshCw className="w-4 h-4" />
             )}
-            {loading ? "Testing..." : "Test Full Signup"}
+            {loading ? "Testing..." : "Full Signup"}
+          </button>
+
+          <button
+            onClick={fixRLSPolicies}
+            disabled={loading}
+            className="bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <Loader className="w-4 h-4 animate-spin" />
+            ) : (
+              <AlertCircle className="w-4 h-4" />
+            )}
+            {loading ? "Fixing..." : "Fix RLS Policies"}
+          </button>
+
+          <button
+            onClick={createStudentRecord}
+            disabled={loading}
+            className="bg-orange-600 text-white px-4 py-3 rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <Loader className="w-4 h-4 animate-spin" />
+            ) : (
+              <UserPlus className="w-4 h-4" />
+            )}
+            {loading ? "Creating..." : "Create Student Record"}
           </button>
         </div>
 
