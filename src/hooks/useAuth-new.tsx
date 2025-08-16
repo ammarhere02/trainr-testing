@@ -31,20 +31,9 @@ interface Instructor {
   updated_at: string;
 }
 
-interface Student {
-  id: string;
-  email: string;
-  full_name: string;
-  instructor_id: string;
-  avatar_url?: string;
-  created_at: string;
-  updated_at: string;
-}
-
 interface UserData {
   profile: Profile;
   instructor?: Instructor;
-  student?: Student;
 }
 
 interface AuthContextType {
@@ -64,7 +53,6 @@ interface AuthContextType {
       password: string;
       fullName: string;
       businessName?: string;
-      instructorId?: string; // Required for students
     }
   ) => Promise<{ success: boolean; error?: string }>;
   signOutUser: () => Promise<void>;
@@ -125,22 +113,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         } else if (instructor) {
           result.instructor = instructor;
           console.log("useAuth: Found instructor data");
-        }
-      }
-
-      // If user is a student, get student data
-      if (profile.role === "student") {
-        const { data: student, error: studentError } = await supabase
-          .from("students")
-          .select("*")
-          .eq("email", profile.email) // Students table uses email to link, not profile id
-          .single();
-
-        if (studentError) {
-          console.warn("useAuth: Error fetching student data:", studentError);
-        } else if (student) {
-          result.student = student;
-          console.log("useAuth: Found student data");
         }
       }
 
@@ -246,7 +218,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -274,26 +246,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       password: string;
       fullName: string;
       businessName?: string;
-      instructorId?: string;
     }
   ) => {
     console.log("useAuth: Starting sign up for role:", selectedRole);
     setError(null);
-
-    // Validate required fields
-    if (selectedRole === "student" && !data.instructorId) {
-      const errorMsg = "Instructor ID is required for student registration";
-      console.error("useAuth:", errorMsg);
-      setError(errorMsg);
-      return { success: false, error: errorMsg };
-    }
-
-    if (selectedRole === "instructor" && !data.businessName) {
-      const errorMsg = "Business name is required for instructor registration";
-      console.error("useAuth:", errorMsg);
-      setError(errorMsg);
-      return { success: false, error: errorMsg };
-    }
 
     try {
       // Create auth user with metadata that the trigger will use
@@ -306,7 +262,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             full_name: data.fullName,
             role: selectedRole,
             business_name: data.businessName,
-            instructor_id: data.instructorId,
           },
         },
       });
@@ -325,63 +280,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       console.log(
-        "useAuth: Auth user created successfully. Creating profile..."
+        "useAuth: Auth user created successfully. The trigger should have created the profile."
       );
 
-      // Sign in the user first so they have permissions
-      await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      });
+      // The trigger function should have created the profile and instructor record
+      // Let's wait a moment and then check
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Wait a moment for auth to settle
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Verify the profile was created
+      const userData = await fetchUserData(authData.user.id);
+      if (!userData) {
+        console.warn(
+          "useAuth: Profile not created by trigger, creating manually..."
+        );
 
-      // Create profile manually
-      console.log("useAuth: Creating profile manually...");
-      const { error: profileError } = await supabase.from("profiles").insert({
-        id: authData.user.id,
-        email: data.email,
-        full_name: data.fullName,
-        role: selectedRole,
-      });
-
-      if (profileError) {
-        console.error("useAuth: Profile creation failed:", profileError);
-        setError(`Failed to create profile: ${profileError.message}`);
-        return { success: false, error: profileError.message };
-      }
-
-      // Create role-specific records
-      if (selectedRole === "instructor") {
-        const { error: instructorError } = await supabase
-          .from("instructors")
-          .insert({
-            id: authData.user.id,
-            business_name: data.businessName!,
-          });
-
-        if (instructorError) {
-          console.error(
-            "useAuth: Instructor creation failed:",
-            instructorError
-          );
-          setError(
-            `Failed to create instructor profile: ${instructorError.message}`
-          );
-          return { success: false, error: instructorError.message };
-        }
-      } else if (selectedRole === "student") {
-        const { error: studentError } = await supabase.from("students").insert({
+        // Fallback: Create profile manually
+        const { error: profileError } = await supabase.from("profiles").insert({
+          id: authData.user.id,
           email: data.email,
           full_name: data.fullName,
-          instructor_id: data.instructorId!,
+          role: selectedRole,
         });
 
-        if (studentError) {
-          console.error("useAuth: Student creation failed:", studentError);
-          setError(`Failed to create student profile: ${studentError.message}`);
-          return { success: false, error: studentError.message };
+        if (profileError) {
+          console.error(
+            "useAuth: Manual profile creation failed:",
+            profileError
+          );
+          setError(`Failed to create profile: ${profileError.message}`);
+          return { success: false, error: profileError.message };
+        }
+
+        // If instructor, create instructor record
+        if (selectedRole === "instructor") {
+          const { error: instructorError } = await supabase
+            .from("instructors")
+            .insert({
+              id: authData.user.id,
+              business_name: data.businessName || "My Business",
+            });
+
+          if (instructorError) {
+            console.error(
+              "useAuth: Manual instructor creation failed:",
+              instructorError
+            );
+            setError(
+              `Failed to create instructor profile: ${instructorError.message}`
+            );
+            return { success: false, error: instructorError.message };
+          }
         }
       }
 

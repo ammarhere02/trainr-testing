@@ -1,1 +1,1 @@
-The diff shows that the file `src/components/auth/AuthDashboard.tsx` should be completely deleted. Since the diff is removing all content (lines 1-190) and the target is `/dev/null`, the result should be an empty file.
+// The diff shows that the file `src/components/auth/AuthDashboard.tsx` should be completely deleted. Since the diff is removing all content (lines 1-190) and the target is `/dev/null`, the result should be an empty file.
