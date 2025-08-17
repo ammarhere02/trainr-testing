@@ -18,6 +18,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
+import CommunityManagement from "./CommunityManagement";
 
 interface Profile {
   id: string;
@@ -55,9 +56,7 @@ interface InstructorDashboardProps {
   };
 }
 
-export default function InstructorDashboard({
-  instructorData,
-}: InstructorDashboardProps) {
+function InstructorDashboard({ instructorData }: InstructorDashboardProps) {
   const { signOutUser } = useAuth();
   const [activeView, setActiveView] = useState("overview");
   const [stats] = useState({
@@ -423,8 +422,13 @@ export default function InstructorDashboard({
                 </div>
               )}
 
+              {/* Community Management */}
+              {activeView === "community" && (
+                <CommunityManagement instructor={instructor} />
+              )}
+
               {/* Other views placeholder */}
-              {activeView !== "overview" && (
+              {activeView !== "overview" && activeView !== "community" && (
                 <div className="text-center py-16">
                   <div className="w-20 h-20 bg-gradient-to-r from-purple-100 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
                     {React.createElement(
@@ -457,3 +461,5 @@ export default function InstructorDashboard({
     </div>
   );
 }
+
+export default InstructorDashboard;
