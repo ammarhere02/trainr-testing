@@ -167,34 +167,36 @@ export default function CommunityManagement({
   const handleUpdateCommunity = async () => {
     if (editingCommunity) {
       try {
+        setLoading(true);
+        setError(null);
+
         // Find the course name from the courses list
         const selectedCourse = courses.find(
           (c) => c.id === editingCommunity.course_id
         );
 
-        const updated = await communityApi.updateCommunity(
-          editingCommunity.id,
-          {
-            name: editingCommunity.name,
-            description: editingCommunity.description ?? undefined,
-            course_id: editingCommunity.course_id ?? undefined,
-            course_name: selectedCourse?.title, // Include course name
-          }
-        );
-        setCommunities(
-          communities.map((c) =>
-            c.id === editingCommunity.id
-              ? {
-                  ...c,
-                  ...updated,
-                  course_name: selectedCourse?.title || c.course_name,
-                }
-              : c
-          )
-        );
+        await communityApi.updateCommunity(editingCommunity.id, {
+          name: editingCommunity.name,
+          description: editingCommunity.description ?? undefined,
+          course_id: editingCommunity.course_id ?? undefined,
+          course_name: selectedCourse?.title, // Include course name
+          is_active: editingCommunity.is_active,
+        });
+
+        // Reset editing state
         setEditingCommunity(null);
+
+        // Reload communities to get fresh data from database
+        await loadCommunities();
+
+        console.log("Community updated successfully");
       } catch (error) {
         console.error("Error updating community:", error);
+        setError(
+          error instanceof Error ? error.message : "Failed to update community"
+        );
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -270,20 +272,31 @@ export default function CommunityManagement({
   const handleUpdateMessage = async () => {
     if (editingMessage) {
       try {
-        const updated = await communityApi.updateMessage(editingMessage.id, {
-          title: "Message", // Use a default title since our new interface doesn't use titles
+        setLoading(true);
+        setError(null);
+
+        await communityApi.updateMessage(editingMessage.id, {
+          title: editingMessage.title || "Message",
           content: editingMessage.content,
           is_pinned: editingMessage.message_type === "announcement",
         });
-        setMessages(
-          messages.map((m) =>
-            m.id === editingMessage.id ? { ...m, ...updated } : m
-          )
-        );
+
+        // Reset editing state
         setEditingMessage(null);
+
+        // Reload messages to get fresh data from database
+        if (selectedCommunity) {
+          await loadMessages(selectedCommunity.id);
+        }
+
+        console.log("Message updated successfully");
       } catch (error) {
         console.error("Error updating message:", error);
-        // Handle error appropriately
+        setError(
+          error instanceof Error ? error.message : "Failed to update message"
+        );
+      } finally {
+        setLoading(false);
       }
     }
   };

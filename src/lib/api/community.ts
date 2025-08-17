@@ -1,6 +1,5 @@
 ﻿import { supabase } from "../supabase";
 
-// Enhanced interfaces with better structure
 export interface CommunityWithCourse {
   id: string;
   name: string;
@@ -58,8 +57,6 @@ export const communityApi = {
     instructorId: string
   ): Promise<CommunityWithCourse[]> {
     try {
-      console.log("Loading communities for instructor:", instructorId);
-
       // Get community metadata posts (these store community info using special title prefix)
       const { data: communityPosts, error: postsError } = await supabase
         .from("community_posts")
@@ -75,7 +72,6 @@ export const communityApi = {
       }
 
       if (!communityPosts || communityPosts.length === 0) {
-        console.log("No communities found for instructor");
         return [];
       }
 
@@ -107,15 +103,16 @@ export const communityApi = {
           course_name: communityData.course_name || "General Discussion",
           member_count: 5,
           message_count: messageCount || 0,
-          is_active: true,
+          is_active:
+            communityData.is_active !== undefined
+              ? communityData.is_active
+              : true,
           created_at: post.created_at,
           courses: { title: communityData.course_name || "General Discussion" },
         };
 
         communities.push(community);
       }
-
-      console.log("Loaded communities:", communities);
       return communities;
     } catch (error) {
       console.error("Error in getInstructorCommunities:", error);
@@ -128,8 +125,6 @@ export const communityApi = {
     communityId: string
   ): Promise<MessageWithAuthor[]> {
     try {
-      console.log("Loading messages for community:", communityId);
-
       const { data: messages, error } = await supabase
         .from("community_posts")
         .select(
@@ -174,8 +169,6 @@ export const communityApi = {
           };
         }
       );
-
-      console.log("Loaded messages:", formattedMessages);
       return formattedMessages;
     } catch (error) {
       console.error("Error getting community messages:", error);
@@ -192,8 +185,6 @@ export const communityApi = {
     course_name?: string;
   }) {
     try {
-      console.log("Creating community with data:", data);
-
       // Create metadata post with JSON content storing community info
       const communityMetadata = {
         name: data.name,
@@ -201,6 +192,7 @@ export const communityApi = {
         course_id: data.course_id,
         course_name: data.course_name || "General Discussion",
         created_by: data.instructor_id,
+        is_active: true, // Initialize as active by default
       };
 
       const { data: metadataPost, error } = await supabase
@@ -220,8 +212,6 @@ export const communityApi = {
         console.error("Error creating community metadata:", error);
         throw new Error(`Failed to create community: ${error.message}`);
       }
-
-      console.log("Community created successfully:", metadataPost);
 
       // Return the community object
       return {
@@ -251,6 +241,7 @@ export const communityApi = {
       description?: string;
       course_id?: string;
       course_name?: string;
+      is_active?: boolean;
     }
   ): Promise<Partial<CommunityWithCourse>> {
     try {
@@ -283,6 +274,8 @@ export const communityApi = {
         description: data.description || metadata.description,
         course_id: data.course_id || metadata.course_id,
         course_name: data.course_name || metadata.course_name,
+        is_active:
+          data.is_active !== undefined ? data.is_active : metadata.is_active,
       };
 
       // Update the metadata post
@@ -298,13 +291,12 @@ export const communityApi = {
         throw new Error(`Failed to update community: ${updateError.message}`);
       }
 
-      console.log("Community updated successfully");
-
       return {
         name: data.name,
         description: data.description || null,
         course_id: data.course_id,
         course_name: data.course_name,
+        is_active: data.is_active,
       };
     } catch (error) {
       console.error("Error in updateCommunity:", error);
@@ -315,8 +307,6 @@ export const communityApi = {
   // Delete a community and all its messages
   async deleteCommunity(id: string) {
     try {
-      console.log("Deleting community:", id);
-
       // First delete all messages associated with this community
       const { error: messagesError } = await supabase
         .from("community_posts")
@@ -340,7 +330,6 @@ export const communityApi = {
         throw new Error(`Failed to delete community: ${metadataError.message}`);
       }
 
-      console.log("Community deleted successfully");
       return { success: true };
     } catch (error) {
       console.error("Error in deleteCommunity:", error);
@@ -357,8 +346,6 @@ export const communityApi = {
     is_pinned: boolean;
   }) {
     try {
-      console.log("Creating message:", data);
-
       // Get the instructor_id from the community metadata
       const { data: communityMetadata, error: metadataError } = await supabase
         .from("community_posts")
@@ -417,7 +404,6 @@ export const communityApi = {
         },
       };
 
-      console.log("Message created successfully:", formattedMessage);
       return formattedMessage;
     } catch (error) {
       console.error("Error in createMessage:", error);
@@ -431,13 +417,12 @@ export const communityApi = {
     data: { title: string; content: string; is_pinned: boolean }
   ) {
     try {
-      console.log("Updating message:", id, data);
-
       const { data: post, error } = await supabase
         .from("community_posts")
         .update({
           content: data.content,
           category: data.is_pinned ? "announcement" : "discussion",
+          is_pinned: data.is_pinned,
         })
         .eq("id", id)
         .select(
@@ -467,6 +452,7 @@ export const communityApi = {
         community_id: post.course_id,
         created_at: post.created_at,
         message_type: post.category,
+        is_pinned: post.is_pinned || false,
         author: {
           id: author?.id || post.author_id,
           first_name: author?.full_name?.split(" ")[0] || "Unknown",
@@ -475,7 +461,6 @@ export const communityApi = {
         },
       };
 
-      console.log("Message updated successfully:", formattedMessage);
       return formattedMessage;
     } catch (error) {
       console.error("Error in updateMessage:", error);
@@ -486,8 +471,6 @@ export const communityApi = {
   // Delete a message
   async deleteMessage(id: string) {
     try {
-      console.log("Deleting message:", id);
-
       const { error } = await supabase
         .from("community_posts")
         .delete()
@@ -497,8 +480,6 @@ export const communityApi = {
         console.error("Error deleting message:", error);
         throw new Error(`Failed to delete message: ${error.message}`);
       }
-
-      console.log("Message deleted successfully");
       return { success: true };
     } catch (error) {
       console.error("Error in deleteMessage:", error);
@@ -518,9 +499,7 @@ export const communityApi = {
   },
 
   // Get instructor's courses for community creation (predefined list)
-  async getInstructorCourses(instructorId: string) {
-    console.log("Loading courses for instructor:", instructorId);
-
+  async getInstructorCourses(_instructorId: string) {
     // Return a predefined list of course options
     return [
       { id: "web-dev-fundamentals", title: "Web Development Fundamentals" },
@@ -645,8 +624,6 @@ export async function togglePinPost(
   postId: string
 ): Promise<{ is_pinned: boolean }> {
   try {
-    console.log("Toggling pin for post:", postId);
-
     // Get current post to check its category
     const { data: currentPost, error: fetchError } = await supabase
       .from("community_posts")
@@ -663,10 +640,6 @@ export async function togglePinPost(
     const newCategory =
       currentPost.category === "announcement" ? "discussion" : "announcement";
 
-    console.log(
-      `Changing category from ${currentPost.category} to ${newCategory}`
-    );
-
     const { error: updateError } = await supabase
       .from("community_posts")
       .update({ category: newCategory })
@@ -678,7 +651,6 @@ export async function togglePinPost(
     }
 
     const isPinned = newCategory === "announcement";
-    console.log("Pin toggled successfully. Is pinned:", isPinned);
 
     return { is_pinned: isPinned };
   } catch (error) {
