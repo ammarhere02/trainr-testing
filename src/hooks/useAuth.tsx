@@ -494,22 +494,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Create role-specific records
       if (selectedRole === "instructor") {
-        const { error: instructorError } = await supabase
+        // Check if instructor record already exists
+        console.log("useAuth: Checking if instructor record already exists...");
+        const { data: existingInstructor } = await supabase
           .from("instructors")
-          .insert({
-            id: authData.user.id,
-            business_name: data.businessName!,
-          });
+          .select("*")
+          .eq("id", authData.user.id)
+          .single();
 
-        if (instructorError) {
-          console.error(
-            "useAuth: Instructor creation failed:",
-            instructorError
+        if (existingInstructor) {
+          console.log(
+            "useAuth: Instructor record already exists, updating it..."
           );
-          setError(
-            `Failed to create instructor profile: ${instructorError.message}`
-          );
-          return { success: false, error: instructorError.message };
+          // Update existing instructor record
+          const { error: updateError } = await supabase
+            .from("instructors")
+            .update({
+              business_name: data.businessName!,
+            })
+            .eq("id", authData.user.id);
+
+          if (updateError) {
+            console.error("useAuth: Instructor update failed:", updateError);
+            setError(
+              `Failed to update instructor profile: ${updateError.message}`
+            );
+            return { success: false, error: updateError.message };
+          }
+        } else {
+          // Create new instructor record
+          console.log("useAuth: Creating new instructor record...");
+          const { error: instructorError } = await supabase
+            .from("instructors")
+            .insert({
+              id: authData.user.id,
+              business_name: data.businessName!,
+            });
+
+          if (instructorError) {
+            console.error(
+              "useAuth: Instructor creation failed:",
+              instructorError
+            );
+
+            // Check if it's a duplicate key error (instructor created by trigger)
+            if (instructorError.code === "23505") {
+              console.log(
+                "useAuth: Instructor was created by database trigger - continuing..."
+              );
+            } else {
+              setError(
+                `Failed to create instructor profile: ${instructorError.message}`
+              );
+              return { success: false, error: instructorError.message };
+            }
+          }
         }
       } else if (selectedRole === "student") {
         const { error: studentError } = await supabase.from("students").insert({
