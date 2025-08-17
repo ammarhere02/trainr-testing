@@ -478,6 +478,99 @@ export interface Database {
           edited_at?: string | null;
         };
       };
+      communities: {
+        Row: {
+          id: string;
+          instructor_id: string;
+          course_id: string | null;
+          name: string;
+          description: string | null;
+          member_count: number | null;
+          message_count: number | null;
+          is_active: boolean | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          instructor_id: string;
+          course_id?: string | null;
+          name: string;
+          description?: string | null;
+          member_count?: number | null;
+          message_count?: number | null;
+          is_active?: boolean | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          instructor_id?: string;
+          course_id?: string | null;
+          name?: string;
+          description?: string | null;
+          member_count?: number | null;
+          message_count?: number | null;
+          is_active?: boolean | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      community_messages: {
+        Row: {
+          id: string;
+          community_id: string;
+          author_id: string;
+          title: string;
+          content: string;
+          is_pinned: boolean | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          community_id: string;
+          author_id: string;
+          title: string;
+          content: string;
+          is_pinned?: boolean | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          community_id?: string;
+          author_id?: string;
+          title?: string;
+          content?: string;
+          is_pinned?: boolean | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      community_members: {
+        Row: {
+          id: string;
+          community_id: string;
+          user_id: string;
+          role: string | null;
+          joined_at: string;
+        };
+        Insert: {
+          id?: string;
+          community_id: string;
+          user_id: string;
+          role?: string | null;
+          joined_at?: string;
+        };
+        Update: {
+          id?: string;
+          community_id?: string;
+          user_id?: string;
+          role?: string | null;
+          joined_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;

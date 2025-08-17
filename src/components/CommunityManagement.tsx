@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Users,
   MessageCircle,
@@ -12,93 +12,99 @@ import {
   Star,
   BookOpen,
 } from "lucide-react";
+import {
+  communityApi,
+  CommunityWithCourse,
+  MessageWithAuthor,
+} from "../lib/api/community";
+import { useAuth } from "../hooks/useAuth";
 
 interface CommunityManagementProps {
   instructor: any;
 }
 
 export default function CommunityManagement({
-  instructor,
+  instructor: _instructor,
 }: CommunityManagementProps) {
+  const { userData } = useAuth();
   const [currentView, setCurrentView] = useState<"list" | "messages">("list");
-  const [selectedCommunity, setSelectedCommunity] = useState<any>(null);
+  const [selectedCommunity, setSelectedCommunity] =
+    useState<CommunityWithCourse | null>(null);
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
   const [showCreateMessage, setShowCreateMessage] = useState(false);
-  const [editingCommunity, setEditingCommunity] = useState<any>(null);
-  const [editingMessage, setEditingMessage] = useState<any>(null);
+  const [editingCommunity, setEditingCommunity] =
+    useState<CommunityWithCourse | null>(null);
+  const [editingMessage, setEditingMessage] =
+    useState<MessageWithAuthor | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data - replace with real data later
-  const [communities, setCommunities] = useState([
-    {
-      id: 1,
-      name: "Web Development Fundamentals",
-      description: "Community for students learning web development basics",
-      course: "Web Development Course",
-      memberCount: 45,
-      messageCount: 127,
-      lastActivity: "2 hours ago",
-      isActive: true,
-      createdAt: "2024-08-15",
-    },
-    {
-      id: 2,
-      name: "Advanced JavaScript",
-      description:
-        "Discussions about advanced JavaScript concepts and best practices",
-      course: "JavaScript Mastery",
-      memberCount: 32,
-      messageCount: 89,
-      lastActivity: "5 hours ago",
-      isActive: true,
-      createdAt: "2024-08-10",
-    },
-    {
-      id: 3,
-      name: "React Development",
-      description:
-        "Community for React developers to share knowledge and troubleshoot",
-      course: "React Complete Guide",
-      memberCount: 58,
-      messageCount: 203,
-      lastActivity: "1 day ago",
-      isActive: false,
-      createdAt: "2024-08-05",
-    },
-  ]);
+  // State for real data
+  const [communities, setCommunities] = useState<CommunityWithCourse[]>([]);
+  const [messages, setMessages] = useState<MessageWithAuthor[]>([]);
+  const [courses, setCourses] = useState<{ id: string; title: string }[]>([]);
 
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      communityId: 1,
-      title: "Welcome to Web Development Community!",
-      content:
-        "Hello everyone! Welcome to our web development community. Here you'll find resources, discussions, and support for your learning journey.",
-      author: "Instructor",
-      createdAt: "2024-08-15T10:30:00Z",
-      isPinned: true,
-    },
-    {
-      id: 2,
-      communityId: 1,
-      title: "Week 1 Assignment Guidelines",
-      content:
-        "Please review the assignment requirements for this week. Make sure to submit your projects by Friday midnight. If you have any questions, feel free to ask!",
-      author: "Instructor",
-      createdAt: "2024-08-16T14:20:00Z",
-      isPinned: false,
-    },
-    {
-      id: 3,
-      communityId: 1,
-      title: "Additional Resources for HTML & CSS",
-      content:
-        "I've compiled some additional resources that might help you with HTML and CSS fundamentals. Check out MDN Web Docs and W3Schools for comprehensive guides.",
-      author: "Instructor",
-      createdAt: "2024-08-17T09:15:00Z",
-      isPinned: false,
-    },
-  ]);
-  console.log(instructor);
+  // Load data on component mount
+  useEffect(() => {
+    if (userData?.profile?.id) {
+      loadCommunities();
+      loadCourses();
+    }
+  }, [userData?.profile?.id]);
+
+  useEffect(() => {
+    if (selectedCommunity) {
+      loadMessages(selectedCommunity.id);
+    }
+  }, [selectedCommunity]);
+
+  const loadCommunities = async () => {
+    if (!userData?.profile?.id) {
+      setError("User not authenticated");
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await communityApi.getInstructorCommunities(
+        userData.profile.id
+      );
+      setCommunities(data);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to load communities"
+      );
+      console.error("Error loading communities:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMessages = async (communityId: string) => {
+    try {
+      setLoading(true);
+      const data = await communityApi.getCommunityMessages(communityId);
+      setMessages(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load messages");
+      console.error("Error loading messages:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadCourses = async () => {
+    if (!userData?.profile?.id) {
+      console.error("User not authenticated");
+      return;
+    }
+    try {
+      const data = await communityApi.getInstructorCourses(userData.profile.id);
+      setCourses(data);
+    } catch (err) {
+      console.error("Error loading courses:", err);
+    }
+  };
 
   const [newCommunity, setNewCommunity] = useState({
     name: "",
@@ -112,64 +118,227 @@ export default function CommunityManagement({
     isPinned: false,
   });
 
-  const handleCreateCommunity = () => {
-    if (newCommunity.name && newCommunity.description && newCommunity.course) {
-      const community = {
-        id: communities.length + 1,
-        ...newCommunity,
-        memberCount: 0,
-        messageCount: 0,
-        lastActivity: "Just created",
-        isActive: true,
-        createdAt: new Date().toISOString().split("T")[0],
-      };
-      setCommunities([...communities, community]);
-      setNewCommunity({ name: "", description: "", course: "" });
-      setShowCreateCommunity(false);
+  const handleCreateCommunity = async () => {
+    if (
+      newCommunity.name &&
+      newCommunity.description &&
+      newCommunity.course &&
+      userData?.profile?.id
+    ) {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Find the course name from the courses list
+        const selectedCourse = courses.find(
+          (c) => c.id === newCommunity.course
+        );
+
+        const community = await communityApi.createCommunity({
+          name: newCommunity.name,
+          description: newCommunity.description,
+          instructor_id: userData.profile.id, // Use actual user ID from auth context
+          course_id: newCommunity.course,
+          course_name: selectedCourse?.title, // Include course name
+        });
+
+        // Reset form and close modal
+        setNewCommunity({ name: "", description: "", course: "" });
+        setShowCreateCommunity(false);
+
+        // Reload communities to get fresh data from database
+        await loadCommunities();
+
+        console.log("Community created successfully:", community);
+      } catch (error) {
+        console.error("Error creating community:", error);
+        setError(
+          error instanceof Error ? error.message : "Failed to create community"
+        );
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      console.error("Missing required fields or user not authenticated");
+      setError("Please fill in all required fields");
     }
   };
 
-  const handleUpdateCommunity = () => {
+  const handleUpdateCommunity = async () => {
     if (editingCommunity) {
-      setCommunities(
-        communities.map((c) =>
-          c.id === editingCommunity.id ? editingCommunity : c
-        )
+      try {
+        // Find the course name from the courses list
+        const selectedCourse = courses.find(
+          (c) => c.id === editingCommunity.course_id
+        );
+
+        const updated = await communityApi.updateCommunity(
+          editingCommunity.id,
+          {
+            name: editingCommunity.name,
+            description: editingCommunity.description ?? undefined,
+            course_id: editingCommunity.course_id ?? undefined,
+            course_name: selectedCourse?.title, // Include course name
+          }
+        );
+        setCommunities(
+          communities.map((c) =>
+            c.id === editingCommunity.id
+              ? {
+                  ...c,
+                  ...updated,
+                  course_name: selectedCourse?.title || c.course_name,
+                }
+              : c
+          )
+        );
+        setEditingCommunity(null);
+      } catch (error) {
+        console.error("Error updating community:", error);
+      }
+    }
+  };
+
+  const handleDeleteCommunity = async (id: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      await communityApi.deleteCommunity(id);
+
+      // If the deleted community was selected, go back to list view
+      if (selectedCommunity?.id === id) {
+        setSelectedCommunity(null);
+        setCurrentView("list");
+      }
+
+      // Reload communities to get fresh data from database
+      await loadCommunities();
+
+      console.log("Community deleted successfully");
+    } catch (error) {
+      console.error("Error deleting community:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to delete community"
       );
-      setEditingCommunity(null);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDeleteCommunity = (id: number) => {
-    setCommunities(communities.filter((c) => c.id !== id));
-  };
+  const handleCreateMessage = async () => {
+    if (
+      newMessage.title &&
+      newMessage.content &&
+      selectedCommunity &&
+      userData?.profile?.id
+    ) {
+      try {
+        setLoading(true);
+        setError(null);
 
-  const handleCreateMessage = () => {
-    if (newMessage.title && newMessage.content && selectedCommunity) {
-      const message = {
-        id: messages.length + 1,
-        communityId: selectedCommunity.id,
-        ...newMessage,
-        author: "Instructor",
-        createdAt: new Date().toISOString(),
-      };
-      setMessages([...messages, message]);
-      setNewMessage({ title: "", content: "", isPinned: false });
-      setShowCreateMessage(false);
+        const message = await communityApi.createMessage({
+          community_id: selectedCommunity.id,
+          title: newMessage.title,
+          content: newMessage.content,
+          author_id: userData.profile.id, // Use actual user ID from auth context
+          is_pinned: newMessage.isPinned,
+        });
+
+        // Reset form and close modal
+        setNewMessage({ title: "", content: "", isPinned: false });
+        setShowCreateMessage(false);
+
+        // Reload messages to get fresh data from database
+        await loadMessages(selectedCommunity.id);
+
+        console.log("Message created successfully:", message);
+      } catch (error) {
+        console.error("Error creating message:", error);
+        setError(
+          error instanceof Error ? error.message : "Failed to create message"
+        );
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      console.error("Missing required fields or user not authenticated");
+      setError("Please fill in all required fields");
     }
   };
 
-  const handleUpdateMessage = () => {
+  const handleUpdateMessage = async () => {
     if (editingMessage) {
-      setMessages(
-        messages.map((m) => (m.id === editingMessage.id ? editingMessage : m))
-      );
-      setEditingMessage(null);
+      try {
+        const updated = await communityApi.updateMessage(editingMessage.id, {
+          title: "Message", // Use a default title since our new interface doesn't use titles
+          content: editingMessage.content,
+          is_pinned: editingMessage.message_type === "announcement",
+        });
+        setMessages(
+          messages.map((m) =>
+            m.id === editingMessage.id ? { ...m, ...updated } : m
+          )
+        );
+        setEditingMessage(null);
+      } catch (error) {
+        console.error("Error updating message:", error);
+        // Handle error appropriately
+      }
     }
   };
 
-  const handleDeleteMessage = (id: number) => {
-    setMessages(messages.filter((m) => m.id !== id));
+  const handleDeleteMessage = async (id: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      await communityApi.deleteMessage(id);
+
+      // Reload messages to get fresh data from database
+      if (selectedCommunity) {
+        await loadMessages(selectedCommunity.id);
+      }
+
+      console.log("Message deleted successfully");
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to delete message"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTogglePin = async (messageId: string, currentPinned: boolean) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const messageToUpdate = messages.find((m) => m.id === messageId);
+      if (messageToUpdate) {
+        await communityApi.updateMessage(messageId, {
+          title: messageToUpdate.title || "",
+          content: messageToUpdate.content,
+          is_pinned: !currentPinned,
+        });
+      }
+
+      // Reload messages to get fresh data from database
+      if (selectedCommunity) {
+        await loadMessages(selectedCommunity.id);
+      }
+
+      console.log("Message pin status updated successfully");
+    } catch (error) {
+      console.error("Error updating pin status:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to update pin status"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -183,8 +352,24 @@ export default function CommunityManagement({
   };
 
   const communityMessages = messages.filter(
-    (m) => m.communityId === selectedCommunity?.id
+    (m) => m.community_id === selectedCommunity?.id
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-gray-600">Loading communities...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-red-600">Error: {error}</div>
+      </div>
+    );
+  }
 
   if (currentView === "messages" && selectedCommunity) {
     return (
@@ -224,7 +409,7 @@ export default function CommunityManagement({
               <div>
                 <p className="text-gray-600 text-sm">Members</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {selectedCommunity.memberCount}
+                  {selectedCommunity.member_count}
                 </p>
               </div>
             </div>
@@ -250,7 +435,8 @@ export default function CommunityManagement({
               <div>
                 <p className="text-gray-600 text-sm">Last Activity</p>
                 <p className="text-sm font-medium text-gray-900">
-                  {selectedCommunity.lastActivity}
+                  {selectedCommunity.created_at &&
+                    formatDate(selectedCommunity.created_at)}
                 </p>
               </div>
             </div>
@@ -277,7 +463,7 @@ export default function CommunityManagement({
                 <div
                   key={message.id}
                   className={`p-4 rounded-xl border ${
-                    message.isPinned
+                    message.message_type === "announcement"
                       ? "border-yellow-200 bg-yellow-50"
                       : "border-gray-200 bg-gray-50"
                   } hover:shadow-sm transition-all duration-200`}
@@ -286,9 +472,11 @@ export default function CommunityManagement({
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
                         <h3 className="font-semibold text-gray-900">
-                          {message.title}
+                          {message.message_type === "announcement"
+                            ? "📢 Announcement"
+                            : "💬 Discussion"}
                         </h3>
-                        {message.isPinned && (
+                        {message.message_type === "announcement" && (
                           <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full font-medium">
                             Pinned
                           </span>
@@ -296,12 +484,35 @@ export default function CommunityManagement({
                       </div>
                       <p className="text-gray-700 mb-3">{message.content}</p>
                       <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>By {message.author}</span>
+                        <span>
+                          By {message.author?.first_name}{" "}
+                          {message.author?.last_name}
+                        </span>
                         <span>•</span>
-                        <span>{formatDate(message.createdAt)}</span>
+                        <span>{formatDate(message.created_at)}</span>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2 ml-4">
+                      <button
+                        onClick={() =>
+                          handleTogglePin(
+                            message.id,
+                            message.is_pinned || false
+                          )
+                        }
+                        className={`p-2 rounded-lg transition-colors ${
+                          message.is_pinned
+                            ? "bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
+                            : "hover:bg-gray-100 text-gray-600"
+                        }`}
+                        title={
+                          message.is_pinned ? "Unpin message" : "Pin message"
+                        }
+                      >
+                        <span className="w-4 h-4 flex items-center justify-center">
+                          📌
+                        </span>
+                      </button>
                       <button
                         onClick={() => setEditingMessage(message)}
                         className="p-2 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors"
@@ -407,19 +618,21 @@ export default function CommunityManagement({
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Message Title
+                    Message Type
                   </label>
-                  <input
-                    type="text"
-                    value={editingMessage.title}
+                  <select
+                    value={editingMessage.message_type}
                     onChange={(e) =>
                       setEditingMessage({
                         ...editingMessage,
-                        title: e.target.value,
+                        message_type: e.target.value,
                       })
                     }
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
+                  >
+                    <option value="discussion">Discussion</option>
+                    <option value="announcement">Announcement (Pinned)</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -436,26 +649,6 @@ export default function CommunityManagement({
                     rows={6}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="editPinned"
-                    checked={editingMessage.isPinned}
-                    onChange={(e) =>
-                      setEditingMessage({
-                        ...editingMessage,
-                        isPinned: e.target.checked,
-                      })
-                    }
-                    className="mr-3 w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
-                  />
-                  <label
-                    htmlFor="editPinned"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Pin this message
-                  </label>
                 </div>
               </div>
               <div className="flex justify-end space-x-4 mt-8">
@@ -523,7 +716,7 @@ export default function CommunityManagement({
             <div>
               <p className="text-gray-600 text-sm">Total Members</p>
               <p className="text-2xl font-bold text-gray-900">
-                {communities.reduce((acc, c) => acc + c.memberCount, 0)}
+                {communities.reduce((acc, c) => acc + (c.member_count || 0), 0)}
               </p>
             </div>
           </div>
@@ -549,7 +742,7 @@ export default function CommunityManagement({
             <div>
               <p className="text-gray-600 text-sm">Active Communities</p>
               <p className="text-2xl font-bold text-gray-900">
-                {communities.filter((c) => c.isActive).length}
+                {communities.filter((c) => c.is_active).length}
               </p>
             </div>
           </div>
@@ -582,9 +775,9 @@ export default function CommunityManagement({
             </div>
           ) : (
             <div className="grid gap-6">
-              {communities.map((community) => (
+              {communities.map((community, idx) => (
                 <div
-                  key={community.id}
+                  key={community.id + idx}
                   className="p-6 border border-gray-200 rounded-xl hover:border-purple-300 hover:shadow-sm transition-all duration-200"
                 >
                   <div className="flex items-start justify-between">
@@ -595,12 +788,12 @@ export default function CommunityManagement({
                         </h3>
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            community.isActive
+                            community.is_active
                               ? "bg-green-100 text-green-800"
                               : "bg-gray-100 text-gray-800"
                           }`}
                         >
-                          {community.isActive ? "Active" : "Inactive"}
+                          {community.is_active ? "Active" : "Inactive"}
                         </span>
                       </div>
                       <p className="text-gray-600 mb-3">
@@ -609,19 +802,22 @@ export default function CommunityManagement({
                       <div className="flex items-center space-x-6 text-sm text-gray-500">
                         <span className="flex items-center space-x-1">
                           <BookOpen className="w-4 h-4" />
-                          <span>{community.course}</span>
+                          <span>{community.courses?.title || "No Course"}</span>
                         </span>
                         <span className="flex items-center space-x-1">
                           <Users className="w-4 h-4" />
-                          <span>{community.memberCount} members</span>
+                          <span>{community.member_count || 0} members</span>
                         </span>
                         <span className="flex items-center space-x-1">
                           <MessageCircle className="w-4 h-4" />
-                          <span>{community.messageCount} messages</span>
+                          <span>{community.message_count || 0} messages</span>
                         </span>
                         <span className="flex items-center space-x-1">
                           <Clock className="w-4 h-4" />
-                          <span>{community.lastActivity}</span>
+                          <span>
+                            {community.created_at &&
+                              formatDate(community.created_at)}
+                          </span>
                         </span>
                       </div>
                     </div>
@@ -710,19 +906,11 @@ export default function CommunityManagement({
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
                   <option value="">Select a course</option>
-                  <option value="Web Development Course">
-                    Web Development Course
-                  </option>
-                  <option value="JavaScript Mastery">JavaScript Mastery</option>
-                  <option value="React Complete Guide">
-                    React Complete Guide
-                  </option>
-                  <option value="Node.js Fundamentals">
-                    Node.js Fundamentals
-                  </option>
-                  <option value="Python for Beginners">
-                    Python for Beginners
-                  </option>
+                  {courses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.title}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -773,7 +961,7 @@ export default function CommunityManagement({
                   Description
                 </label>
                 <textarea
-                  value={editingCommunity.description}
+                  value={editingCommunity.description || ""}
                   onChange={(e) =>
                     setEditingCommunity({
                       ...editingCommunity,
@@ -789,40 +977,32 @@ export default function CommunityManagement({
                   Associated Course
                 </label>
                 <select
-                  value={editingCommunity.course}
+                  value={editingCommunity.course_id || ""}
                   onChange={(e) =>
                     setEditingCommunity({
                       ...editingCommunity,
-                      course: e.target.value,
+                      course_id: e.target.value,
                     })
                   }
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
                   <option value="">Select a course</option>
-                  <option value="Web Development Course">
-                    Web Development Course
-                  </option>
-                  <option value="JavaScript Mastery">JavaScript Mastery</option>
-                  <option value="React Complete Guide">
-                    React Complete Guide
-                  </option>
-                  <option value="Node.js Fundamentals">
-                    Node.js Fundamentals
-                  </option>
-                  <option value="Python for Beginners">
-                    Python for Beginners
-                  </option>
+                  {courses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.title}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="flex items-center">
                 <input
                   type="checkbox"
                   id="isActive"
-                  checked={editingCommunity.isActive}
+                  checked={editingCommunity.is_active || false}
                   onChange={(e) =>
                     setEditingCommunity({
                       ...editingCommunity,
-                      isActive: e.target.checked,
+                      is_active: e.target.checked,
                     })
                   }
                   className="mr-3 w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
