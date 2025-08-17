@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import CommunityManagement from "./CommunityManagement";
+import AnalyticsDashboard from "./AnalyticsDashboard";
+import InstructorSettings from "./InstructorSettings";
 
 interface Profile {
   id: string;
@@ -427,33 +429,46 @@ function InstructorDashboard({ instructorData }: InstructorDashboardProps) {
                 <CommunityManagement instructor={instructor} />
               )}
 
-              {/* Other views placeholder */}
-              {activeView !== "overview" && activeView !== "community" && (
-                <div className="text-center py-16">
-                  <div className="w-20 h-20 bg-gradient-to-r from-purple-100 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    {React.createElement(
-                      menuItems.find((item) => item.id === activeView)?.icon ||
-                        Settings,
-                      {
-                        className: "w-10 h-10 text-purple-600",
-                      }
-                    )}
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                    {menuItems.find((item) => item.id === activeView)?.label}{" "}
-                    Section
-                  </h3>
-                  <p className="text-gray-600 mb-6">
-                    This section is under development
-                  </p>
-                  <button
-                    onClick={() => setActiveView("overview")}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:shadow-lg transition-all duration-300"
-                  >
-                    Back to Overview
-                  </button>
-                </div>
+              {/* Analytics Dashboard */}
+              {activeView === "analytics" && (
+                <AnalyticsDashboard instructor={instructor} />
               )}
+
+              {/* Settings */}
+              {activeView === "settings" && (
+                <InstructorSettings instructor={instructor} />
+              )}
+
+              {/* Other views placeholder */}
+              {activeView !== "overview" &&
+                activeView !== "community" &&
+                activeView !== "analytics" &&
+                activeView !== "settings" && (
+                  <div className="text-center py-16">
+                    <div className="w-20 h-20 bg-gradient-to-r from-purple-100 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                      {React.createElement(
+                        menuItems.find((item) => item.id === activeView)
+                          ?.icon || Settings,
+                        {
+                          className: "w-10 h-10 text-purple-600",
+                        }
+                      )}
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                      {menuItems.find((item) => item.id === activeView)?.label}{" "}
+                      Section
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      This section is under development
+                    </p>
+                    <button
+                      onClick={() => setActiveView("overview")}
+                      className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:shadow-lg transition-all duration-300"
+                    >
+                      Back to Overview
+                    </button>
+                  </div>
+                )}
             </div>
           </div>
         </div>

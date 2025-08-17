@@ -98,6 +98,7 @@ export default function CommunityManagement({
       isPinned: false,
     },
   ]);
+  console.log(instructor);
 
   const [newCommunity, setNewCommunity] = useState({
     name: "",
