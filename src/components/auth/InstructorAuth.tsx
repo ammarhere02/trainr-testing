@@ -194,6 +194,16 @@ export default function InstructorAuth({ onSuccess }: InstructorAuthProps) {
                     ? "Sign in to your instructor dashboard"
                     : "Start building your online course platform"}
                 </p>
+                {mode === "login" && (
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-700">
+                      <strong>First time?</strong> Create an account first using the signup form below.
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Test credentials will only work after creating an account.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {errors.submit && (
