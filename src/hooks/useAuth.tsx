@@ -52,6 +52,7 @@ interface AuthContextType {
   userData: UserData | null;
   role: "instructor" | "student" | null;
   isLoading: boolean;
+  isSigningOut: boolean;
   error: string | null;
   signIn: (
     email: string,
@@ -86,6 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   // Fetch user profile and instructor data if applicable
   const fetchUserData = async (userId: string): Promise<UserData | null> => {
@@ -198,7 +200,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         if (session?.user) {
-          
           setUser(session.user);
 
           try {
@@ -237,7 +238,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-
       if (event === "SIGNED_IN" && session?.user) {
         setIsLoading(true);
         setUser(session.user);
@@ -498,7 +498,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const signOutUser = async () => {
+    setIsSigningOut(true);
     try {
+      // Add a professional delay to show loading state
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error("useAuth: Sign out error:", error);
@@ -510,12 +514,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setRole(null);
         setError(null);
 
+        // Add another small delay before redirect for smooth UX
+        await new Promise(resolve => setTimeout(resolve, 500));
+
         // Redirect to home page
         window.location.href = "/";
       }
     } catch (error: any) {
       console.error("useAuth: Sign out exception:", error);
       setError(error.message);
+    } finally {
+      setIsSigningOut(false);
     }
   };
 
@@ -562,6 +571,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     userData,
     role,
     isLoading,
+    isSigningOut,
     error,
     signIn,
     signUp,
