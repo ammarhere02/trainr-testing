@@ -34,7 +34,14 @@ import {
   Twitter,
   Instagram,
   Youtube,
-  Linkedin
+  Linkedin,
+  Play,
+  Clock,
+  Award,
+  Download,
+  Shield,
+  Target,
+  Zap
 } from 'lucide-react';
 
 export default function Website() {
@@ -44,89 +51,66 @@ export default function Website() {
   const [showColorPicker, setShowColorPicker] = useState(false);
   
   const [websiteData, setWebsiteData] = useState({
-    // Hero Section
-    heroTitle: 'Transform Your Career with Expert-Led Courses',
-    heroSubtitle: 'Join thousands of students learning cutting-edge skills from industry professionals',
-    heroImage: 'https://images.pexels.com/photos/3861958/pexels-photo-3861958.jpeg?auto=compress&cs=tinysrgb&w=800',
-    ctaText: 'Start Learning Today',
+    // Course Info
+    courseTitle: 'Complete Web Development Bootcamp',
+    courseSubtitle: 'by Dr. Angela Yu',
+    courseDescription: 'Learn full-stack web development from scratch with HTML, CSS, JavaScript, React, Node.js, and MongoDB.',
+    coursePrice: 'FREE',
+    originalPrice: '$199',
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
     
-    // About Section
-    aboutTitle: 'About Dr. Angela Yu',
-    aboutDescription: 'With over 10 years of experience in web development and education, I\'ve helped thousands of students launch successful careers in tech.',
-    instructorImage: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400',
+    // What You'll Learn
+    learningPoints: [
+      'Build responsive websites with HTML5 and CSS3',
+      'Master JavaScript ES6+ and modern frameworks',
+      'Create dynamic web applications with React',
+      'Develop backend APIs with Node.js and Express',
+      'Work with databases using MongoDB',
+      'Deploy applications to production servers'
+    ],
+    
+    // Course Features
+    features: [
+      { icon: '🎥', title: '40+ hours of content', description: 'Comprehensive video lessons' },
+      { icon: '💻', title: '5 real-world projects', description: 'Build portfolio-worthy applications' },
+      { icon: '🏆', title: 'Certificate of completion', description: 'Showcase your achievement' },
+      { icon: '⚡', title: 'Lifetime access', description: 'Learn at your own pace' },
+      { icon: '👥', title: 'Community support', description: 'Connect with fellow learners' },
+      { icon: '🚀', title: 'Job placement help', description: 'Career guidance included' }
+    ],
+    
+    // Course Resources
+    resources: [
+      { name: 'Course Workbook.pdf', size: '2.4 MB', type: 'pdf' },
+      { name: 'Project Templates.zip', size: '15.7 MB', type: 'zip' },
+      { name: 'Resource Links.txt', size: '1.2 KB', type: 'txt' },
+      { name: 'Cheat Sheets.pdf', size: '3.1 MB', type: 'pdf' }
+    ],
+    
+    // Instructor Info
+    instructorName: 'Dr. Angela Yu',
+    instructorTitle: 'Lead Developer & Instructor',
+    instructorImage: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=200',
+    instructorBio: 'Former lead developer at major tech companies. Passionate about teaching and helping students launch successful careers in web development.',
     
     // Stats
     stats: {
-      students: '50,000+',
-      courses: '12',
+      students: '2,847',
       rating: '4.9',
-      reviews: '15,000+'
+      reviews: '1,234',
+      hours: '40+'
     },
     
     // Branding
-    primaryColor: '#7c3aed',
+    primaryColor: '#8b5cf6',
     secondaryColor: '#3b82f6',
     logoUrl: '',
     businessName: 'Web Development Academy',
-    
-    // Contact
-    email: 'hello@webdevacademy.com',
-    phone: '+1 (555) 123-4567',
-    location: 'San Francisco, CA',
-    
-    // Social Links
-    socialLinks: {
-      facebook: 'https://facebook.com/webdevacademy',
-      twitter: 'https://twitter.com/webdevacademy',
-      instagram: 'https://instagram.com/webdevacademy',
-      youtube: 'https://youtube.com/@webdevacademy',
-      linkedin: 'https://linkedin.com/company/webdevacademy'
-    },
-    
-    // SEO
-    metaTitle: 'Web Development Academy - Learn to Code',
-    metaDescription: 'Master web development with expert-led courses. Join 50,000+ students learning HTML, CSS, JavaScript, React, and more.',
-    
-    // Custom CSS
-    customCSS: '',
     
     // Domain
     customDomain: '',
     subdomain: 'webdevacademy'
   });
-
-  const [courses] = useState([
-    {
-      id: 1,
-      title: 'Complete Web Development Bootcamp',
-      description: 'Learn full-stack web development from scratch with HTML, CSS, JavaScript, React, Node.js, and MongoDB.',
-      image: 'https://images.pexels.com/photos/3861958/pexels-photo-3861958.jpeg?auto=compress&cs=tinysrgb&w=400',
-      price: 199,
-      students: 12547,
-      rating: 4.8,
-      level: 'Beginner'
-    },
-    {
-      id: 2,
-      title: 'Advanced React Patterns',
-      description: 'Master advanced React concepts including hooks, context, performance optimization, and testing.',
-      image: 'https://images.pexels.com/photos/1181676/pexels-photo-1181676.jpeg?auto=compress&cs=tinysrgb&w=400',
-      price: 149,
-      students: 8934,
-      rating: 4.9,
-      level: 'Advanced'
-    },
-    {
-      id: 3,
-      title: 'JavaScript Fundamentals',
-      description: 'Build a solid foundation in JavaScript with practical projects and real-world examples.',
-      image: 'https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=400',
-      price: 99,
-      students: 15623,
-      rating: 4.7,
-      level: 'Beginner'
-    }
-  ]);
 
   const tabs = [
     { id: 'design', label: 'Design', icon: Palette },
@@ -136,14 +120,12 @@ export default function Website() {
   ];
 
   const handleSave = () => {
-    // Save website data
     localStorage.setItem('instructor-website-data', JSON.stringify(websiteData));
     setIsEditing(false);
     console.log('Website saved:', websiteData);
   };
 
   const handlePublish = () => {
-    // Publish website
     console.log('Publishing website...');
     alert('Website published successfully!');
   };
@@ -162,13 +144,24 @@ export default function Website() {
     }
   };
 
+  const getYouTubeVideoId = (url: string) => {
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+  };
+
+  const getEmbedUrl = (url: string) => {
+    const videoId = getYouTubeVideoId(url);
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Website Builder</h1>
-          <p className="text-gray-600 mt-2">Create and customize your public-facing website</p>
+          <p className="text-gray-600 mt-2">Create and customize your course landing page</p>
         </div>
         <div className="flex items-center space-x-4 mt-4 lg:mt-0">
           <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
@@ -246,6 +239,73 @@ export default function Website() {
               ))}
             </div>
 
+            {/* Content Tab */}
+            {activeTab === 'content' && (
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Course Title
+                  </label>
+                  <input
+                    type="text"
+                    value={websiteData.courseTitle}
+                    onChange={(e) => setWebsiteData({...websiteData, courseTitle: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Course Description
+                  </label>
+                  <textarea
+                    value={websiteData.courseDescription}
+                    onChange={(e) => setWebsiteData({...websiteData, courseDescription: e.target.value})}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Video URL
+                  </label>
+                  <input
+                    type="url"
+                    value={websiteData.videoUrl}
+                    onChange={(e) => setWebsiteData({...websiteData, videoUrl: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Price
+                    </label>
+                    <input
+                      type="text"
+                      value={websiteData.coursePrice}
+                      onChange={(e) => setWebsiteData({...websiteData, coursePrice: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Original Price
+                    </label>
+                    <input
+                      type="text"
+                      value={websiteData.originalPrice}
+                      onChange={(e) => setWebsiteData({...websiteData, originalPrice: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Design Tab */}
             {activeTab === 'design' && (
               <div className="space-y-6">
@@ -288,58 +348,6 @@ export default function Website() {
                     />
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Logo
-                  </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600">Upload logo</p>
-                    <p className="text-xs text-gray-500">PNG, JPG up to 2MB</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Content Tab */}
-            {activeTab === 'content' && (
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Hero Title
-                  </label>
-                  <input
-                    type="text"
-                    value={websiteData.heroTitle}
-                    onChange={(e) => setWebsiteData({...websiteData, heroTitle: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Hero Subtitle
-                  </label>
-                  <textarea
-                    value={websiteData.heroSubtitle}
-                    onChange={(e) => setWebsiteData({...websiteData, heroSubtitle: e.target.value})}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    About Description
-                  </label>
-                  <textarea
-                    value={websiteData.aboutDescription}
-                    onChange={(e) => setWebsiteData({...websiteData, aboutDescription: e.target.value})}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
-                  />
-                </div>
               </div>
             )}
 
@@ -352,8 +360,8 @@ export default function Website() {
                   </label>
                   <input
                     type="text"
-                    value={websiteData.metaTitle}
-                    onChange={(e) => setWebsiteData({...websiteData, metaTitle: e.target.value})}
+                    value={websiteData.courseTitle}
+                    onChange={(e) => setWebsiteData({...websiteData, courseTitle: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                   />
                 </div>
@@ -363,12 +371,11 @@ export default function Website() {
                     Meta Description
                   </label>
                   <textarea
-                    value={websiteData.metaDescription}
-                    onChange={(e) => setWebsiteData({...websiteData, metaDescription: e.target.value})}
+                    value={websiteData.courseDescription}
+                    onChange={(e) => setWebsiteData({...websiteData, courseDescription: e.target.value})}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
                   />
-                  <p className="text-xs text-gray-500 mt-1">{websiteData.metaDescription.length}/160 characters</p>
                 </div>
               </div>
             )}
@@ -426,7 +433,7 @@ export default function Website() {
         <div className="lg:col-span-3">
           <div className="bg-gray-100 rounded-xl p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Website Preview</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Course Landing Page Preview</h2>
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">
                   {websiteData.customDomain || `trainr.app/${websiteData.subdomain}`}
@@ -439,268 +446,318 @@ export default function Website() {
             <div className="flex justify-center">
               <div className={`${getPreviewWidth()} transition-all duration-300`}>
                 <div className="bg-white rounded-lg shadow-xl overflow-hidden">
-                  {/* Website Header */}
-                  <header className="bg-white border-b border-gray-200 px-6 py-4">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-3">
-                        <div 
-                          className="w-8 h-8 rounded-lg flex items-center justify-center"
-                          style={{ backgroundColor: websiteData.primaryColor }}
-                        >
-                          <span className="text-white font-bold text-sm">T</span>
-                        </div>
-                        <span className="text-xl font-bold text-gray-900">{websiteData.businessName}</span>
-                      </div>
-                      <nav className="hidden md:flex items-center space-x-6">
-                        <a href="#" className="text-gray-600 hover:text-gray-900">Courses</a>
-                        <a href="#" className="text-gray-600 hover:text-gray-900">About</a>
-                        <a href="#" className="text-gray-600 hover:text-gray-900">Contact</a>
-                        <button 
-                          className="text-white px-4 py-2 rounded-lg font-medium"
-                          style={{ backgroundColor: websiteData.primaryColor }}
-                        >
-                          Enroll Now
-                        </button>
-                      </nav>
-                    </div>
-                  </header>
-
-                  {/* Hero Section */}
-                  <section className="relative py-20 px-6" style={{ 
-                    background: `linear-gradient(135deg, ${websiteData.primaryColor}15, ${websiteData.secondaryColor}15)` 
-                  }}>
-                    <div className="max-w-4xl mx-auto text-center">
-                      <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-                        {websiteData.heroTitle}
-                      </h1>
-                      <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-                        {websiteData.heroSubtitle}
-                      </p>
-                      <button 
-                        className="text-white px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition-all"
-                        style={{ backgroundColor: websiteData.primaryColor }}
-                      >
-                        {websiteData.ctaText}
-                        <ArrowRight className="w-5 h-5 ml-2 inline" />
-                      </button>
-                    </div>
-                  </section>
-
-                  {/* Stats Section */}
-                  <section className="py-16 px-6 bg-white">
-                    <div className="max-w-4xl mx-auto">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-                        <div>
-                          <div className="text-3xl font-bold" style={{ color: websiteData.primaryColor }}>
-                            {websiteData.stats.students}
+                  
+                  {/* Course Landing Page */}
+                  <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50">
+                    
+                    {/* Header */}
+                    <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 px-6 py-4">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
+                            <span className="text-white font-bold text-sm">T</span>
                           </div>
-                          <div className="text-gray-600">Students</div>
+                          <span className="text-xl font-bold text-gray-900">trainr</span>
                         </div>
-                        <div>
-                          <div className="text-3xl font-bold" style={{ color: websiteData.primaryColor }}>
-                            {websiteData.stats.courses}
-                          </div>
-                          <div className="text-gray-600">Courses</div>
-                        </div>
-                        <div>
-                          <div className="text-3xl font-bold flex items-center justify-center" style={{ color: websiteData.primaryColor }}>
-                            <Star className="w-6 h-6 mr-1 fill-current" />
-                            {websiteData.stats.rating}
-                          </div>
-                          <div className="text-gray-600">Rating</div>
-                        </div>
-                        <div>
-                          <div className="text-3xl font-bold" style={{ color: websiteData.primaryColor }}>
-                            {websiteData.stats.reviews}
-                          </div>
-                          <div className="text-gray-600">Reviews</div>
+                        <div className="flex items-center space-x-4">
+                          <button className="text-gray-600 hover:text-gray-900">Courses</button>
+                          <button className="text-gray-600 hover:text-gray-900">About</button>
+                          <button className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium">
+                            Sign In
+                          </button>
                         </div>
                       </div>
-                    </div>
-                  </section>
+                    </header>
 
-                  {/* About Section */}
-                  <section className="py-16 px-6 bg-gray-50">
-                    <div className="max-w-4xl mx-auto">
-                      <div className="grid md:grid-cols-2 gap-12 items-center">
-                        <div>
-                          <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                            {websiteData.aboutTitle}
-                          </h2>
-                          <p className="text-lg text-gray-700 mb-6 leading-relaxed">
-                            {websiteData.aboutDescription}
-                          </p>
-                          <div className="flex items-center space-x-6">
-                            <div className="flex items-center space-x-2">
-                              <CheckCircle className="w-5 h-5 text-green-500" />
-                              <span className="text-gray-700">Industry Expert</span>
+                    {/* Main Content */}
+                    <div className="max-w-7xl mx-auto px-6 py-12">
+                      <div className="grid lg:grid-cols-3 gap-12">
+                        
+                        {/* Left Column - Course Content */}
+                        <div className="lg:col-span-2 space-y-8">
+                          
+                          {/* Course Header */}
+                          <div className="text-center lg:text-left">
+                            <div className="inline-flex items-center bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium mb-4">
+                              <Award className="w-4 h-4 mr-2" />
+                              Premium Course
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <CheckCircle className="w-5 h-5 text-green-500" />
-                              <span className="text-gray-700">Certified Instructor</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <img
-                            src={websiteData.instructorImage}
-                            alt="Instructor"
-                            className="w-64 h-64 rounded-2xl mx-auto object-cover shadow-xl"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Courses Section */}
-                  <section className="py-16 px-6 bg-white">
-                    <div className="max-w-6xl mx-auto">
-                      <div className="text-center mb-12">
-                        <h2 className="text-3xl font-bold text-gray-900 mb-4">Featured Courses</h2>
-                        <p className="text-xl text-gray-600">Master new skills with our comprehensive courses</p>
-                      </div>
-
-                      <div className="grid md:grid-cols-3 gap-8">
-                        {courses.map((course) => (
-                          <div key={course.id} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow">
-                            <img
-                              src={course.image}
-                              alt={course.title}
-                              className="w-full h-48 object-cover"
-                            />
-                            <div className="p-6">
-                              <div className="flex items-center justify-between mb-2">
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  course.level === 'Beginner' ? 'bg-green-100 text-green-700' :
-                                  course.level === 'Advanced' ? 'bg-red-100 text-red-700' :
-                                  'bg-yellow-100 text-yellow-700'
-                                }`}>
-                                  {course.level}
-                                </span>
-                                <span className="text-2xl font-bold" style={{ color: websiteData.primaryColor }}>
-                                  ${course.price}
-                                </span>
+                            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+                              {websiteData.courseTitle}
+                            </h1>
+                            <p className="text-xl text-gray-600 mb-6 leading-relaxed">
+                              {websiteData.courseDescription}
+                            </p>
+                            
+                            {/* Course Stats */}
+                            <div className="flex flex-wrap items-center gap-6 mb-8">
+                              <div className="flex items-center space-x-2">
+                                <Users className="w-5 h-5 text-purple-600" />
+                                <span className="font-medium text-gray-900">{websiteData.stats.students} students</span>
                               </div>
-                              <h3 className="text-xl font-bold text-gray-900 mb-2">{course.title}</h3>
-                              <p className="text-gray-600 mb-4">{course.description}</p>
-                              <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center space-x-4">
-                                  <div className="flex items-center space-x-1">
-                                    <Users className="w-4 h-4 text-gray-500" />
-                                    <span className="text-sm text-gray-600">{course.students.toLocaleString()}</span>
+                              <div className="flex items-center space-x-2">
+                                <Star className="w-5 h-5 text-yellow-500 fill-current" />
+                                <span className="font-medium text-gray-900">{websiteData.stats.rating} rating</span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Clock className="w-5 h-5 text-blue-600" />
+                                <span className="font-medium text-gray-900">{websiteData.stats.hours} hours</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Video Player */}
+                          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                            <div className="aspect-video bg-black">
+                              {getEmbedUrl(websiteData.videoUrl) ? (
+                                <iframe
+                                  src={getEmbedUrl(websiteData.videoUrl)}
+                                  className="w-full h-full"
+                                  frameBorder="0"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                  title="Course Preview"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <div className="text-center text-white">
+                                    <Play className="w-16 h-16 mx-auto mb-4 opacity-70" />
+                                    <p className="text-lg">Course Preview Video</p>
                                   </div>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Video Info */}
+                            <div className="p-6">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                  <img
+                                    src={websiteData.instructorImage}
+                                    alt={websiteData.instructorName}
+                                    className="w-12 h-12 rounded-full object-cover"
+                                  />
+                                  <div>
+                                    <h4 className="font-semibold text-gray-900">{websiteData.instructorName}</h4>
+                                    <p className="text-sm text-gray-600">{websiteData.instructorTitle}</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-3">
+                                  <button className="flex items-center space-x-1 text-gray-600 hover:text-red-600 transition-colors">
+                                    <span className="text-sm">1.2K</span>
+                                  </button>
+                                  <button className="flex items-center space-x-1 text-gray-600 hover:text-blue-600 transition-colors">
+                                    <span className="text-sm">Share</span>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* What You'll Learn */}
+                          <div className="bg-white rounded-2xl shadow-xl p-8">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-6">What You'll Learn</h2>
+                            <div className="grid md:grid-cols-2 gap-4">
+                              {websiteData.learningPoints.map((point, index) => (
+                                <div key={index} className="flex items-start space-x-3">
+                                  <div className="bg-purple-100 rounded-full p-1 mt-1">
+                                    <CheckCircle className="w-4 h-4 text-purple-600" />
+                                  </div>
+                                  <span className="text-gray-700">{point}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Course Features */}
+                          <div className="bg-white rounded-2xl shadow-xl p-8">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Course Features</h2>
+                            <div className="grid md:grid-cols-2 gap-6">
+                              {websiteData.features.map((feature, index) => (
+                                <div key={index} className="flex items-start space-x-4 p-4 bg-gray-50 rounded-xl">
+                                  <div className="text-2xl">{feature.icon}</div>
+                                  <div>
+                                    <h3 className="font-semibold text-gray-900 mb-1">{feature.title}</h3>
+                                    <p className="text-sm text-gray-600">{feature.description}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Course Resources */}
+                          <div className="bg-white rounded-2xl shadow-xl p-8">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Course Resources</h2>
+                            <div className="grid md:grid-cols-2 gap-4">
+                              {websiteData.resources.map((resource, index) => (
+                                <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
+                                  <div className="bg-white rounded-lg p-3 shadow-sm">
+                                    <FileText className="w-6 h-6 text-purple-600" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <h4 className="font-medium text-gray-900">{resource.name}</h4>
+                                    <p className="text-sm text-gray-600">{resource.size}</p>
+                                  </div>
+                                  <Download className="w-5 h-5 text-gray-400" />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Instructor Bio */}
+                          <div className="bg-white rounded-2xl shadow-xl p-8">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-6">About Your Instructor</h2>
+                            <div className="flex items-start space-x-6">
+                              <img
+                                src={websiteData.instructorImage}
+                                alt={websiteData.instructorName}
+                                className="w-24 h-24 rounded-full object-cover"
+                              />
+                              <div>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">{websiteData.instructorName}</h3>
+                                <p className="text-purple-600 font-medium mb-4">{websiteData.instructorTitle}</p>
+                                <p className="text-gray-700 leading-relaxed">{websiteData.instructorBio}</p>
+                                <div className="flex items-center space-x-4 mt-4">
                                   <div className="flex items-center space-x-1">
                                     <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                                    <span className="text-sm text-gray-600">{course.rating}</span>
+                                    <span className="text-sm text-gray-600">{websiteData.stats.rating} • {websiteData.stats.reviews} reviews</span>
+                                  </div>
+                                  <div className="flex items-center space-x-1">
+                                    <Users className="w-4 h-4 text-gray-500" />
+                                    <span className="text-sm text-gray-600">{websiteData.stats.students} students</span>
                                   </div>
                                 </div>
                               </div>
-                              <button 
-                                className="w-full text-white py-3 rounded-lg font-medium hover:shadow-lg transition-all"
-                                style={{ backgroundColor: websiteData.primaryColor }}
-                              >
-                                Enroll Now
-                              </button>
                             </div>
                           </div>
-                        ))}
+
+                          {/* Guarantee Section */}
+                          <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-8 text-white">
+                            <div className="text-center">
+                              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Shield className="w-8 h-8" />
+                              </div>
+                              <h3 className="text-2xl font-bold mb-4">30-Day Money-Back Guarantee</h3>
+                              <p className="text-green-100 leading-relaxed">
+                                Not satisfied with the course? Get your money back within 30 days. 
+                                No questions asked. Your success is our priority.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right Column - Sticky Sidebar */}
+                        <div className="lg:col-span-1">
+                          <div className="sticky top-8 space-y-6">
+                            
+                            {/* Course Card */}
+                            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                              {/* Course Header */}
+                              <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-white">
+                                <div className="text-center">
+                                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                    <BookOpen className="w-8 h-8" />
+                                  </div>
+                                  <h3 className="text-xl font-bold mb-2">{websiteData.courseTitle}</h3>
+                                  <p className="text-purple-100 text-sm">{websiteData.courseSubtitle}</p>
+                                </div>
+                              </div>
+
+                              {/* Pricing */}
+                              <div className="p-6 text-center border-b border-gray-100">
+                                <div className="mb-4">
+                                  <div className="text-4xl font-bold text-gray-900 mb-2">
+                                    <span className="line-through text-2xl text-gray-400 mr-2">{websiteData.originalPrice}</span>
+                                    {websiteData.coursePrice}
+                                  </div>
+                                  <p className="text-green-600 font-medium">Limited Time Offer</p>
+                                </div>
+                                
+                                <button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 mb-4">
+                                  Enroll Now
+                                </button>
+                                
+                                <p className="text-xs text-gray-600">
+                                  🔒 Secure enrollment • 30-day money-back guarantee
+                                </p>
+                              </div>
+
+                              {/* Course Includes */}
+                              <div className="p-6 space-y-4">
+                                <h4 className="font-semibold text-gray-900 mb-4">This course includes:</h4>
+                                {[
+                                  { icon: Clock, text: '40+ hours of content', color: 'text-purple-600' },
+                                  { icon: BookOpen, text: '5 real-world projects', color: 'text-blue-600' },
+                                  { icon: Award, text: 'Certificate of completion', color: 'text-green-600' },
+                                  { icon: Zap, text: 'Lifetime access', color: 'text-yellow-600' },
+                                  { icon: Users, text: 'Community support', color: 'text-red-600' },
+                                  { icon: Target, text: 'Job placement help', color: 'text-indigo-600' }
+                                ].map((feature, index) => (
+                                  <div key={index} className="flex items-center space-x-3">
+                                    <div className="bg-gray-50 rounded-lg p-2">
+                                      <feature.icon className={`w-5 h-5 ${feature.color}`} />
+                                    </div>
+                                    <span className="text-gray-700 font-medium">{feature.text}</span>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Live Stats */}
+                              <div className="p-6 bg-gray-50 border-t border-gray-100">
+                                <div className="grid grid-cols-2 gap-4 text-center">
+                                  <div>
+                                    <div className="text-2xl font-bold text-purple-600">{websiteData.stats.students}</div>
+                                    <div className="text-sm text-gray-600">Students</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-2xl font-bold text-green-600">156</div>
+                                    <div className="text-sm text-gray-600">Online Now</div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Instructor Card */}
+                            <div className="bg-white rounded-2xl shadow-xl p-6">
+                              <h4 className="font-semibold text-gray-900 mb-4">Your Instructor</h4>
+                              <div className="flex items-center space-x-4 mb-4">
+                                <img
+                                  src={websiteData.instructorImage}
+                                  alt={websiteData.instructorName}
+                                  className="w-16 h-16 rounded-full object-cover"
+                                />
+                                <div>
+                                  <h5 className="font-bold text-gray-900">{websiteData.instructorName}</h5>
+                                  <p className="text-sm text-gray-600">{websiteData.instructorTitle}</p>
+                                  <div className="flex items-center space-x-1 mt-1">
+                                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                                    <span className="text-sm text-gray-600">{websiteData.stats.rating} • {websiteData.stats.students} students</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <p className="text-sm text-gray-600 leading-relaxed">
+                                {websiteData.instructorBio}
+                              </p>
+                            </div>
+
+                            {/* Money-Back Guarantee */}
+                            <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-6 text-white">
+                              <div className="text-center">
+                                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-3">
+                                  <Shield className="w-6 h-6" />
+                                </div>
+                                <h4 className="font-bold text-lg mb-2">30-Day Guarantee</h4>
+                                <p className="text-green-100 text-sm leading-relaxed">
+                                  Not satisfied? Get your money back within 30 days. 
+                                  No questions asked.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </section>
-
-                  {/* Contact Section */}
-                  <section className="py-16 px-6" style={{ 
-                    background: `linear-gradient(135deg, ${websiteData.primaryColor}10, ${websiteData.secondaryColor}10)` 
-                  }}>
-                    <div className="max-w-4xl mx-auto text-center">
-                      <h2 className="text-3xl font-bold text-gray-900 mb-8">Get In Touch</h2>
-                      <div className="grid md:grid-cols-3 gap-8">
-                        <div className="flex flex-col items-center">
-                          <div 
-                            className="w-12 h-12 rounded-lg flex items-center justify-center mb-4"
-                            style={{ backgroundColor: websiteData.primaryColor }}
-                          >
-                            <Mail className="w-6 h-6 text-white" />
-                          </div>
-                          <h3 className="font-semibold text-gray-900 mb-2">Email</h3>
-                          <p className="text-gray-600">{websiteData.email}</p>
-                        </div>
-                        <div className="flex flex-col items-center">
-                          <div 
-                            className="w-12 h-12 rounded-lg flex items-center justify-center mb-4"
-                            style={{ backgroundColor: websiteData.primaryColor }}
-                          >
-                            <Phone className="w-6 h-6 text-white" />
-                          </div>
-                          <h3 className="font-semibold text-gray-900 mb-2">Phone</h3>
-                          <p className="text-gray-600">{websiteData.phone}</p>
-                        </div>
-                        <div className="flex flex-col items-center">
-                          <div 
-                            className="w-12 h-12 rounded-lg flex items-center justify-center mb-4"
-                            style={{ backgroundColor: websiteData.primaryColor }}
-                          >
-                            <MapPin className="w-6 h-6 text-white" />
-                          </div>
-                          <h3 className="font-semibold text-gray-900 mb-2">Location</h3>
-                          <p className="text-gray-600">{websiteData.location}</p>
-                        </div>
-                      </div>
-
-                      {/* Social Links */}
-                      <div className="flex justify-center space-x-4 mt-8">
-                        {websiteData.socialLinks.facebook && (
-                          <a href={websiteData.socialLinks.facebook} className="p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                            <Facebook className="w-5 h-5" style={{ color: websiteData.primaryColor }} />
-                          </a>
-                        )}
-                        {websiteData.socialLinks.twitter && (
-                          <a href={websiteData.socialLinks.twitter} className="p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                            <Twitter className="w-5 h-5" style={{ color: websiteData.primaryColor }} />
-                          </a>
-                        )}
-                        {websiteData.socialLinks.instagram && (
-                          <a href={websiteData.socialLinks.instagram} className="p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                            <Instagram className="w-5 h-5" style={{ color: websiteData.primaryColor }} />
-                          </a>
-                        )}
-                        {websiteData.socialLinks.youtube && (
-                          <a href={websiteData.socialLinks.youtube} className="p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                            <Youtube className="w-5 h-5" style={{ color: websiteData.primaryColor }} />
-                          </a>
-                        )}
-                        {websiteData.socialLinks.linkedin && (
-                          <a href={websiteData.socialLinks.linkedin} className="p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                            <Linkedin className="w-5 h-5" style={{ color: websiteData.primaryColor }} />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Footer */}
-                  <footer className="bg-gray-900 text-white py-12 px-6">
-                    <div className="max-w-4xl mx-auto text-center">
-                      <div className="flex items-center justify-center space-x-3 mb-4">
-                        <div 
-                          className="w-8 h-8 rounded-lg flex items-center justify-center"
-                          style={{ backgroundColor: websiteData.primaryColor }}
-                        >
-                          <span className="text-white font-bold text-sm">T</span>
-                        </div>
-                        <span className="text-xl font-bold">{websiteData.businessName}</span>
-                      </div>
-                      <p className="text-gray-400 mb-6">{websiteData.aboutDescription}</p>
-                      <div className="flex justify-center space-x-6 text-sm">
-                        <a href="#" className="text-gray-400 hover:text-white">Privacy Policy</a>
-                        <a href="#" className="text-gray-400 hover:text-white">Terms of Service</a>
-                        <a href="#" className="text-gray-400 hover:text-white">Support</a>
-                      </div>
-                      <div className="mt-6 pt-6 border-t border-gray-800">
-                        <p className="text-gray-400">© 2024 {websiteData.businessName}. All rights reserved. Powered by Trainr.</p>
-                      </div>
-                    </div>
-                  </footer>
+                  </div>
                 </div>
               </div>
             </div>
