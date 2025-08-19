@@ -82,13 +82,6 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
              )}
 
              {/* Admin Button - Always Visible */}
-             <button
-               onClick={() => window.location.href = '/studio/dashboard'}
-               className="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors mr-4 text-sm font-medium"
-               title="Admin Access"
-             >
-               ADMIN
-             </button>
 
               {/* Center Navigation - Only show when showFullNavigation is true */}
               {showFullNavigation && (
