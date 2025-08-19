@@ -447,11 +447,11 @@ export default function Website() {
               <div className={`${getPreviewWidth()} transition-all duration-300`}>
                 <div className="bg-white rounded-lg shadow-xl overflow-hidden">
                   
-                  {/* Course Landing Page */}
-                  <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50">
+                  {/* Course Landing Page - Matching Reference Design */}
+                  <div className="min-h-screen bg-white">
                     
                     {/* Header */}
-                    <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 px-6 py-4">
+                    <header className="bg-white border-b border-gray-200 px-6 py-4">
                       <div className="flex justify-between items-center">
                         <div className="flex items-center space-x-3">
                           <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
@@ -470,45 +470,41 @@ export default function Website() {
                     </header>
 
                     {/* Main Content */}
-                    <div className="max-w-7xl mx-auto px-6 py-12">
-                      <div className="grid lg:grid-cols-3 gap-12">
+                    <div className="max-w-7xl mx-auto px-6 py-8">
+                      <div className="grid lg:grid-cols-3 gap-8">
                         
                         {/* Left Column - Course Content */}
-                        <div className="lg:col-span-2 space-y-8">
+                        <div className="lg:col-span-2 space-y-6">
                           
                           {/* Course Header */}
-                          <div className="text-center lg:text-left">
-                            <div className="inline-flex items-center bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium mb-4">
-                              <Award className="w-4 h-4 mr-2" />
-                              Premium Course
+                          <div>
+                            <div className="flex items-center space-x-2 mb-3">
+                              <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium">
+                                Beginner
+                              </span>
+                              <span className="text-gray-500 text-sm">•</span>
+                              <span className="text-gray-600 text-sm">4.9 ⭐ (1,234 reviews)</span>
+                              <span className="text-gray-500 text-sm">•</span>
+                              <span className="text-gray-600 text-sm">2,847 students</span>
                             </div>
-                            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+                            <h1 className="text-3xl font-bold text-gray-900 mb-3">
                               {websiteData.courseTitle}
                             </h1>
-                            <p className="text-xl text-gray-600 mb-6 leading-relaxed">
+                            <p className="text-lg text-gray-600 mb-4">
                               {websiteData.courseDescription}
                             </p>
-                            
-                            {/* Course Stats */}
-                            <div className="flex flex-wrap items-center gap-6 mb-8">
-                              <div className="flex items-center space-x-2">
-                                <Users className="w-5 h-5 text-purple-600" />
-                                <span className="font-medium text-gray-900">{websiteData.stats.students} students</span>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <Star className="w-5 h-5 text-yellow-500 fill-current" />
-                                <span className="font-medium text-gray-900">{websiteData.stats.rating} rating</span>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <Clock className="w-5 h-5 text-blue-600" />
-                                <span className="font-medium text-gray-900">{websiteData.stats.hours} hours</span>
-                              </div>
+                            <div className="flex items-center space-x-4 text-sm text-gray-600">
+                              <span>Created by {websiteData.instructorName}</span>
+                              <span>•</span>
+                              <span>Last updated 12/2023</span>
+                              <span>•</span>
+                              <span>English</span>
                             </div>
                           </div>
 
                           {/* Video Player */}
-                          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-                            <div className="aspect-video bg-black">
+                          <div className="bg-black rounded-lg overflow-hidden shadow-lg">
+                            <div className="aspect-video">
                               {getEmbedUrl(websiteData.videoUrl) ? (
                                 <iframe
                                   src={getEmbedUrl(websiteData.videoUrl)}
@@ -527,122 +523,110 @@ export default function Website() {
                                 </div>
                               )}
                             </div>
-                            
-                            {/* Video Info */}
-                            <div className="p-6">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-4">
-                                  <img
-                                    src={websiteData.instructorImage}
-                                    alt={websiteData.instructorName}
-                                    className="w-12 h-12 rounded-full object-cover"
-                                  />
-                                  <div>
-                                    <h4 className="font-semibold text-gray-900">{websiteData.instructorName}</h4>
-                                    <p className="text-sm text-gray-600">{websiteData.instructorTitle}</p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center space-x-3">
-                                  <button className="flex items-center space-x-1 text-gray-600 hover:text-red-600 transition-colors">
-                                    <span className="text-sm">1.2K</span>
-                                  </button>
-                                  <button className="flex items-center space-x-1 text-gray-600 hover:text-blue-600 transition-colors">
-                                    <span className="text-sm">Share</span>
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
                           </div>
 
                           {/* What You'll Learn */}
-                          <div className="bg-white rounded-2xl shadow-xl p-8">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">What You'll Learn</h2>
-                            <div className="grid md:grid-cols-2 gap-4">
+                          <div className="bg-white border border-gray-200 rounded-lg p-6">
+                            <h2 className="text-xl font-bold text-gray-900 mb-4">What You'll Learn</h2>
+                            <div className="grid md:grid-cols-2 gap-3">
                               {websiteData.learningPoints.map((point, index) => (
                                 <div key={index} className="flex items-start space-x-3">
-                                  <div className="bg-purple-100 rounded-full p-1 mt-1">
-                                    <CheckCircle className="w-4 h-4 text-purple-600" />
-                                  </div>
-                                  <span className="text-gray-700">{point}</span>
+                                  <CheckCircle className="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0" />
+                                  <span className="text-gray-700 text-sm">{point}</span>
                                 </div>
                               ))}
                             </div>
                           </div>
 
                           {/* Course Features */}
-                          <div className="bg-white rounded-2xl shadow-xl p-8">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Course Features</h2>
-                            <div className="grid md:grid-cols-2 gap-6">
+                          <div className="bg-white border border-gray-200 rounded-lg p-6">
+                            <h2 className="text-xl font-bold text-gray-900 mb-4">This course includes:</h2>
+                            <div className="grid md:grid-cols-2 gap-4">
                               {websiteData.features.map((feature, index) => (
-                                <div key={index} className="flex items-start space-x-4 p-4 bg-gray-50 rounded-xl">
-                                  <div className="text-2xl">{feature.icon}</div>
+                                <div key={index} className="flex items-center space-x-3">
+                                  <span className="text-lg">{feature.icon}</span>
                                   <div>
-                                    <h3 className="font-semibold text-gray-900 mb-1">{feature.title}</h3>
-                                    <p className="text-sm text-gray-600">{feature.description}</p>
+                                    <div className="font-medium text-gray-900 text-sm">{feature.title}</div>
+                                    <div className="text-gray-600 text-xs">{feature.description}</div>
                                   </div>
                                 </div>
                               ))}
+                            </div>
+                          </div>
+
+                          {/* Exclusive Bonus Section */}
+                          <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-lg p-6 text-white">
+                            <div className="flex items-start space-x-4">
+                              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                                <span className="text-2xl">🎁</span>
+                              </div>
+                              <div>
+                                <h3 className="text-xl font-bold mb-2">
+                                  Exclusive Bonus Worth $497
+                                </h3>
+                                <p className="text-orange-100 leading-relaxed">
+                                  Get a personalized one-on-one onboarding call with our expert instructors. 
+                                  We'll create a custom learning roadmap just for you and answer all your questions.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Next Steps */}
+                          <div className="bg-white border border-gray-200 rounded-lg p-6">
+                            <h2 className="text-xl font-bold text-gray-900 mb-4">Next Steps</h2>
+                            <div className="space-y-4">
+                              <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+                                <div className="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                  1
+                                </div>
+                                <div>
+                                  <p className="text-gray-700 font-medium mb-2">Follow for exclusive content:</p>
+                                  <div className="flex space-x-3">
+                                    <a href="#" className="bg-white px-3 py-1 rounded text-purple-600 text-sm border">YouTube</a>
+                                    <a href="#" className="bg-white px-3 py-1 rounded text-purple-600 text-sm border">Instagram</a>
+                                    <a href="#" className="bg-white px-3 py-1 rounded text-purple-600 text-sm border">TikTok</a>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+                                <div className="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                  2
+                                </div>
+                                <div>
+                                  <p className="text-gray-700 font-medium mb-2">Newsletter for important updates:</p>
+                                  <a href="#" className="bg-white px-3 py-1 rounded text-purple-600 text-sm border">trainr.com/newsletter</a>
+                                </div>
+                              </div>
                             </div>
                           </div>
 
                           {/* Course Resources */}
-                          <div className="bg-white rounded-2xl shadow-xl p-8">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Course Resources</h2>
+                          <div className="bg-white border border-gray-200 rounded-lg p-6">
+                            <h2 className="text-xl font-bold text-gray-900 mb-4">Course Resources</h2>
                             <div className="grid md:grid-cols-2 gap-4">
                               {websiteData.resources.map((resource, index) => (
-                                <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
-                                  <div className="bg-white rounded-lg p-3 shadow-sm">
-                                    <FileText className="w-6 h-6 text-purple-600" />
-                                  </div>
+                                <div key={index} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                  <FileText className="w-5 h-5 text-gray-600" />
                                   <div className="flex-1">
-                                    <h4 className="font-medium text-gray-900">{resource.name}</h4>
-                                    <p className="text-sm text-gray-600">{resource.size}</p>
+                                    <div className="font-medium text-gray-900 text-sm">{resource.name}</div>
+                                    <div className="text-gray-600 text-xs">{resource.size}</div>
                                   </div>
-                                  <Download className="w-5 h-5 text-gray-400" />
+                                  <Download className="w-4 h-4 text-gray-400" />
                                 </div>
                               ))}
                             </div>
                           </div>
 
-                          {/* Instructor Bio */}
-                          <div className="bg-white rounded-2xl shadow-xl p-8">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">About Your Instructor</h2>
-                            <div className="flex items-start space-x-6">
-                              <img
-                                src={websiteData.instructorImage}
-                                alt={websiteData.instructorName}
-                                className="w-24 h-24 rounded-full object-cover"
-                              />
-                              <div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-2">{websiteData.instructorName}</h3>
-                                <p className="text-purple-600 font-medium mb-4">{websiteData.instructorTitle}</p>
-                                <p className="text-gray-700 leading-relaxed">{websiteData.instructorBio}</p>
-                                <div className="flex items-center space-x-4 mt-4">
-                                  <div className="flex items-center space-x-1">
-                                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                                    <span className="text-sm text-gray-600">{websiteData.stats.rating} • {websiteData.stats.reviews} reviews</span>
-                                  </div>
-                                  <div className="flex items-center space-x-1">
-                                    <Users className="w-4 h-4 text-gray-500" />
-                                    <span className="text-sm text-gray-600">{websiteData.stats.students} students</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Guarantee Section */}
-                          <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-8 text-white">
-                            <div className="text-center">
-                              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Shield className="w-8 h-8" />
-                              </div>
-                              <h3 className="text-2xl font-bold mb-4">30-Day Money-Back Guarantee</h3>
-                              <p className="text-green-100 leading-relaxed">
-                                Not satisfied with the course? Get your money back within 30 days. 
-                                No questions asked. Your success is our priority.
-                              </p>
-                            </div>
+                          {/* Important Disclaimer */}
+                          <div className="bg-gray-50 border-l-4 border-gray-400 p-6 rounded-r-lg">
+                            <h3 className="font-bold text-gray-900 text-lg mb-3">Important Disclaimer</h3>
+                            <p className="text-gray-700 text-sm leading-relaxed">
+                              Our course material is provided for educational purposes only and does not guarantee any financial success. 
+                              Results vary and are dependent on individual effort and circumstances. The examples shown are not typical, 
+                              and there is no assurance you will achieve similar results. Only hard work pays off!
+                            </p>
                           </div>
                         </div>
 
@@ -651,29 +635,24 @@ export default function Website() {
                           <div className="sticky top-8 space-y-6">
                             
                             {/* Course Card */}
-                            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-lg">
                               {/* Course Header */}
-                              <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-white">
-                                <div className="text-center">
-                                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                    <BookOpen className="w-8 h-8" />
-                                  </div>
-                                  <h3 className="text-xl font-bold mb-2">{websiteData.courseTitle}</h3>
-                                  <p className="text-purple-100 text-sm">{websiteData.courseSubtitle}</p>
-                                </div>
+                              <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-4 text-white text-center">
+                                <h3 className="text-lg font-bold">{websiteData.courseTitle}</h3>
+                                <p className="text-purple-100 text-sm">{websiteData.courseSubtitle}</p>
                               </div>
 
                               {/* Pricing */}
                               <div className="p-6 text-center border-b border-gray-100">
                                 <div className="mb-4">
-                                  <div className="text-4xl font-bold text-gray-900 mb-2">
-                                    <span className="line-through text-2xl text-gray-400 mr-2">{websiteData.originalPrice}</span>
+                                  <div className="text-3xl font-bold text-gray-900 mb-2">
+                                    <span className="line-through text-lg text-gray-400 mr-2">{websiteData.originalPrice}</span>
                                     {websiteData.coursePrice}
                                   </div>
-                                  <p className="text-green-600 font-medium">Limited Time Offer</p>
+                                  <p className="text-green-600 font-medium text-sm">Limited Time Offer</p>
                                 </div>
                                 
-                                <button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 mb-4">
+                                <button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-lg font-bold hover:shadow-lg transition-all mb-3">
                                   Enroll Now
                                 </button>
                                 
@@ -683,8 +662,8 @@ export default function Website() {
                               </div>
 
                               {/* Course Includes */}
-                              <div className="p-6 space-y-4">
-                                <h4 className="font-semibold text-gray-900 mb-4">This course includes:</h4>
+                              <div className="p-6 space-y-3">
+                                <h4 className="font-semibold text-gray-900 mb-3">This course includes:</h4>
                                 {[
                                   { icon: Clock, text: '40+ hours of content', color: 'text-purple-600' },
                                   { icon: BookOpen, text: '5 real-world projects', color: 'text-blue-600' },
@@ -694,10 +673,8 @@ export default function Website() {
                                   { icon: Target, text: 'Job placement help', color: 'text-indigo-600' }
                                 ].map((feature, index) => (
                                   <div key={index} className="flex items-center space-x-3">
-                                    <div className="bg-gray-50 rounded-lg p-2">
-                                      <feature.icon className={`w-5 h-5 ${feature.color}`} />
-                                    </div>
-                                    <span className="text-gray-700 font-medium">{feature.text}</span>
+                                    <feature.icon className={`w-4 h-4 ${feature.color}`} />
+                                    <span className="text-gray-700 text-sm">{feature.text}</span>
                                   </div>
                                 ))}
                               </div>
@@ -706,48 +683,48 @@ export default function Website() {
                               <div className="p-6 bg-gray-50 border-t border-gray-100">
                                 <div className="grid grid-cols-2 gap-4 text-center">
                                   <div>
-                                    <div className="text-2xl font-bold text-purple-600">{websiteData.stats.students}</div>
-                                    <div className="text-sm text-gray-600">Students</div>
+                                    <div className="text-xl font-bold text-purple-600">{websiteData.stats.students}</div>
+                                    <div className="text-xs text-gray-600">Students</div>
                                   </div>
                                   <div>
-                                    <div className="text-2xl font-bold text-green-600">156</div>
-                                    <div className="text-sm text-gray-600">Online Now</div>
+                                    <div className="text-xl font-bold text-green-600">156</div>
+                                    <div className="text-xs text-gray-600">Online Now</div>
                                   </div>
                                 </div>
                               </div>
                             </div>
 
                             {/* Instructor Card */}
-                            <div className="bg-white rounded-2xl shadow-xl p-6">
+                            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-lg">
                               <h4 className="font-semibold text-gray-900 mb-4">Your Instructor</h4>
-                              <div className="flex items-center space-x-4 mb-4">
+                              <div className="flex items-center space-x-3 mb-4">
                                 <img
                                   src={websiteData.instructorImage}
                                   alt={websiteData.instructorName}
-                                  className="w-16 h-16 rounded-full object-cover"
+                                  className="w-12 h-12 rounded-full object-cover"
                                 />
                                 <div>
-                                  <h5 className="font-bold text-gray-900">{websiteData.instructorName}</h5>
-                                  <p className="text-sm text-gray-600">{websiteData.instructorTitle}</p>
+                                  <h5 className="font-bold text-gray-900 text-sm">{websiteData.instructorName}</h5>
+                                  <p className="text-gray-600 text-xs">{websiteData.instructorTitle}</p>
                                   <div className="flex items-center space-x-1 mt-1">
-                                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                                    <span className="text-sm text-gray-600">{websiteData.stats.rating} • {websiteData.stats.students} students</span>
+                                    <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                                    <span className="text-xs text-gray-600">{websiteData.stats.rating} • {websiteData.stats.students} students</span>
                                   </div>
                                 </div>
                               </div>
-                              <p className="text-sm text-gray-600 leading-relaxed">
+                              <p className="text-xs text-gray-600 leading-relaxed">
                                 {websiteData.instructorBio}
                               </p>
                             </div>
 
                             {/* Money-Back Guarantee */}
-                            <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-6 text-white">
+                            <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-6 text-white shadow-lg">
                               <div className="text-center">
-                                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-3">
-                                  <Shield className="w-6 h-6" />
+                                <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-3">
+                                  <Shield className="w-5 h-5" />
                                 </div>
-                                <h4 className="font-bold text-lg mb-2">30-Day Guarantee</h4>
-                                <p className="text-green-100 text-sm leading-relaxed">
+                                <h4 className="font-bold mb-2">30-Day Guarantee</h4>
+                                <p className="text-green-100 text-xs leading-relaxed">
                                   Not satisfied? Get your money back within 30 days. 
                                   No questions asked.
                                 </p>
