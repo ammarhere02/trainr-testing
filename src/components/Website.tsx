@@ -447,7 +447,7 @@ export default function Website() {
               <div className={`${getPreviewWidth()} transition-all duration-300`}>
                 <div className="bg-white rounded-lg shadow-xl overflow-hidden">
                   
-                  {/* Course Landing Page - Matching Reference Design */}
+                  {/* Course Landing Page - Exact Reference Design */}
                   <div className="min-h-screen bg-white">
                     
                     {/* Header */}
@@ -460,9 +460,9 @@ export default function Website() {
                           <span className="text-xl font-bold text-gray-900">trainr</span>
                         </div>
                         <div className="flex items-center space-x-4">
-                          <button className="text-gray-600 hover:text-gray-900">Courses</button>
-                          <button className="text-gray-600 hover:text-gray-900">About</button>
-                          <button className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium">
+                          <button className="text-gray-600 hover:text-gray-900 text-sm">Courses</button>
+                          <button className="text-gray-600 hover:text-gray-900 text-sm">About</button>
+                          <button className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium text-sm">
                             Sign In
                           </button>
                         </div>
@@ -479,7 +479,7 @@ export default function Website() {
                           {/* Course Header */}
                           <div>
                             <div className="flex items-center space-x-2 mb-3">
-                              <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium">
+                              <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
                                 Beginner
                               </span>
                               <span className="text-gray-500 text-sm">•</span>
@@ -531,24 +531,8 @@ export default function Website() {
                             <div className="grid md:grid-cols-2 gap-3">
                               {websiteData.learningPoints.map((point, index) => (
                                 <div key={index} className="flex items-start space-x-3">
-                                  <CheckCircle className="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0" />
+                                  <CheckCircle className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
                                   <span className="text-gray-700 text-sm">{point}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Course Features */}
-                          <div className="bg-white border border-gray-200 rounded-lg p-6">
-                            <h2 className="text-xl font-bold text-gray-900 mb-4">This course includes:</h2>
-                            <div className="grid md:grid-cols-2 gap-4">
-                              {websiteData.features.map((feature, index) => (
-                                <div key={index} className="flex items-center space-x-3">
-                                  <span className="text-lg">{feature.icon}</span>
-                                  <div>
-                                    <div className="font-medium text-gray-900 text-sm">{feature.title}</div>
-                                    <div className="text-gray-600 text-xs">{feature.description}</div>
-                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -577,26 +561,36 @@ export default function Website() {
                             <h2 className="text-xl font-bold text-gray-900 mb-4">Next Steps</h2>
                             <div className="space-y-4">
                               <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                                <div className="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                <div className="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">
                                   1
                                 </div>
                                 <div>
                                   <p className="text-gray-700 font-medium mb-2">Follow for exclusive content:</p>
                                   <div className="flex space-x-3">
-                                    <a href="#" className="bg-white px-3 py-1 rounded text-purple-600 text-sm border">YouTube</a>
-                                    <a href="#" className="bg-white px-3 py-1 rounded text-purple-600 text-sm border">Instagram</a>
-                                    <a href="#" className="bg-white px-3 py-1 rounded text-purple-600 text-sm border">TikTok</a>
+                                    <a href="#" className="bg-white px-3 py-1 rounded text-purple-600 text-sm border border-purple-200 hover:bg-purple-50">YouTube</a>
+                                    <a href="#" className="bg-white px-3 py-1 rounded text-purple-600 text-sm border border-purple-200 hover:bg-purple-50">Instagram</a>
+                                    <a href="#" className="bg-white px-3 py-1 rounded text-purple-600 text-sm border border-purple-200 hover:bg-purple-50">TikTok</a>
                                   </div>
                                 </div>
                               </div>
 
                               <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                                <div className="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                <div className="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">
                                   2
                                 </div>
                                 <div>
                                   <p className="text-gray-700 font-medium mb-2">Newsletter for important updates:</p>
-                                  <a href="#" className="bg-white px-3 py-1 rounded text-purple-600 text-sm border">trainr.com/newsletter</a>
+                                  <a href="#" className="bg-white px-3 py-1 rounded text-purple-600 text-sm border border-purple-200 hover:bg-purple-50">trainr.com/newsletter</a>
+                                </div>
+                              </div>
+
+                              <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+                                <div className="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">
+                                  3
+                                </div>
+                                <div>
+                                  <p className="text-gray-700 font-medium mb-2">Leave a testimonial. Win special prizes:</p>
+                                  <a href="#" className="bg-white px-3 py-1 rounded text-purple-600 text-sm border border-purple-200 hover:bg-purple-50">testimonial.trainr.com</a>
                                 </div>
                               </div>
                             </div>
