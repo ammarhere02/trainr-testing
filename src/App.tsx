@@ -14,18 +14,43 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import DatabaseTestNew from "./components/DatabaseTestNew";
 
 function App() {
-  const { user, userData, role, isLoading } = useAuth();
+  const { user, userData, role, isLoading, error } = useAuth();
+
+  // Debug logging
+  console.log('App render:', { user: !!user, userData: !!userData, role, isLoading, error });
 
   if (isLoading) {
+    console.log('App: Showing loading state');
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
+          <p className="text-xs text-gray-400 mt-2">Initializing authentication...</p>
         </div>
       </div>
     );
    }
+
+  if (error) {
+    console.log('App: Showing error state:', error);
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center p-8">
+          <div className="text-red-600 mb-4">Authentication Error</div>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  console.log('App: Rendering main router');
 
   return (
     <Router>

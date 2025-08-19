@@ -90,8 +90,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Fetch user profile and instructor data if applicable
   const fetchUserData = async (userId: string): Promise<UserData | null> => {
     try {
-      console.log("useAuth: Fetching user data for:", userId);
-
       // Add timeout to prevent hanging
       const fetchWithTimeout = (promise: any, timeoutMs: number = 10000) => {
         return Promise.race([
@@ -102,8 +100,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         ]);
       };
 
-      // Get profile from profiles table with timeout
-      console.log("useAuth: Querying profiles table...");
       const profileQuery = supabase
         .from("profiles")
         .select("*")
@@ -121,11 +117,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       if (!profile) {
-        console.log("useAuth: No profile found for user:", userId);
         return null;
       }
-
-      console.log("useAuth: Found profile:", profile);
 
       const result: UserData = { profile };
 
@@ -144,7 +137,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           );
         } else if (instructor) {
           result.instructor = instructor;
-          console.log("useAuth: Found instructor data");
         }
       }
 
@@ -160,37 +152,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           if (studentError) {
             // Don't treat "no rows returned" as an error - just means student record doesn't exist yet
             if (studentError.code === "PGRST116") {
-              console.log(
-                "useAuth: No student record found - this is OK for existing users"
-              );
-              console.log(
-                "useAuth: To create a student record, the student should sign up properly or ask an instructor to add them"
-              );
             } else {
-              console.warn(
-                "useAuth: Error fetching student data:",
-                studentError
-              );
               // For HTTP 406 errors, also treat as "student record not found"
               if (
                 studentError.message?.includes("406") ||
                 studentError.message?.includes("Not Acceptable")
               ) {
-                console.log(
-                  "useAuth: HTTP 406 error - treating as missing student record"
-                );
               }
             }
           } else if (student) {
             result.student = student;
-            console.log("useAuth: Found student data");
           }
         } catch (httpError: any) {
-          // Catch any network/HTTP errors and treat as missing student record
-          console.log(
-            "useAuth: HTTP error fetching student data - treating as missing record:",
-            httpError
-          );
+          console.error(httpError);
         }
       }
 
@@ -205,7 +179,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (authInitialized) return;
 
-    console.log("useAuth: Initializing auth state");
     setAuthInitialized(true);
 
     const initializeAuth = async () => {
@@ -220,25 +193,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         } = await supabase.auth.getSession();
 
         if (sessionError) {
-          console.error("useAuth: Session error:", sessionError);
           setError("Failed to get session");
           return;
         }
 
         if (session?.user) {
-          console.log(
-            "useAuth: Found existing session for user:",
-            session.user.id
-          );
+          
           setUser(session.user);
 
           try {
             const data = await fetchUserData(session.user.id);
             if (data) {
-              console.log(
-                "useAuth: Setting user data and role:",
-                data.profile.role
-              );
               setUserData(data);
               setRole(data.profile.role as "instructor" | "student");
             } else {
@@ -254,7 +219,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             );
           }
         } else {
-          console.log("useAuth: No existing session found");
           setUser(null);
           setUserData(null);
           setRole(null);
@@ -273,7 +237,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("useAuth: Auth state change:", event, "session:", !!session);
 
       if (event === "SIGNED_IN" && session?.user) {
         setIsLoading(true);
@@ -282,10 +245,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         try {
           const data = await fetchUserData(session.user.id);
           if (data) {
-            console.log(
-              "useAuth: Auth listener - Setting user data and role:",
-              data.profile.role
-            );
             setUserData(data);
             setRole(data.profile.role as "instructor" | "student");
           } else {
@@ -312,7 +271,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     });
 
     return () => {
-      console.log("useAuth: Cleaning up auth listener");
       subscription.unsubscribe();
     };
   }, [authInitialized]);
@@ -322,12 +280,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     password: string,
     expectedRole?: "instructor" | "student"
   ) => {
-    console.log(
-      "useAuth: Starting sign in for:",
-      email,
-      "expected role:",
-      expectedRole
-    );
     setError(null);
 
     try {
@@ -353,8 +305,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           return { success: false, error: errorMessage };
         }
       }
-
-      console.log("useAuth: Sign in successful");
       return { success: true };
     } catch (error: any) {
       console.error("useAuth: Sign in exception:", error);
@@ -374,7 +324,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       instructorId?: string;
     }
   ) => {
-    console.log("useAuth: Starting sign up for role:", selectedRole);
     setError(null);
 
     // Validate required fields
@@ -393,8 +342,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     try {
-      // Create auth user with metadata that the trigger will use
-      console.log("useAuth: Creating auth user...");
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -421,11 +368,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return { success: false, error: errorMsg };
       }
 
-      console.log(
-        "useAuth: Auth user created successfully. Creating profile..."
-      );
-
-      // Sign in the user first so they have permissions
       await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
@@ -433,9 +375,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Wait a moment for auth to settle
       await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Check if profile already exists
-      console.log("useAuth: Checking if profile already exists...");
       const { data: existingProfile } = await supabase
         .from("profiles")
         .select("*")
@@ -443,8 +382,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         .single();
 
       if (existingProfile) {
-        console.log("useAuth: Profile already exists, updating it...");
-        // Update existing profile
         const { error: updateError } = await supabase
           .from("profiles")
           .update({
@@ -461,7 +398,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       } else {
         // Create new profile
-        console.log("useAuth: Creating new profile...");
         const { error: profileError } = await supabase.from("profiles").insert({
           id: authData.user.id,
           email: data.email,
@@ -482,9 +418,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
           // Check if it's a duplicate key error (profile created by trigger)
           if (profileError.code === "23505") {
-            console.log(
-              "useAuth: Profile was created by database trigger - continuing..."
-            );
           } else {
             setError(`Failed to create profile: ${profileError.message}`);
             return { success: false, error: profileError.message };
@@ -494,22 +427,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Create role-specific records
       if (selectedRole === "instructor") {
-        const { error: instructorError } = await supabase
+        // Check if instructor record already exists
+        const { data: existingInstructor } = await supabase
           .from("instructors")
-          .insert({
-            id: authData.user.id,
-            business_name: data.businessName!,
-          });
+          .select("*")
+          .eq("id", authData.user.id)
+          .single();
 
-        if (instructorError) {
-          console.error(
-            "useAuth: Instructor creation failed:",
-            instructorError
-          );
-          setError(
-            `Failed to create instructor profile: ${instructorError.message}`
-          );
-          return { success: false, error: instructorError.message };
+        if (existingInstructor) {
+          // Update existing instructor record
+          const { error: updateError } = await supabase
+            .from("instructors")
+            .update({
+              business_name: data.businessName!,
+            })
+            .eq("id", authData.user.id);
+
+          if (updateError) {
+            console.error("useAuth: Instructor update failed:", updateError);
+            setError(
+              `Failed to update instructor profile: ${updateError.message}`
+            );
+            return { success: false, error: updateError.message };
+          }
+        } else {
+          const { error: instructorError } = await supabase
+            .from("instructors")
+            .insert({
+              id: authData.user.id,
+              business_name: data.businessName!,
+            });
+
+          if (instructorError) {
+            console.error(
+              "useAuth: Instructor creation failed:",
+              instructorError
+            );
+
+            // Check if it's a duplicate key error (instructor created by trigger)
+            if (instructorError.code === "23505") {
+            } else {
+              setError(
+                `Failed to create instructor profile: ${instructorError.message}`
+              );
+              return { success: false, error: instructorError.message };
+            }
+          }
         }
       } else if (selectedRole === "student") {
         const { error: studentError } = await supabase.from("students").insert({
@@ -525,7 +488,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       }
 
-      console.log("useAuth: Profile creation completed successfully");
       return { success: true };
     } catch (error: any) {
       console.error("useAuth: Sign up exception:", error);
@@ -586,7 +548,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return { success: false, error: studentError.message };
       }
 
-      console.log("useAuth: Student record created successfully");
       // Refresh user data to include the new student record
       await refreshProfile();
       return { success: true };

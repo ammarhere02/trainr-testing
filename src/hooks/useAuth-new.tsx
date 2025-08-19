@@ -74,7 +74,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Fetch user profile and instructor data if applicable
   const fetchUserData = async (userId: string): Promise<UserData | null> => {
     try {
-      console.log("useAuth: Fetching user data for:", userId);
 
       // Get profile from profiles table
       const { data: profile, error: profileError } = await supabase
@@ -89,11 +88,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       if (!profile) {
-        console.log("useAuth: No profile found for user:", userId);
         return null;
       }
 
-      console.log("useAuth: Found profile:", profile);
 
       const result: UserData = { profile };
 
@@ -112,7 +109,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           );
         } else if (instructor) {
           result.instructor = instructor;
-          console.log("useAuth: Found instructor data");
         }
       }
 
@@ -127,7 +123,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (authInitialized) return;
 
-    console.log("useAuth: Initializing auth state");
     setAuthInitialized(true);
 
     const initializeAuth = async () => {
@@ -148,10 +143,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         if (session?.user) {
-          console.log(
-            "useAuth: Found existing session for user:",
-            session.user.id
-          );
           setUser(session.user);
 
           const data = await fetchUserData(session.user.id);
@@ -163,7 +154,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             setError("User profile not found. Please contact support.");
           }
         } else {
-          console.log("useAuth: No existing session found");
           setUser(null);
           setUserData(null);
           setRole(null);
@@ -182,7 +172,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("useAuth: Auth state change:", event, "session:", !!session);
 
       if (event === "SIGNED_IN" && session?.user) {
         setIsLoading(true);
@@ -208,13 +197,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     });
 
     return () => {
-      console.log("useAuth: Cleaning up auth listener");
       subscription.unsubscribe();
     };
   }, [authInitialized]);
 
   const signIn = async (email: string, password: string) => {
-    console.log("useAuth: Starting sign in for:", email);
     setError(null);
 
     try {
@@ -229,7 +216,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return { success: false, error: error.message };
       }
 
-      console.log("useAuth: Sign in successful");
       return { success: true };
     } catch (error: any) {
       console.error("useAuth: Sign in exception:", error);
@@ -248,12 +234,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       businessName?: string;
     }
   ) => {
-    console.log("useAuth: Starting sign up for role:", selectedRole);
     setError(null);
 
     try {
-      // Create auth user with metadata that the trigger will use
-      console.log("useAuth: Creating auth user...");
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -279,12 +262,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return { success: false, error: errorMsg };
       }
 
-      console.log(
-        "useAuth: Auth user created successfully. The trigger should have created the profile."
-      );
-
-      // The trigger function should have created the profile and instructor record
-      // Let's wait a moment and then check
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Verify the profile was created
@@ -332,8 +309,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         }
       }
-
-      console.log("useAuth: Profile creation completed successfully");
       return { success: true };
     } catch (error: any) {
       console.error("useAuth: Sign up exception:", error);
