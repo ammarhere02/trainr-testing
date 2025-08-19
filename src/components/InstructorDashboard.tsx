@@ -37,7 +37,7 @@ import Content from './Content';
 import Sales from './Sales';
 import MemberArea from './MemberArea';
 import Website from './Website';
-import Settings as SettingsComponent from './Settings';
+import SettingsComponent from './Settings';
 import SideMenu from './SideMenu';
 import Header from './Header';
 import CourseLearning from './CourseLearning';
