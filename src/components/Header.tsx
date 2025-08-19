@@ -21,7 +21,7 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
     try {
       const { error } = await signOut();
       if (error) throw error;
-      window.location.href = '/login';
+      window.location.href = '/';
     } catch (error) {
       console.error('Sign out error:', error);
     }
