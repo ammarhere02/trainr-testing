@@ -27,6 +27,8 @@ import {
   Settings,
   Download
 } from 'lucide-react';
+import VideoLinkInput from './VideoLinkInput';
+import VideoEmbed from './VideoEmbed';
 
 export default function Content() {
   const [currentView, setCurrentView] = useState<'calendar' | 'pipeline' | 'analytics'>('calendar');
@@ -36,7 +38,8 @@ export default function Content() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingContent, setEditingContent] = useState<any>(null);
-  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [showVideoInput, setShowVideoInput] = useState(false);
+  const [editingContentForVideo, setEditingContentForVideo] = useState<any>(null);
   const [contentItems, setContentItems] = useState(() => {
     const saved = localStorage.getItem('content-items');
     return saved ? JSON.parse(saved) : [
@@ -375,6 +378,50 @@ export default function Content() {
     });
   };
 
+  const handleVideoAdd = (videoData: any) => {
+    if (editingContentForVideo) {
+      // Update existing content
+      const updatedItems = contentItems.map(item => 
+        item.id === editingContentForVideo.id 
+          ? { 
+              ...item, 
+              videoUrl: videoData.url,
+              videoSource: videoData.source,
+              videoTitle: videoData.title
+            }
+          : item
+      );
+      setContentItems(updatedItems);
+      localStorage.setItem('content-items', JSON.stringify(updatedItems));
+    } else {
+      // Create new video content
+      const newItem = {
+        id: Date.now(),
+        title: videoData.title || 'New Video Content',
+        type: 'video',
+        status: 'draft',
+        publishDate: new Date().toISOString().split('T')[0],
+        author: 'Current User',
+        platform: videoData.source === 'youtube' ? 'YouTube' : 'Loom',
+        views: 0,
+        engagement: 0,
+        stage: 'content-creation',
+        priority: 'medium',
+        tags: [videoData.source],
+        description: `${videoData.source} video content`,
+        videoSource: videoData.source,
+        videoUrl: videoData.url
+      };
+      
+      const updatedItems = [newItem, ...contentItems];
+      setContentItems(updatedItems);
+      localStorage.setItem('content-items', JSON.stringify(updatedItems));
+    }
+    
+    setShowVideoInput(false);
+    setEditingContentForVideo(null);
+  };
+
   const getVideoSourceIcon = (source: string) => {
     switch (source) {
       case 'youtube':
@@ -667,6 +714,28 @@ export default function Content() {
                             <button className="text-gray-400 hover:text-gray-600">
                               <Settings className="w-4 h-4" />
                             </button>
+                            {item.type === 'video' && item.videoUrl && (
+                              <div className="mt-2">
+                                <VideoEmbed
+                                  url={item.videoUrl}
+                                  source={item.videoSource}
+                                  title={item.videoTitle || item.title}
+                                  className="w-32"
+                                />
+                              </div>
+                            )}
+                            {item.type === 'video' && (
+                              <button 
+                                onClick={() => {
+                                  setEditingContentForVideo(item);
+                                  setShowVideoInput(true);
+                                }}
+                                className="p-1 text-gray-400 hover:text-green-600 transition-colors" 
+                                title="Edit Video"
+                              >
+                                <Video className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
                           
                           <h4 className="font-medium text-gray-900 mb-2 line-clamp-2">{item.title}</h4>
@@ -860,10 +929,10 @@ export default function Content() {
                       onChange={(e) => setNewContent({...newContent, type: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     >
-                      <option>Video</option>
-                      <option>Blog Post</option>
-                      <option>Image</option>
-                      <option>Infographic</option>
+                      <option value="video">Video</option>
+                      <option value="blog">Blog Post</option>
+                      <option value="image">Image</option>
+                      <option value="infographic">Infographic</option>
                     </select>
                   </div>
                 </div>
@@ -929,6 +998,49 @@ export default function Content() {
                   </div>
                 </div>
 
+                {/* Video URL Section for Video Content */}
+                {newContent.type === 'video' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Video Link
+                    </label>
+                    <div className="space-y-3">
+                      {newContent.videoUrl ? (
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                newContent.videoSource === 'youtube' 
+                                  ? 'bg-red-100 text-red-700' 
+                                  : 'bg-purple-100 text-purple-700'
+                              }`}>
+                                {newContent.videoSource === 'youtube' ? '📺 YouTube' : '🔴 Loom'}
+                              </span>
+                              <span className="text-sm text-gray-600 truncate">{newContent.videoUrl}</span>
+                            </div>
+                            <button
+                              onClick={() => setNewContent({...newContent, videoUrl: '', videoSource: ''})}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setShowVideoInput(true)}
+                          className="w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-all text-center"
+                        >
+                          <Video className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-gray-600 font-medium">Add YouTube or Loom Video</p>
+                          <p className="text-sm text-gray-500">Click to paste video link</p>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Description
@@ -970,6 +1082,38 @@ export default function Content() {
                   Create Content
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Video Input Modal */}
+      {showVideoInput && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full">
+            <div className="p-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-6">Add Video Link</h3>
+              <VideoLinkInput
+                onVideoAdd={(videoData) => {
+                  if (editingContentForVideo) {
+                    handleVideoAdd(videoData);
+                  } else {
+                    // For new content creation
+                    setNewContent({
+                      ...newContent,
+                      videoUrl: videoData.url,
+                      videoSource: videoData.source,
+                      title: newContent.title || videoData.title || 'New Video Content'
+                    });
+                    setShowVideoInput(false);
+                  }
+                }}
+                onCancel={() => {
+                  setShowVideoInput(false);
+                  setEditingContentForVideo(null);
+                }}
+                placeholder="Paste YouTube or Loom link for your content..."
+              />
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, Clock, MapPin, Users, Video, ExternalLink, Plus, ChevronLeft, ChevronRight, Link } from 'lucide-react';
+import VideoLinkInput from './VideoLinkInput';
 import { getMeetings, createMeeting, updateMeeting, deleteMeeting } from '../lib/api/meetings';
 import type { Database } from '../lib/database.types';
 
@@ -10,12 +11,15 @@ export default function Events() {
   const [showAddCall, setShowAddCall] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showVideoInput, setShowVideoInput] = useState(false);
   const [newCall, setNewCall] = useState({
     title: '',
     date: '',
     time: '',
     duration: '60',
     url: '',
+    videoUrl: '',
+    videoSource: '',
     description: '',
     maxAttendees: '100'
   });
@@ -129,6 +133,16 @@ export default function Events() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleVideoAdd = (videoData: any) => {
+    setNewCall(prev => ({
+      ...prev,
+      url: videoData.url,
+      videoUrl: videoData.url,
+      videoSource: videoData.source
+    }));
+    setShowVideoInput(false);
   };
 
   return (
@@ -375,18 +389,31 @@ export default function Events() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Meeting URL/Link
+                    Meeting URL/Link {newCall.videoSource && `(${newCall.videoSource})`}
                   </label>
-                  <input
-                    type="url"
-                    value={newCall.url}
-                    onChange={(e) => setNewCall({...newCall, url: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="https://zoom.us/j/123456789 or any meeting link"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Paste your Zoom, Google Meet, Teams, or any other meeting link
-                  </p>
+                  <div className="space-y-3">
+                    <input
+                      type="url"
+                      value={newCall.url}
+                      onChange={(e) => setNewCall({...newCall, url: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="https://zoom.us/j/123456789 or any meeting link"
+                    />
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs text-gray-500">Or</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowVideoInput(true)}
+                        className="text-purple-600 hover:text-purple-700 text-sm font-medium flex items-center"
+                      >
+                        <Video className="w-4 h-4 mr-1" />
+                        Add YouTube/Loom Video
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Paste your Zoom, Google Meet, Teams, YouTube, or Loom link
+                    </p>
+                  </div>
                 </div>
 
                 <div>
@@ -418,6 +445,22 @@ export default function Events() {
                   {isLoading ? 'Creating...' : 'Schedule Call'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Video Link Input Modal */}
+      {showVideoInput && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full">
+            <div className="p-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-6">Add Video Link</h3>
+              <VideoLinkInput
+                onVideoAdd={handleVideoAdd}
+                onCancel={() => setShowVideoInput(false)}
+                placeholder="Paste YouTube or Loom link for your live session..."
+              />
             </div>
           </div>
         </div>
