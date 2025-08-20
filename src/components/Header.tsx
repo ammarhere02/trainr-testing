@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Search, Bell, User, Menu, LogOut, Video, FileText, UserPlus, ArrowRight, ChevronDown, Settings, CreditCard, HelpCircle } from 'lucide-react';
-import { signOut } from '../lib/auth';
+import { useState } from 'react';
+import { Menu, LogOut, ArrowRight, Loader2 } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 
 interface HeaderProps {
   currentView: string;
@@ -13,17 +13,18 @@ interface HeaderProps {
   showFullNavigation?: boolean;
 }
 
-export default function Header({ currentView, onViewChange, onShowLogin, isLoggedIn, userRole, onLogout, onLogin, showFullNavigation = false }: HeaderProps) {
+export default function Header({ onViewChange, isLoggedIn, userRole, onLogin, showFullNavigation = false }: HeaderProps) {
   const [showProductsDropdown, setShowProductsDropdown] = useState(false);
-  const [showAccountDropdown, setShowAccountDropdown] = useState(false);
+  const { signOutUser, isSigningOut } = useAuth();
 
   const handleSignOut = async () => {
     try {
-      const { error } = await signOut();
-      if (error) throw error;
-      window.location.href = '/';
+      await signOutUser();
+      // The signOutUser function handles the redirect to the landing page
     } catch (error) {
       console.error('Sign out error:', error);
+      // Fallback redirect in case of error
+      window.location.href = '/';
     }
   };
 
@@ -76,8 +77,17 @@ export default function Header({ currentView, onViewChange, onShowLogin, isLogge
                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors mr-4 text-sm font-medium flex items-center"
                  title="Sign Out"
                >
-                 <LogOut className="w-4 h-4 mr-2" />
-                 Sign Out
+                 {isSigningOut ? (
+                   <>
+                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                     Signing Out...
+                   </>
+                 ) : (
+                   <>
+                     <LogOut className="w-4 h-4 mr-2" />
+                     Sign Out
+                   </>
+                 )}
                </button>
              )}
 

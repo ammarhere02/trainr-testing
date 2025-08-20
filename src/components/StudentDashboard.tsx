@@ -13,7 +13,6 @@ import {
   User,
   ArrowLeft,
   LogOut,
-  CheckCircle,
   Users,
   Bell,
   MoreVertical,
@@ -22,11 +21,11 @@ import {
   Download,
   Globe,
   Eye,
-  BarChart3,
   Calendar as CalendarIcon,
   FileText,
   Trophy,
   Zap,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 
@@ -194,7 +193,7 @@ const MOCK_DATA = {
 export default function StudentDashboard({
   studentData,
 }: StudentDashboardProps) {
-  const { signOutUser } = useAuth();
+  const { signOutUser, isSigningOut } = useAuth();
   const [activeView, setActiveView] = useState("courses");
   const [selectedCommunity, setSelectedCommunity] = useState<number | null>(null);
   const [communityTab, setCommunityTab] = useState<'announcements' | 'discussions' | 'chat'>('announcements');
@@ -243,7 +242,7 @@ export default function StudentDashboard({
     { id: "courses", label: "My Courses", icon: BookOpen },
     { id: "community", label: "Community", icon: MessageCircle },
     { id: "live-calls", label: "Live Calls", icon: Video },
-    { id: "progress", label: "Progress", icon: Target },
+    { id: "progress", label: "Settings", icon: Target },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
@@ -1132,178 +1131,6 @@ export default function StudentDashboard({
                         </div>
                       </div>
                     ))}
-                  </div>
-                </div>
-              )}
-
-              {/* PROGRESS VIEW */}
-              {activeView === "progress" && (
-                <div>
-                  <div className="mb-8">
-                    <h2 className="text-3xl font-bold text-gray-900">
-                      Learning Progress
-                    </h2>
-                    <p className="text-gray-600 mt-2">
-                      Track your achievements and learning milestones
-                    </p>
-                  </div>
-
-                  {/* Progress Overview */}
-                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-sm border border-blue-200 p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-blue-600 font-medium">
-                            Total Progress
-                          </p>
-                          <p className="text-3xl font-bold text-blue-900">
-                            68%
-                          </p>
-                        </div>
-                        <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
-                          <BarChart3 className="w-6 h-6 text-white" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm border border-green-200 p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-green-600 font-medium">
-                            Certificates
-                          </p>
-                          <p className="text-3xl font-bold text-green-900">
-                            1
-                          </p>
-                        </div>
-                        <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
-                          <Award className="w-6 h-6 text-white" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-sm border border-purple-200 p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-purple-600 font-medium">
-                            Achievements
-                          </p>
-                          <p className="text-3xl font-bold text-purple-900">
-                            2
-                          </p>
-                        </div>
-                        <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center">
-                          <Trophy className="w-6 h-6 text-white" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-sm border border-yellow-200 p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-yellow-600 font-medium">
-                            Streak
-                          </p>
-                          <p className="text-3xl font-bold text-yellow-900">
-                            {progress.currentStreak} days
-                          </p>
-                        </div>
-                        <div className="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center">
-                          <Zap className="w-6 h-6 text-white" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Course Progress */}
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-6">
-                      Course Progress
-                    </h3>
-                    <div className="space-y-6">
-                      {enrolledCourses.map((course) => (
-                        <div key={course.id} className="flex items-center justify-between p-6 bg-gray-50 rounded-xl">
-                          <div className="flex items-center space-x-4">
-                            <img
-                              src={course.image}
-                              alt={course.title}
-                              className="w-16 h-16 rounded-xl object-cover"
-                            />
-                            <div>
-                              <h4 className="font-semibold text-gray-900 mb-1">{course.title}</h4>
-                              <p className="text-gray-600 text-sm">{course.completedLessons}/{course.totalLessons} lessons completed</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-4">
-                            <div className="w-32">
-                              <div className="w-full bg-gray-200 rounded-full h-3">
-                                <div
-                                  className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-500"
-                                  style={{ width: `${course.progress}%` }}
-                                ></div>
-                              </div>
-                            </div>
-                            <span className="text-lg font-bold text-gray-900 w-12">{course.progress}%</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Achievements */}
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-6">
-                      Achievements & Badges
-                    </h3>
-                    <div className="grid md:grid-cols-2 gap-6">
-                      {achievements.map((achievement) => (
-                        <div key={achievement.id} className={`p-6 rounded-xl border-2 transition-all duration-300 ${
-                          achievement.earned 
-                            ? 'bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200' 
-                            : 'bg-gray-50 border-gray-200'
-                        }`}>
-                          <div className="flex items-center justify-between mb-4">
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                              achievement.earned 
-                                ? 'bg-yellow-500 text-white' 
-                                : 'bg-gray-300 text-gray-600'
-                            }`}>
-                              <achievement.icon className="w-6 h-6" />
-                            </div>
-                            {achievement.earned && (
-                              <CheckCircle className="w-6 h-6 text-green-500" />
-                            )}
-                          </div>
-                          <h4 className={`font-bold mb-2 ${
-                            achievement.earned ? 'text-gray-900' : 'text-gray-500'
-                          }`}>
-                            {achievement.title}
-                          </h4>
-                          <p className={`text-sm mb-3 ${
-                            achievement.earned ? 'text-gray-700' : 'text-gray-500'
-                          }`}>
-                            {achievement.description}
-                          </p>
-                          {achievement.earned ? (
-                            <span className="text-sm text-yellow-600 font-medium">
-                              Earned {achievement.date}
-                            </span>
-                          ) : (
-                            <div>
-                              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                                <div
-                                  className="bg-blue-500 h-2 rounded-full transition-all duration-500"
-                                  style={{ width: `${achievement.progress}%` }}
-                                ></div>
-                              </div>
-                              <span className="text-sm text-gray-500">
-                                {achievement.progress}% progress
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
                   </div>
                 </div>
               )}
