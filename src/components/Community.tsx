@@ -15,6 +15,8 @@ import {
   FileText,
   AlertCircle,
 } from "lucide-react";
+import VideoLinkInput from './VideoLinkInput';
+import VideoEmbed from './VideoEmbed';
 import {
   getCommunityPosts,
   createCommunityPost,
@@ -31,6 +33,13 @@ export default function Community({ userRole = "student" }: CommunityProps) {
   const [showPostModal, setShowPostModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showVideoInput, setShowVideoInput] = useState(false);
+  const [attachedVideo, setAttachedVideo] = useState<{
+    url: string;
+    source: 'youtube' | 'loom';
+    title?: string;
+    thumbnail?: string;
+  } | null>(null);
 
   const [postTitle, setPostTitle] = useState("");
   const [postBody, setPostBody] = useState("");
@@ -115,7 +124,7 @@ export default function Community({ userRole = "student" }: CommunityProps) {
         content: postBody,
         category: selectedCategory,
         image_url: attachedMedia.find((m) => m.type === "image")?.url || null,
-        video_url: attachedMedia.find((m) => m.type === "video")?.url || null,
+        video_url: attachedVideo?.url || attachedMedia.find((m) => m.type === "video")?.url || null,
       };
 
       await createCommunityPost(postData);
@@ -128,6 +137,7 @@ export default function Community({ userRole = "student" }: CommunityProps) {
       setPostBody("");
       setSelectedCategory("");
       setAttachedMedia([]);
+      setAttachedVideo(null);
       setShowPostModal(false);
       setShowCategoryDropdown(false);
     } catch (err) {
@@ -200,6 +210,15 @@ export default function Community({ userRole = "student" }: CommunityProps) {
     "👏",
     "🚀",
   ];
+
+  const handleVideoAdd = (videoData: any) => {
+    setAttachedVideo(videoData);
+    setShowVideoInput(false);
+  };
+
+  const removeAttachedVideo = () => {
+    setAttachedVideo(null);
+  };
 
   // Check if post can be submitted
   const canSubmitPost = selectedCategory && postBody.trim().length > 0;
@@ -513,6 +532,19 @@ export default function Community({ userRole = "student" }: CommunityProps) {
                 </div>
               )}
 
+              {/* Attached Video */}
+              {attachedVideo && (
+                <div className="mb-6">
+                  <VideoEmbed
+                    url={attachedVideo.url}
+                    source={attachedVideo.source}
+                    title={attachedVideo.title}
+                    thumbnail={attachedVideo.thumbnail}
+                    onRemove={removeAttachedVideo}
+                  />
+                </div>
+              )}
+
               {/* Upload Progress */}
               {isUploading && (
                 <div className="mb-6">
@@ -550,7 +582,10 @@ export default function Community({ userRole = "student" }: CommunityProps) {
 
                   {/* Video */}
                   <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                    <Video className="w-5 h-5 text-gray-600" />
+                    <Video 
+                      className="w-5 h-5 text-gray-600" 
+                      onClick={() => setShowVideoInput(true)}
+                    />
                   </button>
 
                   {/* Poll */}
@@ -666,6 +701,22 @@ export default function Community({ userRole = "student" }: CommunityProps) {
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Video Input Modal */}
+      {showVideoInput && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full">
+            <div className="p-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-6">Add Video to Post</h3>
+              <VideoLinkInput
+                onVideoAdd={handleVideoAdd}
+                onCancel={() => setShowVideoInput(false)}
+                placeholder="Paste YouTube or Loom link to share with the community..."
+              />
             </div>
           </div>
         </div>
