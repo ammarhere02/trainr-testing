@@ -514,25 +514,49 @@ export const communityApi = {
 
 export async function getCommunityPosts(): Promise<CommunityPostWithAuthor[]> {
   try {
+    console.log("Fetching community posts...");
+
+    // First get posts without joins
     const { data: posts, error } = await supabase
       .from("community_posts")
-      .select(
-        `
-        *,
-        author:profiles!community_posts_author_id_fkey(
-          id,
-          full_name,
-          avatar_url
-        )
-      `
-      )
+      .select('*')
       .not("title", "like", "[COMMUNITY_METADATA]%")
       .not("title", "like", "[COMMUNITY:%")
       .order("created_at", { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error fetching posts:", error);
+      throw new Error(error.message || "Failed to fetch posts");
+    }
 
-    return (posts || []).map((post) => ({
+    if (!posts || posts.length === 0) {
+      console.log("No posts found");
+      return [];
+    }
+
+    console.log(`Found ${posts.length} posts`);
+
+    // Get unique author IDs
+    const authorIds = [...new Set(posts.map(post => post.author_id))];
+
+    // Try to get author info for all authors
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url")
+      .in("id", authorIds);
+
+    // Create author lookup map
+    const authorMap = new Map();
+    if (profiles) {
+      profiles.forEach(profile => {
+        authorMap.set(profile.id, {
+          full_name: profile.full_name || "Unknown User",
+          avatar_url: profile.avatar_url,
+        });
+      });
+    }
+
+    return posts.map((post) => ({
       id: post.id,
       title: post.title || "Community Post",
       content: post.content,
@@ -547,14 +571,22 @@ export async function getCommunityPosts(): Promise<CommunityPostWithAuthor[]> {
         "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=60",
       ],
       created_at: post.created_at,
-      author: {
-        full_name: (post.author as any)?.full_name || "Unknown User",
-        avatar_url: (post.author as any)?.avatar_url || null,
+      author: authorMap.get(post.author_id) || {
+        full_name: "Unknown User",
+        avatar_url: null,
       },
     }));
   } catch (error) {
     console.error("Error fetching community posts:", error);
-    throw new Error(`Failed to fetch posts: ${error}`);
+
+    // Properly format error message
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : typeof error === 'string' 
+        ? error 
+        : JSON.stringify(error);
+
+    throw new Error(`Failed to fetch posts: ${errorMessage}`);
   }
 }
 
@@ -566,12 +598,21 @@ export async function createCommunityPost(data: {
   video_url?: string | null;
 }): Promise<CommunityPostWithAuthor> {
   try {
+    console.log("Creating community post:", data);
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
 
-    const { data: post, error } = await supabase
+    if (!user) {
+      console.error("User not authenticated");
+      throw new Error("User not authenticated");
+    }
+
+    console.log("User authenticated:", user.id);
+
+    // First create the post without joins
+    const { data: post, error: insertError } = await supabase
       .from("community_posts")
       .insert({
         title: data.title,
@@ -583,19 +624,40 @@ export async function createCommunityPost(data: {
         instructor_id: user.id,
         course_id: null,
       })
-      .select(
-        `
-        *,
-        author:profiles!community_posts_author_id_fkey(
-          id,
-          full_name,
-          avatar_url
-        )
-      `
-      )
+      .select('*')
       .single();
 
-    if (error) throw error;
+    if (insertError) {
+      console.error("Insert error:", insertError);
+      throw new Error(insertError.message || "Failed to insert post");
+    }
+
+    console.log("Post created successfully:", post.id);
+
+    // Try to get author info separately, with fallback
+    let authorInfo = {
+      full_name: "Unknown User",
+      avatar_url: null as string | null,
+    };
+
+    try {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("id", user.id)
+        .single();
+
+      if (!profileError && profile) {
+        authorInfo = {
+          full_name: profile.full_name || "Unknown User",
+          avatar_url: profile.avatar_url,
+        };
+      }
+    } catch (profileError) {
+      console.warn("Could not fetch profile, using fallback:", profileError);
+      // Use email as fallback
+      authorInfo.full_name = user.email?.split("@")[0] || "Unknown User";
+    }
 
     return {
       id: post.id,
@@ -609,14 +671,19 @@ export async function createCommunityPost(data: {
       comments: 0,
       commentAvatars: [],
       created_at: post.created_at,
-      author: {
-        full_name: (post.author as any)?.full_name || "Unknown User",
-        avatar_url: (post.author as any)?.avatar_url || null,
-      },
+      author: authorInfo,
     };
   } catch (error) {
     console.error("Error creating community post:", error);
-    throw new Error(`Failed to create post: ${error}`);
+
+    // Properly format error message
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : typeof error === 'string' 
+        ? error 
+        : JSON.stringify(error);
+
+    throw new Error(`Failed to create post: ${errorMessage}`);
   }
 }
 
