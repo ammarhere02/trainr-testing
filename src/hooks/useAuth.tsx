@@ -337,12 +337,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   ) => {
     setError(null);
+    setIsLoading(true);
 
     // Validate required fields
     if (selectedRole === "student" && !data.instructorId) {
       const errorMsg = "Instructor ID is required for student registration";
       console.error("useAuth:", errorMsg);
       setError(errorMsg);
+      setIsLoading(false);
       return { success: false, error: errorMsg };
     }
 
@@ -350,6 +352,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const errorMsg = "Business name is required for instructor registration";
       console.error("useAuth:", errorMsg);
       setError(errorMsg);
+      setIsLoading(false);
       return { success: false, error: errorMsg };
     }
 
@@ -370,6 +373,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (authError) {
         console.error("useAuth: Auth signup error:", authError);
         setError(authError.message);
+        setIsLoading(false);
         return { success: false, error: authError.message };
       }
 
@@ -377,16 +381,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         const errorMsg = "User creation failed - no user returned";
         console.error("useAuth:", errorMsg);
         setError(errorMsg);
+        setIsLoading(false);
         return { success: false, error: errorMsg };
       }
 
-      await supabase.auth.signInWithPassword({
+      // Sign in the user immediately after successful signup
+      const signInResult = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
 
+      if (signInResult.error) {
+        console.error("useAuth: Auto sign-in after signup failed:", signInResult.error);
+        setError("Account created but auto sign-in failed. Please try logging in manually.");
+        setIsLoading(false);
+        return { success: false, error: signInResult.error.message };
+      }
+
+      // Set the user state immediately
+      setUser(signInResult.data.user);
+
       // Wait a moment for auth to settle
       await new Promise((resolve) => setTimeout(resolve, 500));
+
       const { data: existingProfile } = await supabase
         .from("profiles")
         .select("*")
@@ -406,6 +423,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         if (updateError) {
           console.error("useAuth: Profile update failed:", updateError);
           setError(`Failed to update profile: ${updateError.message}`);
+          setIsLoading(false);
           return { success: false, error: updateError.message };
         }
       } else {
@@ -425,13 +443,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             const rlsError =
               "RLS Policy Error: Please run the SQL script in supabase/rls_policies.sql in your Supabase dashboard to fix authentication permissions.";
             setError(rlsError);
+            setIsLoading(false);
             return { success: false, error: rlsError };
           }
 
           // Check if it's a duplicate key error (profile created by trigger)
           if (profileError.code === "23505") {
+            // Profile already exists, continue
           } else {
             setError(`Failed to create profile: ${profileError.message}`);
+            setIsLoading(false);
             return { success: false, error: profileError.message };
           }
         }
@@ -460,6 +481,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             setError(
               `Failed to update instructor profile: ${updateError.message}`
             );
+            setIsLoading(false);
             return { success: false, error: updateError.message };
           }
         } else {
@@ -478,10 +500,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
             // Check if it's a duplicate key error (instructor created by trigger)
             if (instructorError.code === "23505") {
+              // Instructor record already exists, continue
             } else {
               setError(
                 `Failed to create instructor profile: ${instructorError.message}`
               );
+              setIsLoading(false);
               return { success: false, error: instructorError.message };
             }
           }
@@ -496,15 +520,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         if (studentError) {
           console.error("useAuth: Student creation failed:", studentError);
           setError(`Failed to create student profile: ${studentError.message}`);
+          setIsLoading(false);
           return { success: false, error: studentError.message };
         }
       }
 
+      // Fetch and set complete user data after successful signup
+      try {
+        const userData = await fetchUserData(authData.user.id);
+        if (userData) {
+          setUserData(userData);
+          setRole(userData.profile.role as "instructor" | "student");
+          console.log("useAuth: Signup successful, user data set, role:", userData.profile.role);
+        } else {
+          console.warn("useAuth: Could not fetch user data after signup");
+        }
+      } catch (fetchError) {
+        console.error("useAuth: Error fetching user data after signup:", fetchError);
+        // Don't fail the signup for this, but log the error
+      }
+
+      setIsLoading(false);
       return { success: true };
     } catch (error: any) {
       console.error("useAuth: Sign up exception:", error);
       const errorMessage = error.message || "Sign up failed";
       setError(errorMessage);
+      setIsLoading(false);
       return { success: false, error: errorMessage };
     }
   };
