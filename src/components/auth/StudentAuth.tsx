@@ -20,7 +20,7 @@ interface Instructor {
 }
 
 interface StudentAuthProps {
-  onSuccess: (user: any) => void;
+  onSuccess?: (user: unknown) => void;
   instructorId?: string;
 }
 
@@ -125,7 +125,9 @@ export default function StudentAuth({
           "student"
         );
         if (result.success) {
-          onSuccess({});
+          console.log("Student login successful - auth state will trigger navigation");
+          // Don't call onSuccess - let the App.tsx useEffect handle navigation automatically
+          // The authentication state change will trigger the redirection in App.tsx
         } else {
           setErrors({ submit: result.error || "Sign in failed" });
         }
@@ -137,20 +139,19 @@ export default function StudentAuth({
           instructorId: instructorId || selectedInstructorId,
         });
         if (result.success) {
-          onSuccess({});
+          // For signup, we can still call onSuccess if provided
+          if (onSuccess) onSuccess({});
         } else {
           setErrors({ submit: result.error || "Sign up failed" });
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("StudentAuth: Unexpected error:", error);
       setErrors({
         submit:
-          error.message ||
-          `Failed to ${mode === "login" ? "sign in" : "create account"}`,
+          error instanceof Error ? error.message : "Something went wrong. Please try again.",
       });
     } finally {
-      console.log("StudentAuth: Form submission complete");
       setIsLoading(false);
     }
   };

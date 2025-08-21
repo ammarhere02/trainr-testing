@@ -15,7 +15,7 @@ import {
 import { useAuth } from "../../hooks/useAuth";
 
 interface InstructorAuthProps {
-  onSuccess: (user: any) => void;
+  onSuccess?: (user: any) => void;
 }
 
 export default function InstructorAuth({ onSuccess }: InstructorAuthProps) {
@@ -81,7 +81,9 @@ export default function InstructorAuth({ onSuccess }: InstructorAuthProps) {
           "instructor"
         );
         if (result.success) {
-          onSuccess({});
+          console.log("Instructor login successful - auth state will trigger navigation");
+          // Don't call onSuccess - let the App.tsx useEffect handle navigation automatically
+          // The authentication state change will trigger the redirection in App.tsx
         } else {
           setErrors({ submit: result.error || "Sign in failed" });
         }
@@ -93,7 +95,8 @@ export default function InstructorAuth({ onSuccess }: InstructorAuthProps) {
           businessName: formData.businessName,
         });
         if (result.success) {
-          onSuccess({});
+          // For signup, we can still call onSuccess if provided
+          if (onSuccess) onSuccess({});
         } else {
           setErrors({ submit: result.error || "Sign up failed" });
         }

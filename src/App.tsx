@@ -6,7 +6,7 @@ import {
     useNavigate,
 } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import Hero from "./components/Hero";
 import InstructorDashboard from "./components/InstructorDashboard";
 import StudentDashboard from "./components/StudentDashboard";
@@ -20,7 +20,7 @@ function App() {
     const navigate = useNavigate();
 
     // Helper function to get user name for URL
-    const getUserName = () => {
+    const getUserName = useCallback(() => {
         if (!userData || !userData.profile) {
             console.log("userData or profile not available yet");
             return "";
@@ -57,48 +57,75 @@ function App() {
         const cleanFirstName = firstName.replace(/[^a-z0-9]/g, "");
         console.log("Extracted firstName:", firstName, "cleaned:", cleanFirstName);
         return cleanFirstName;
-    };
+    }, [userData, role]);
 
     // Helper function to generate dashboard URL with name
-    const getDashboardUrl = (userRole: string) => {
-        if (!userData || !userData.profile) {
-            console.log("User data not complete, using generic URL");
-            return userRole === "instructor"
-                ? "/dashboard-instructor"
-                : "/dashboard-student";
-        }
+    const getDashboardUrl = useCallback(
+        (userRole: string) => {
+            if (!userData || !userData.profile) {
+                console.log("User data not complete, using generic URL");
+                return userRole === "instructor"
+                    ? "/dashboard-instructor"
+                    : "/dashboard-student";
+            }
 
-        const firstName = getUserName();
-        console.log("getDashboardUrl - firstName:", firstName, "for role:", userRole);
+            const firstName = getUserName();
+            console.log("getDashboardUrl - firstName:", firstName, "for role:", userRole);
 
-        if (userRole === "instructor") {
-            return firstName
-                ? `/dashboard-instructor/${firstName}`
-                : "/dashboard-instructor";
-        } else {
-            return firstName
-                ? `/dashboard-student/${firstName}`
-                : "/dashboard-student";
-        }
-    };
+            if (userRole === "instructor") {
+                return firstName
+                    ? `/dashboard-instructor/${firstName}`
+                    : "/dashboard-instructor";
+            } else {
+                return firstName
+                    ? `/dashboard-student/${firstName}`
+                    : "/dashboard-student";
+            }
+        },
+        [userData, getUserName]
+    );
 
-    // 🔧 FIXED: Post-login navigation handler
+    // 🔧 FIXED: Post-login navigation handler with better state detection
     useEffect(() => {
-        console.log('useEffect triggered:', { user: !!user, userData: !!userData, role });
+        console.log('Navigation useEffect triggered:', {
+            user: !!user,
+            userData: !!userData,
+            role,
+            isLoading,
+            profileExists: !!(userData?.profile),
+            currentPath: window.location.pathname
+        });
 
-        if (user && userData && role) {
+        // Wait for auth to be completely initialized and user data to be available
+        if (!isLoading && user && userData && userData.profile && role) {
             const currentPath = window.location.pathname;
-            console.log('Current path:', currentPath);
+            console.log('Checking if redirection needed from:', currentPath);
 
-            if (currentPath.includes("/login")) {
+            // Check if we need to redirect
+            const shouldRedirect =
+                currentPath.includes("/login") ||
+                currentPath === "/dashboard-instructor" ||
+                currentPath === "/dashboard-student" ||
+                currentPath === "/" ||
+                (currentPath.startsWith("/dashboard-instructor/") && role === "student") ||
+                (currentPath.startsWith("/dashboard-student/") && role === "instructor");
+
+            if (shouldRedirect) {
                 const targetUrl = getDashboardUrl(role);
-                console.log("Post-login navigation to:", targetUrl);
+                console.log("🚀 Redirecting from", currentPath, "to:", targetUrl);
 
-                // Use navigate with proper options
+                // Force immediate navigation
                 navigate(targetUrl, { replace: true });
             }
+        } else if (!isLoading && !user) {
+            // User is not authenticated and not loading - ensure we're not on protected routes
+            const currentPath = window.location.pathname;
+            if (currentPath.startsWith("/dashboard-")) {
+                console.log("Redirecting unauthenticated user from protected route");
+                navigate("/", { replace: true });
+            }
         }
-    }, [user, userData, role, navigate]);
+    }, [user, userData, role, isLoading, navigate, getDashboardUrl]);
 
     console.log("App render:", {
         user: !!user,
@@ -209,11 +236,7 @@ function App() {
                         ) : user && role === "student" ? (
                             <Navigate to={getDashboardUrl("student")} replace />
                         ) : (
-                            <InstructorAuth
-                                onSuccess={() => {
-                                    console.log("Instructor login successful, waiting for complete user data...");
-                                }}
-                            />
+                            <InstructorAuth />
                         )
                     }
                 />
@@ -226,11 +249,7 @@ function App() {
                         ) : user && role === "instructor" ? (
                             <Navigate to={getDashboardUrl("instructor")} replace />
                         ) : (
-                            <StudentAuth
-                                onSuccess={() => {
-                                    console.log("Student login successful, waiting for complete user data...");
-                                }}
-                            />
+                            <StudentAuth />
                         )
                     }
                 />

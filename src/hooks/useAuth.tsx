@@ -234,40 +234,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     initializeAuth();
 
-    // Set up auth state listener
+    // Set up auth state listener - simplified to avoid conflicts
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        setIsLoading(true);
-        setUser(session.user);
+      console.log("Auth state change event:", event, "Session exists:", !!session?.user);
 
-        try {
-          const data = await fetchUserData(session.user.id);
-          if (data) {
-            setUserData(data);
-            setRole(data.profile.role as "instructor" | "student");
-          } else {
-            console.warn("useAuth: Auth listener - No user data found");
-            setUserData(null);
-            setRole(null);
-            setError("Profile not found after sign in");
-          }
-        } catch (fetchError) {
-          console.error(
-            "useAuth: Auth listener - Error fetching user data:",
-            fetchError
-          );
-          setError("Failed to load user profile after sign in");
-        }
-        setIsLoading(false);
-      } else if (event === "SIGNED_OUT") {
+      // Only handle SIGNED_OUT events here to avoid conflicts with manual sign-in
+      if (event === "SIGNED_OUT") {
+        console.log("Processing SIGNED_OUT event");
         setUser(null);
         setUserData(null);
         setRole(null);
         setError(null);
         setIsLoading(false);
       }
+      // Don't handle SIGNED_IN here - let the signIn method handle it directly
     });
 
     return () => {
@@ -281,6 +263,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     expectedRole?: "instructor" | "student"
   ) => {
     setError(null);
+    setIsLoading(true);
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -291,25 +274,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (error) {
         console.error("useAuth: Sign in error:", error);
         setError(error.message);
+        setIsLoading(false);
         return { success: false, error: error.message };
       }
 
-      // If role validation is required, check user's role
-      if (expectedRole && data.user) {
-        const userData = await fetchUserData(data.user.id);
-        if (userData && userData.profile.role !== expectedRole) {
-          // Sign out the user since they're using wrong login page
-          await supabase.auth.signOut();
-          const errorMessage = `This account is registered as a ${userData.profile.role}. Please use the ${userData.profile.role} login page.`;
-          setError(errorMessage);
-          return { success: false, error: errorMessage };
+      // Fetch and set user data immediately after successful sign in
+      if (data.user) {
+        console.log("useAuth: Sign in successful, fetching user data...");
+        setUser(data.user);
+
+        try {
+          const userData = await fetchUserData(data.user.id);
+          if (userData) {
+            // Role validation
+            if (expectedRole && userData.profile.role !== expectedRole) {
+              await supabase.auth.signOut();
+              const errorMessage = `This account is registered as a ${userData.profile.role}. Please use the ${userData.profile.role} login page.`;
+              setError(errorMessage);
+              setIsLoading(false);
+              return { success: false, error: errorMessage };
+            }
+
+            // Set user data and role
+            setUserData(userData);
+            setRole(userData.profile.role as "instructor" | "student");
+            setIsLoading(false);
+
+            console.log("useAuth: User data set successfully, role:", userData.profile.role);
+            return { success: true };
+          } else {
+            setError("User profile not found. Please contact support.");
+            setIsLoading(false);
+            return { success: false, error: "User profile not found" };
+          }
+        } catch (fetchError) {
+          console.error("useAuth: Error fetching user data after sign in:", fetchError);
+          setError("Failed to load user profile. Please try again.");
+          setIsLoading(false);
+          return { success: false, error: "Failed to load user profile" };
         }
       }
+
+      setIsLoading(false);
       return { success: true };
     } catch (error: any) {
       console.error("useAuth: Sign in exception:", error);
       const errorMessage = error.message || "Sign in failed";
       setError(errorMessage);
+      setIsLoading(false);
       return { success: false, error: errorMessage };
     }
   };

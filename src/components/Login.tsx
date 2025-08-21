@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, Loader, ArrowRight } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 interface LoginProps {
   onLogin: (role: 'educator' | 'student') => void;
@@ -8,6 +10,9 @@ interface LoginProps {
 }
 
 export default function Login({ onLogin, onShowEducatorSignup, onShowStudentSignup }: LoginProps) {
+  const { signIn } = useAuth();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -16,11 +21,11 @@ export default function Login({ onLogin, onShowEducatorSignup, onShowStudentSign
   
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loginAs, setLoginAs] = useState<'educator' | 'student'>('educator');
 
   const validateForm = () => {
-    const newErrors: any = {};
+    const newErrors: Record<string, string> = {};
 
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
@@ -33,20 +38,32 @@ export default function Login({ onLogin, onShowEducatorSignup, onShowStudentSign
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setIsLoading(true);
+    setErrors({});
 
     try {
-      // Simulate login process
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // In a real app, this would verify credentials with a backend
-      onLogin(loginAs);
+      const result = await signIn(
+        formData.email,
+        formData.password,
+        loginAs
+      );
+
+      if (result.success) {
+        // Navigate to appropriate auth page which will handle the final redirection
+        if (loginAs === 'educator') {
+          navigate('/login/instructor');
+        } else {
+          navigate('/login/student');
+        }
+      } else {
+        setErrors({ general: result.error || 'Invalid email or password' });
+      }
     } catch (error) {
       console.error('Login failed:', error);
-      setErrors({ general: 'Invalid email or password' });
+      setErrors({ general: 'An unexpected error occurred. Please try again.' });
     } finally {
       setIsLoading(false);
     }
